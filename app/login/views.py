@@ -11,7 +11,7 @@ def login_view(request):
             login(request, user)
             if user.is_superuser:
                 return redirect('super:home')  # Redirige a superadmin si es superusuario
-            return redirect('alimentos:home')  # Redirige a la página normal si no es superusuario
+            return redirect('dashuser:home')  # Redirige a la página normal si no es superusuario
         else:
             messages.error(request, 'Usuario o contraseña incorrectos.')
     return render(request, 'login/login.html')

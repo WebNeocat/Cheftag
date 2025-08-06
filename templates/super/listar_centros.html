@@ -1,0 +1,94 @@
+{% extends "base_super.html" %}
+{% block content %}
+
+<div class="content-wrapper">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="m-0">Listado de Centros</h3>
+            <a class="btn btn-light text-primary" onclick="abrir_modal_edicion('{% url 'super:CentroCreate' %}')">
+                <i class="fa fa-plus-circle"></i>&nbsp; Crear Nuevo
+            </a>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-md-4">
+                    <select class="form-select" name="ordenar" id="ordenar" onchange="this.form.submit()">
+                        <option value="" disabled selected>Ordenar por...</option>
+                        <option value="nombre" {% if ordenar == 'nombre' %}selected{% endif %}>Nombre</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <input type="text" class="form-control" placeholder="Buscar..." name="buscar">
+                </div>
+                <div class="col-md-3 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-secondary">
+                        <i class="fa fa-search"></i>&nbsp; Buscar
+                    </button>
+                </div>
+            </form>
+                {% if centros %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-dark text-center">
+                            <tr>
+                                <th>Estado</th>
+                                <th>Nombre</th>
+                                <th>Teléfono</th>
+                                <th>Opciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for centro in centros %}
+                        <tr class="text-center" style="font-size: 14px;">
+                            <td>
+                                {% if centro.estado %}
+                                    <i style="padding: 10px 0 10px 25px" class="fa fa-circle text-success"></i>
+                                {% else %}
+                                    <i style="padding: 10px 0 10px 25px" class="fa fa-circle text-danger"></i>
+                                {% endif %}
+                            </td>
+                            <td>{{ centro.nombre }}</td>
+                            <td>{{ centro.telefono }}</td>
+                            <td>
+                                <a class="btn btn-success" style="--bs-btn-padding-y: 10px; --bs-btn-padding-x: 14px;" href="#" data-toggle="tooltip" title="Ver usuarios">
+                                    <i class="fa fa-user"></i>
+                                </a>
+                                <a class="btn btn-info" style="--bs-btn-padding-y: 10px; --bs-btn-padding-x: 14px;" onclick="#" data-toggle="tooltip" title="Editar centro">
+                                    <i class="fa fa-pencil"></i>
+                                </a>
+                                <a class="btn btn-danger" style="--bs-btn-padding-y: 10px; --bs-btn-padding-x: 14px;" href="#" data-toggle="tooltip" title="Eliminar centro">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            {% include "core/pagination.html" %}
+
+            {% else %}
+            <div class="alert alert-warning text-center mt-3">
+                <i class="fa fa-exclamation-circle"></i> No se encontraron alimentos.
+            </div>
+            {% endif %}
+        </div>
+        <div class="modal fade" id="consulta" role="dialog">
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extrajs %}
+<script type="text/javascript">
+    var $ = jQuery.noConflict();
+    function abrir_modal_edicion(url){
+        $('#consulta').load(url, function(){
+            $(this).modal('show');
+        });
+    }
+</script>
+
+{% endblock extrajs %}

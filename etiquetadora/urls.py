@@ -7,4 +7,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('app.login.urls', namespace='login')),
     path('super/', include('app.super.urls', namespace='super')), 
+    path('dashuser/', include('app.dashuser.urls', namespace='dashuser')),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'app.login',
-    'app.alimentos',
+    'app.core',
+    'app.dashuser',
     'app.platos',
     'app.super',
 ]
