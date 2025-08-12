@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white">
+            <h2>{{ alimento.nombre }}</h2>
+            {% if alimento.nombre_alternativo %}
+            <small class="text-light fst-italic">({{ alimento.nombre_alternativo }})</small>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Imagen -->
+                <div class="col-md-4 text-center">
+                    {% if alimento.imagen %}
+                        <img src="{{ alimento.imagen.url }}" class="img-fluid rounded mb-3" alt="Imagen de {{ alimento.nombre }}">
+                    {% else %}
+                        <img src="{% static 'alimentos/default.jpg' %}" class="img-fluid rounded mb-3" alt="Imagen por defecto">
+                    {% endif %}
+                </div>
+
+                <!-- Descripción y detalles -->
+                <div class="col-md-8">
+                    {% if alimento.descripcion %}
+                    <p class="fs-7">{{ alimento.descripcion }}</p>
+                    {% endif %}
+
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>Tipo de alimento:</strong> {{ alimento.tipo_alimento }}</li>
+                        <li class="list-group-item"><strong>Conservación:</strong> {{ alimento.conservacion }}</li>
+                        <li class="list-group-item"><strong>Localización:</strong> {{ alimento.localizacion }}</li>
+                        <li class="list-group-item"><strong>Stock actual:</strong> {{ alimento.stock_actual_format }}</li>
+                        <li class="list-group-item"><strong>Stock mínimo:</strong> {{ alimento.stock_minimo_format }}</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Alérgenos -->
+            <div class="mt-4">
+                <h4>Alérgenos</h4>
+                {% if alimento.alergenos.all %}
+                    <div class="d-flex flex-wrap gap-3">
+                        {% for alergeno in alimento.alergenos.all %}
+                            <div class="text-center" style="width: 80px;">
+                                {% if alergeno.imagen %}
+                                    <img src="{{ alergeno.imagen.url }}" class="img-thumbnail rounded" alt="{{ alergeno.nombre }}" title="{{ alergeno.nombre }}">
+                                {% else %}
+                                    <img src="{% static 'alergenos/default.jpg' %}" class="img-thumbnail rounded" alt="{{ alergeno.nombre }}" title="{{ alergeno.nombre }}">
+                                {% endif %}
+                                <small class="d-block mt-1">{{ alergeno.nombre }}</small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted fst-italic">Sin alérgenos asociados</p>
+                {% endif %}
+            </div>
+
+            <!-- Información nutricional -->
+            <div class="mt-5">
+                <h4>Información Nutricional (por 100g)</h4>
+                {% if alimento.nutricion %}
+                <table class="table table-bordered table-striped table-hover align-middle">
+                    <tbody>
+                        <tr><th>Energía</th><td>{{ alimento.nutricion.energia }} kcal</td></tr>
+                        <tr><th>Carbohidratos</th><td>{{ alimento.nutricion.carbohidratos }} g</td></tr>
+                        <tr><th>Proteínas</th><td>{{ alimento.nutricion.proteinas }} g</td></tr>
+                        <tr><th>Grasas</th><td>{{ alimento.nutricion.grasas }} g</td></tr>
+                        <tr><th>Azúcares</th><td>{{ alimento.nutricion.azucares }} g</td></tr>
+                        <tr><th>Sal (Sodio)</th><td>{{ alimento.nutricion.sal_mg }} mg</td></tr>
+                        <tr><th>Ácido fólico</th><td>{{ alimento.nutricion.acido_folico }} µg</td></tr>
+                        <tr><th>Vitamina C</th><td>{{ alimento.nutricion.vitamina_c }} g</td></tr>
+                        <tr><th>Vitamina A</th><td>{{ alimento.nutricion.vitamina_a }} µg</td></tr>
+                        <tr><th>Zinc</th><td>{{ alimento.nutricion.zinc }} mg</td></tr>
+                        <tr><th>Hierro</th><td>{{ alimento.nutricion.hierro }} mg</td></tr>
+                        <tr><th>Calcio</th><td>{{ alimento.nutricion.calcio }} mg</td></tr>
+                        <tr><th>Colesterol</th><td>{{ alimento.nutricion.colesterol }} mg</td></tr>
+                        <tr><th>Ácidos grasos poliinsaturados</th><td>{{ alimento.nutricion.acidos_grasos_polinsaturados }} g</td></tr>
+                        <tr><th>Ácidos grasos monoinsaturados</th><td>{{ alimento.nutricion.acidos_grasos_monoinsaturados }} g</td></tr>
+                        <tr><th>Ácidos grasos saturados</th><td>{{ alimento.nutricion.acidos_grasos_saturados }} g</td></tr>
+                        <tr><th>Fibra</th><td>{{ alimento.nutricion.fibra }} g</td></tr>
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted fst-italic">No hay información nutricional disponible.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

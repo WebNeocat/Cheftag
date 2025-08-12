@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from django.contrib import messages
+from django.db import transaction
+from django.contrib.auth.models import User
 from django.utils.timezone import localtime
 from django.db.models import Q
 from django.core.paginator import Paginator
@@ -74,16 +76,40 @@ class UsuariosList (PaginationMixin, ListView):
         return context
     
     
-def crear_usuario(request):
-    if request.method == 'POST':
-        form = UserProfileForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            return redirect('super:UsuariosList')
-    else:
-        return render(request, 'super/crear_usuario.html')
+class CrearUsuarioView(CreateView):
+    model = UserProfile
+    form_class = UserProfileForm
+    template_name = 'super/crear_usuario.html'
+    success_url = reverse_lazy('super:UsuariosList')
 
-    return render(request, 'super/crear_usuario.html', {'form': form})
+    @transaction.atomic
+    def form_valid(self, form):
+        # Extraer datos
+        username = form.cleaned_data['username']
+        password = form.cleaned_data['password']
+        nombre = form.cleaned_data['nombre']
+        apellidos = form.cleaned_data['apellidos']
+
+        # Crear el User de Django
+        user = User.objects.create_user(
+            username=username,
+            password=password,
+            first_name=nombre,
+            last_name=apellidos
+        )
+
+        # Asignar user al perfil antes de guardar
+        profile = form.save(commit=False)
+        profile.user = user
+        profile.password = password  # ⚠ Guarda el password plano si quieres mostrarlo, pero no es seguro
+        profile.save()
+
+        messages.success(self.request, "Usuario y perfil creados correctamente.")
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, "Error al crear el usuario. Revisa los datos.")
+        return super().form_invalid(form)
 
 
 class CentrosList(PaginationMixin, ListView):

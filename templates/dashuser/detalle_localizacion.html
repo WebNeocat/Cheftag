@@ -1,0 +1,43 @@
+<div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-info">
+            <h2 class="modal-title text-white">Editar ubicación</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="container">
+                <form method='POST' action="{% url 'dashuser:LocalizacionUpdate' localizacion.id %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Ubicación</label>
+                                <input type="text" class="form-control" name="localizacion" value="{{ localizacion.localizacion }}">
+                            </div>
+                            <div class="col-12">
+                                <div style="margin-left: 22px; margin-bottom: 30px" class="form-check form-check-success col-2">
+                                    <input type="checkbox" class="form-check-input" name="estado" {% if localizacion.estado %}checked{% endif %}> Estado <i class="input-helper"></i></label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-end mt-4">
+                            <button type="submit" class="btn btn-success"><i class="fa fa-save"></i>&nbsp; Crear</button>
+                            <button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa fa-times-circle"></i>&nbsp; Cancelar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Agrega un evento de clic a los botones de cerrar y cancelar
+    $('.modal .close, .modal .btn-danger').click(function() {
+        // Oculta el modal
+        $('.modal').modal('hide');
+        // Elimina el fondo oscuro
+        $('.modal-backdrop').remove();
+    });
+</script>

@@ -15,7 +15,7 @@ class CentroForm(forms.ModelForm):
             'telefono': forms.TextInput(attrs={"class":"form-control form-control-border", "placeholder":"Teléfono"}),
             'email': forms.TextInput(attrs={"class":"form-control form-control-border", "placeholder":"Email"}),
             'sitio_web': forms.TextInput(attrs={"class":"form-control form-control-border", "placeholder":"Sitio Web"}),
-            'fecha_creacion': forms.DateInput (format=('%Y-%m-%d'), attrs={"class":"form-control form-control-border", "type":"date"}),
+            'fecha_creacion': forms.DateInput (attrs={"class":"form-control form-control-border", "type":"date"}),
             'imagen': forms.FileInput(attrs={"class":"form-control form-control-border"}),
             'estado': forms.CheckboxInput(attrs={"class":"form-check-input"}),
         }  
@@ -23,34 +23,16 @@ class CentroForm(forms.ModelForm):
 
                 
 class UserProfileForm(forms.ModelForm):
-
-    centro = forms.ModelChoiceField(
-        queryset=Centros.objects.none(),  # Inicia vacío
-        label="Centro",
-        widget=forms.Select(attrs={"class": "form-select form-control-border"}),
-        empty_label="Selecciona un centro"
-    )
-
-    password1 = forms.CharField(
-        label="Contraseña",
-        widget=forms.PasswordInput(attrs={"class": "form-control form-control-border"}),
-        min_length=8
-    )
-
-    password2 = forms.CharField(
-        label="Confirmar Contraseña",
-        widget=forms.PasswordInput(attrs={"class": "form-control form-control-border"}),
-        min_length=8
-    )
+    password = forms.CharField(widget=forms.PasswordInput(attrs={"class": "form-control"}))
+    username = forms.CharField(widget=forms.TextInput(attrs={"class": "form-control"}))
 
     class Meta:
         model = UserProfile
-        fields = ['username', 'nombre', 'apellidos', 'cargo', 'imagen', 'centro', 'estado']
+        fields = ['centro', 'username', 'password', 'nombre', 'apellidos', 'cargo', 'imagen', 'estado']
         widgets = {
-            'username': forms.TextInput(attrs={"class": "form-control form-control-border"}),
-            'nombre': forms.TextInput(attrs={"class": "form-control form-control-border"}),
-            'apellidos': forms.TextInput(attrs={"class": "form-control form-control-border"}),
-            'cargo': forms.TextInput(attrs={"class": "form-control form-control-border"}),
-            'imagen': forms.FileInput(attrs={"class": "form-control form-control-border"}),
+            'nombre': forms.TextInput(attrs={"class": "form-control"}),
+            'apellidos': forms.TextInput(attrs={"class": "form-control"}),
+            'cargo': forms.TextInput(attrs={"class": "form-control"}),
             'estado': forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            'centro': forms.Select(attrs={"class": "form-control"}),
         }

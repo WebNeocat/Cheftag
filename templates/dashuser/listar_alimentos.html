@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="content-wrapper">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="m-0">Listado de Alimentos</h3>
+            <a class="btn btn-light btn-sm rounded text-primary" href="{% url 'dashuser:AlimentoCreate' %}">
+                <i class="fa fa-plus-circle"></i>&nbsp; Crear Nuevo
+            </a>
+        </div>
+
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-md-11">
+                    <input type="text" class="form-control form-control-sm" placeholder="Buscar..." name="buscar">
+                </div>
+                <div class="col-md-1 d-flex justify-content">
+                    <button type="submit" class="btn btn-secondary btn-sm rounded" >
+                        <i class="fa fa-search"></i>&nbsp; Buscar
+                    </button>
+                </div>
+            </form>
+
+            {% if alimentos %}
+            <div class="table-wrapper">
+                <table class="table table-hover tabla-responsive align-middle" style="table-layout: fixed;">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Tipo de alimento</th>
+                            <th>Imagen</th>
+                            <th>Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alimento in alimentos %}
+                        <tr>
+                            <td data-label="Nombre" class="fw-bold">{{ alimento.nombre }}</td>
+                            <td data-label="Tipo de alimento">{{ alimento.tipo_alimento }}</td>
+                            <td data-label="Imagen"><img src="{{ alimento.imagen.url }}"></td>
+                            <td data-label="Opciones">
+                                <a class="btn btn-success" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" href="{% url 'dashuser:AlimentoDetail' alimento.pk %}" data-toggle="tooltip" title="Ver Detalles">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                                <a class="btn btn-info" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="" data-toggle="tooltip" title="Editar Alimento">
+                                    <i class="fa fa-pencil"></i>
+                                </a>
+                                <a class="btn btn-danger" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="" data-toggle="tooltip" title="Eliminar Alimento">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            <!-- Paginación -->
+            {% include "core/pagination.html" %}
+
+            {% else %}
+            <div class="alert alert-warning text-center mt-3">
+                <i class="fa fa-exclamation-circle"></i> No se encontraron alérgenos.
+            </div>
+            {% endif %}
+        </div>
+        <div class="modal fade" id="consulta" role="dialog">
+    </div>
+</div>
+<div id="modal-container"></div>
+{% endblock content %}
+
+{% block extrajs %}
+<script type="text/javascript">
+    var $ = jQuery.noConflict();
+    function abrir_modal_edicion(url){
+        $('#consulta').load(url, function(){
+            $(this).modal('show');
+        });
+    }
+</script>
+{% endblock extrajs %}

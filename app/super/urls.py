@@ -7,7 +7,7 @@ app_name = 'super'
 urlpatterns = [
     path('home/', views.home, name='home'),
     
-    path("crear_usuario/", crear_usuario, name="crear_usuario"),
+    path("crear_usuario/", CrearUsuarioView.as_view(), name="crear_usuario"),
     path("listado_usuarios/", UsuariosList.as_view(), name="UsuariosList"),
     
     path("listado_centros/", CentrosList.as_view(), name="CentrosList"),
