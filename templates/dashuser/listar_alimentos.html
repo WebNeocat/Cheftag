@@ -1,4 +1,15 @@
 {% extends "base.html" %}
+{% block head %}
+<style>
+    .content-wrapper { padding-top: 0 !important; }
+    table.table td {
+        padding-top: 6px !important;
+        padding-bottom: 6px !important;
+        font-size: 12px;
+        line-height: 1.2;
+    }
+</style>
+{% endblock head %}
 {% block content %}
 
 <div class="content-wrapper">
@@ -11,52 +22,111 @@
         </div>
 
         <div class="card-body">
-            <form method="get" class="row g-2 align-items-center">
-                <div class="col-md-11">
-                    <input type="text" class="form-control form-control-sm" placeholder="Buscar..." name="buscar">
+            <!-- Barra de controles -->
+            <form method="get" class="row g-2 align-items-center mb-3">
+                <!-- Orden -->
+                <div class="col">
+                    <select class="form-select form-select-sm" name="ordenar" id="ordenar" onchange="this.form.submit()">
+                        <option value="" disabled selected>Ordenar por...</option>
+                        <option value="nombre" {% if ordenar == 'nombre' %}selected{% endif %}>Nombre</option>
+                        <option value="tipoalimento" {% if ordenar == 'tipo_alimento' %}selected{% endif %}>Tipo Alimento</option>
+                    </select>
                 </div>
-                <div class="col-md-1 d-flex justify-content">
-                    <button type="submit" class="btn btn-secondary btn-sm rounded" >
-                        <i class="fa fa-search"></i>&nbsp; Buscar
+
+                <!-- Buscar -->
+                <div class="col">
+                    <input type="text" class="form-control form-control-sm" placeholder="Buscar..." name="buscar" value="{{ request.GET.buscar }}">
+                </div>
+
+                <!-- Botón buscar -->
+                <div class="col">
+                    <button type="submit" class="btn btn-secondary">
+                        <i class="fa fa-search"></i>
                     </button>
+                </div>
+
+                <!-- Botones vista -->
+                <div class="col-auto">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button id="btn-lista" type="button" class="btn btn-primary">
+                            <i class="fa fa-list"></i>
+                        </button>
+                        <button id="btn-cuadricula" type="button" class="btn btn-outline-primary">
+                            <i class="fa fa-th"></i>
+                        </button>
+                    </div>
                 </div>
             </form>
 
             {% if alimentos %}
-            <div class="table-wrapper">
-                <table class="table table-hover tabla-responsive align-middle" style="table-layout: fixed;">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Tipo de alimento</th>
-                            <th>Imagen</th>
-                            <th>Opciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for alimento in alimentos %}
-                        <tr>
-                            <td data-label="Nombre" class="fw-bold">{{ alimento.nombre }}</td>
-                            <td data-label="Tipo de alimento">{{ alimento.tipo_alimento }}</td>
-                            <td data-label="Imagen"><img src="{{ alimento.imagen.url }}"></td>
-                            <td data-label="Opciones">
-                                <a class="btn btn-success" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" href="{% url 'dashuser:AlimentoDetail' alimento.pk %}" data-toggle="tooltip" title="Ver Detalles">
+            <!-- Vista lista -->
+            <div id="vista-lista">
+                <div class="table-wrapper">
+                    <table class="table table-hover tabla-responsive align-middle" style="table-layout: fixed;">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Tipo de alimento</th>
+                                <th>Ubicación</th>
+                                <th>Stock actual</th>
+                                <th>Imagen</th>
+                                <th>Opciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for alimento in alimentos %}
+                            <tr>
+                                <td data-label="Nombre" class="fw-bold">{{ alimento.nombre }}</td>
+                                <td data-label="Tipo de alimento">{{ alimento.tipo_alimento }}</td>
+                                <td data-label="Ubicación">{{ alimento.localizacion }}</td>
+                                <td data-label="Stock actual">{{ alimento.stock_actual }}</td>
+                                <td data-label="Imagen"><img src="{{ alimento.imagen.url }}"></td>
+                                <td data-label="Opciones">
+                                    <a class="btn btn-success" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'dashuser:AlimentoDetail' alimento.pk %}')" data-toggle="tooltip" title="Ver Detalles">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+                                    <a class="btn btn-info" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" href="{% url 'dashuser:AlimentoUpdate' alimento.pk %}" data-toggle="tooltip" title="Editar Alimento">
+                                        <i class="fa fa-pencil"></i>
+                                    </a>
+                                    <a class="btn btn-danger" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'dashuser:AlimentoDelete' alimento.pk %}')" data-toggle="tooltip" title="Eliminar Alimento">
+                                        <i class="fa fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- Vista cuadrícula -->
+            <div id="vista-cuadricula" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4" style="display:none;">
+                {% for alimento in alimentos %}
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        {% if alimento.imagen %}
+                            <img src="{{ alimento.imagen.url }}" class="card-img-top" alt="{{ alimento.nombre }}" style="height:200px; object-fit:cover;">
+                        {% else %}
+                            <img src="https://via.placeholder.com/300x200?text=Sin+imagen" class="card-img-top" alt="Sin imagen">
+                        {% endif %}
+                        <div class="card-body text-center">
+                            <h5 class="card-title mb-2">{{ alimento.nombre }}</h5>
+                            <p class="text-muted small mb-3">Stock: {{ alimento.stock_actual }}</p>
+                            <div class="d-flex justify-content-center gap-2">
+                                <a class="btn btn-success" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'dashuser:AlimentoDetail' alimento.pk %}')" data-toggle="tooltip" title="Ver Detalles">
                                     <i class="fa fa-eye"></i>
                                 </a>
-                                <a class="btn btn-info" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="" data-toggle="tooltip" title="Editar Alimento">
+                                <a class="btn btn-info" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" href="{% url 'dashuser:AlimentoUpdate' alimento.pk %}" data-toggle="tooltip" title="Editar Alimento">
                                     <i class="fa fa-pencil"></i>
                                 </a>
-                                <a class="btn btn-danger" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="" data-toggle="tooltip" title="Eliminar Alimento">
+                                <a class="btn btn-danger" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'dashuser:AlimentoDelete' alimento.pk %}')" data-toggle="tooltip" title="Eliminar Alimento">
                                     <i class="fa fa-trash"></i>
                                 </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Paginación -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>     
             <!-- Paginación -->
             {% include "core/pagination.html" %}
 
@@ -80,5 +150,40 @@
             $(this).modal('show');
         });
     }
+
+    // Funciones cambio vista
+    function activarLista(){
+        document.getElementById('vista-lista').style.display = 'block';
+        document.getElementById('vista-cuadricula').style.display = 'none';
+        document.getElementById('btn-lista').classList.add('btn-primary');
+        document.getElementById('btn-lista').classList.remove('btn-outline-primary');
+        document.getElementById('btn-cuadricula').classList.add('btn-outline-primary');
+        document.getElementById('btn-cuadricula').classList.remove('btn-primary');
+        localStorage.setItem('vistaAlimentos', 'lista');
+    }
+
+    function activarCuadricula(){
+        document.getElementById('vista-lista').style.display = 'none';
+        document.getElementById('vista-cuadricula').style.display = 'flex';
+        document.getElementById('btn-cuadricula').classList.add('btn-primary');
+        document.getElementById('btn-cuadricula').classList.remove('btn-outline-primary');
+        document.getElementById('btn-lista').classList.add('btn-outline-primary');
+        document.getElementById('btn-lista').classList.remove('btn-primary');
+        localStorage.setItem('vistaAlimentos', 'cuadricula');
+    }
+
+    // Eventos botones
+    document.getElementById('btn-lista').addEventListener('click', activarLista);
+    document.getElementById('btn-cuadricula').addEventListener('click', activarCuadricula);
+
+    // Cargar vista guardada
+    document.addEventListener('DOMContentLoaded', function(){
+        const vistaGuardada = localStorage.getItem('vistaAlimentos');
+        if (vistaGuardada === 'cuadricula') {
+            activarCuadricula();
+        } else {
+            activarLista();
+        }
+    });
 </script>
 {% endblock extrajs %}

@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load static %}
+{% load form_tags %}
+
+{% block content %}
+<style>
+.alergeno-checkbox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+}
+.alergeno-checkbox input[type="checkbox"] {
+    display: none; /* Ocultamos el checkbox */
+}
+.alergeno-checkbox img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out;
+}
+.alergeno-checkbox input[type="checkbox"]:checked + img {
+    border-color: #28a745; /* Verde al seleccionar */
+    box-shadow: 0 0 5px #28a745;
+}
+.alergeno-checkbox span {
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+</style>
+
+<div class="content-wrapper py-4">
+    <div class="container">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-basket-fill me-2"></i> Crear Alimento
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'dashuser:AlimentoUpdate' alimento.pk %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- Tabs -->
+                    <ul class="nav nav-tabs mb-3">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#datos" type="button">Datos del alimento</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#nutricion" type="button">Información nutricional</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+
+                        <!-- TAB: Datos -->
+                        <div class="tab-pane fade show active" id="datos">
+                            <div class="row g-3">
+                                {% for field in alimento_form %}
+                                    {% if field.name != 'alergenos' %}
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">{{ field.label }}</label>
+                                        {{ field }}
+                                        {% if field.errors %}
+                                        <div class="text-danger small">{{ field.errors|join:", " }}</div>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+
+                            <!-- Alergenos como imágenes clicables -->
+                            <h4 class="mt-4 mb-3">Alergenos</h4>
+                            <div class="d-flex flex-wrap gap-3">
+                                {% for choice in alimento_form.alergenos %}
+                                    {% with alergeno=choice.choice_label %}
+                                    <label class="alergeno-checkbox">
+                                        {{ choice.tag }}
+                                        <img src="{{ alergeno.imagen.url }}" alt="{{ alergeno.nombre }}">
+                                        <span>{{ alergeno.nombre }}</span>
+                                    </label>
+                                    {% endwith %}
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- TAB: Nutrición -->
+                        <div class="tab-pane fade" id="nutricion">
+                            <div class="row g-3">
+                                {% for field in nutricion_form %}
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">{{ field.label }}</label>
+                                    {{ field }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="mt-4 d-flex justify-content-end">
+                        <a href="{% url 'dashuser:AlimentoList' %}" class="btn btn-outline-secondary me-2">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-save"></i> Guardar
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

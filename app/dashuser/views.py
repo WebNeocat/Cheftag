@@ -508,7 +508,7 @@ class AlimentoList(PaginationMixin, LoginRequiredMixin, ListView):
     model = Alimento
     template_name = 'dashuser/listar_alimentos.html'
     context_object_name = 'alimentos'
-    paginate_by = 10  # Número de registros por página
+    paginate_by = 12  # Número de registros por página
 
     def get_queryset(self):
         try:
@@ -585,3 +585,80 @@ class AlimentoDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         context.update(datos_centro(self.request))  # Añadimos datos del centro (usuario)
         return context
+    
+    
+class AlimentoUpdate(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        alimento = get_object_or_404(
+            Alimento, pk=pk, centro=request.user.userprofile.centro
+        )
+
+        try:
+            nutricion = alimento.nutricion
+        except InformacionNutricional.DoesNotExist:
+            nutricion = None
+
+        alimento_form = AlimentoForm(instance=alimento)
+        nutricion_form = InformacionNutricionalForm(instance=nutricion)
+
+        context = {
+            'alimento_form': alimento_form,
+            'nutricion_form': nutricion_form,
+            'alimento': alimento
+        }
+        context.update(datos_centro(request))
+        return render(request, 'dashuser/editar_alimento.html', context)
+
+    def post(self, request, pk):
+        alimento = get_object_or_404(
+            Alimento, pk=pk, centro=request.user.userprofile.centro
+        )
+
+        try:
+            nutricion = alimento.nutricion
+        except InformacionNutricional.DoesNotExist:
+            nutricion = None
+
+        alimento_form = AlimentoForm(request.POST, request.FILES, instance=alimento)
+        nutricion_form = InformacionNutricionalForm(request.POST, instance=nutricion)
+
+        if alimento_form.is_valid() and nutricion_form.is_valid():
+            alimento = alimento_form.save(commit=False)
+            alimento.centro = request.user.userprofile.centro
+            alimento.save()
+
+            alimento_form.save_m2m()  # ✅ guarda los alergenos
+
+            nutricion = nutricion_form.save(commit=False)
+            nutricion.alimento = alimento
+            nutricion.save()
+
+            return redirect('dashuser:AlimentoList')
+
+        context = {
+            'alimento_form': alimento_form,
+            'nutricion_form': nutricion_form,
+            'alimento': alimento
+        }
+        context.update(datos_centro(request))
+        return render(request, 'dashuser/editar_alimento.html', context)
+
+
+class AlimentoDelete(LoginRequiredMixin, DeleteView):
+    model = Alimento
+    template_name = 'dashuser/eliminar_alimento.html'
+    context_object_name = 'alimento'
+    success_url = reverse_lazy('dashuser:AlimentoList')
+
+    def get_object(self, queryset=None):
+        # Filtramos para que solo pueda borrar alimentos de su centro
+        return get_object_or_404(
+            Alimento,
+            pk=self.kwargs.get('pk'),
+            centro=self.request.user.userprofile.centro
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(datos_centro(self.request))
+        return context    

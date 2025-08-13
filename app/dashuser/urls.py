@@ -30,6 +30,8 @@ urlpatterns = [
     path('lista_alimento/', AlimentoList.as_view(), name='AlimentoList'),
     path('crear_alimento/', AlimentoCreate.as_view(), name='AlimentoCreate'),
     path('alimentos/<int:pk>/', AlimentoDetailView.as_view(), name='AlimentoDetail'),
+    path('actualizar_alimentos/<int:pk>/', AlimentoUpdate.as_view(), name='AlimentoUpdate'),
+    path('eliminar_alimentos/<int:pk>/', AlimentoDelete.as_view(), name='AlimentoDelete'),
     
     
 ]

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="content-wrapper">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="m-0">Listado de Tipos de Plato</h3>
+            <a class="btn btn-light text-primary" onclick="abrir_modal_edicion('{% url 'platos:TipoPlatoCreate' %}')">
+                <i class="fa fa-plus-circle"></i>&nbsp; Crear Nuevo
+            </a>
+        </div>
+
+        <div class="card-body mt-3">
+            <form method="get" class="row g-2 align-items-center mb-3">
+                <div class="col-md-8">
+                    <input type="text" class="form-control" placeholder="Buscar..." name="buscar">
+                </div>
+                <div class="col-md-4 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-secondary">
+                        <i class="fa fa-search"></i>&nbsp; Buscar
+                    </button>
+                </div>
+            </form>
+
+            {% if tipoplatos %}
+            <div class="table-wrapper">
+                <table class="table table-hover tabla-responsive align-middle" style="table-layout: fixed;">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Estado</th>
+                            <th>Tipo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tipoplato in tipoplatos %}
+                        <tr data-label="Estado">
+                            <td>
+                                {% if tipoplato.estado %}
+                                    <i class="fa fa-circle text-success fs-6"></i>
+                                {% else %}
+                                    <i class="fa fa-circle text-danger fs-6"></i>
+                                {% endif %}
+                            </td>
+                            <td data-label="Tipo" class="fw-bold">{{ tipoplato.nombre }}</td>
+                            <td data-label="Acciones">
+                                <a class="btn btn-info" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'platos:TipoPlatoUpdate' pk=tipoplato.id %}')" data-toggle="tooltip" title="Editar Tipo de Iva">
+                                    <i class="fa fa-pencil"></i>
+                                </a>
+                                <a class="btn btn-danger" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'platos:TipoPlatoDelete' pk=tipoplato.id %}')" data-toggle="tooltip" title="Eliminar Tipo de Iva">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            {% include "core/pagination.html" %}
+            
+            {% else %}
+            <div class="alert alert-warning text-center mt-3">
+                <i class="fa fa-exclamation-circle"></i> No se encontraron tipos de plato.
+            </div>
+            {% endif %}
+        </div>
+        <div class="modal fade" id="consulta" role="dialog">
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extrajs %}
+<script type="text/javascript">
+    var $ = jQuery.noConflict();
+    function abrir_modal_edicion(url){
+        $('#consulta').load(url, function(){
+            $(this).modal('show');
+        });
+    }
+</script>
+{% endblock extrajs %}
