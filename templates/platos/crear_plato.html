@@ -1,0 +1,158 @@
+<div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+            <h2 class="modal-title">{% if object %}Editar{% else %}<i class="fa fa-plus-circle"></i>&nbsp; Crear{% endif %} Plato</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="{% url 'platos:PlatoCreate' %}" enctype="multipart/form-data" id="plato-form">
+                {% csrf_token %}
+                
+                <!-- Datos del Plato - Estilo similar a crear_centro.html -->
+                <div class="card mb-3">
+                    <div class="card-header bg-inverse-primary">Datos del Plato</div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre</label>
+                                {{ form.nombre }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Tipo de plato</label>
+                                {{ form.tipoplato }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Descripción</label>
+                                {{ form.descripcion }}
+                            </div>
+                            <div class="col-7">
+                                <label class="form-label">Imagen</label>
+                                {{ form.imagen }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Ingredientes - Estilo similar pero adaptado para el formset -->
+                <div class="card mb-3">
+                    <div class="card-header bg-inverse-primary">Ingredientes</div>
+                    <div class="card-body">
+                        {{ ingredientes_formset.management_form }}
+                        
+                        <div id="ingredientes-container">
+                            {% for form in ingredientes_formset %}
+                            <div class="ingrediente-form mb-3 p-3 border rounded">
+                                <div class="row g-3">
+                                    <div class="col-md-5">
+                                        <label class="form-label">Alimento</label>
+                                        {{ form.alimento }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Cantidad</label>
+                                        {{ form.cantidad }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Unidad de Medida</label>
+                                        {{ form.unidad_medida }}
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label class="form-label">Notas</label>
+                                        {{ form.notas }}
+                                    </div>
+                                    {% if form.instance.pk %}
+                                    <div class="col-md-12 mt-2">
+                                        <div class="form-check">
+                                            {{ form.DELETE }}
+                                            <label class="form-check-label text-danger" for="{{ form.DELETE.id_for_label }}">
+                                                Eliminar este ingrediente
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <button type="button" id="add-ingrediente" class="btn btn-inverse-success">
+                            <i class="fa fa-plus-circle"></i>&nbsp; Añadir ingrediente
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fa fa-save"></i> Guardar
+                    </button>
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">
+                        <i class="fa fa-times"></i> Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Función para ordenar selects alfabéticamente
+    function sortSelectOptions(selectElement) {
+        const $select = $(selectElement);
+        const selectedValue = $select.val();
+        const $options = $select.find('option');
+        
+        $options.sort(function(a, b) {
+            return $(a).text().localeCompare($(b).text());
+        });
+        
+        $select.empty().append($options).val(selectedValue);
+    }
+    
+    // Ordenar los selects al cargar la página
+    $('select').each(function() {
+        sortSelectOptions(this);
+    });
+    
+    // Manejar la adición de nuevos ingredientes
+    $(document).on('click', '#add-ingrediente', function(e) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        
+        const totalForms = $('#id_ingredientes-TOTAL_FORMS');
+        const formCount = parseInt(totalForms.val());
+        const newForm = $('.ingrediente-form').first().clone(true);
+        
+        // Actualizar IDs/names
+        newForm.find(':input').each(function() {
+            const name = $(this).attr('name')?.replace(/-\d+-/, `-${formCount}-`);
+            const id = $(this).attr('id')?.replace(/-\d+-/, `-${formCount}-`);
+            
+            if (name) $(this).attr('name', name);
+            if (id) $(this).attr('id', id);
+            
+            $(this).val('').prop('checked', false);
+        });
+        
+        // Limpiar errores
+        newForm.find('.errorlist').remove();
+        
+        // Añadir al contenedor
+        $('#ingredientes-container').append(newForm);
+        
+        // Ordenar los nuevos selects
+        newForm.find('select').each(function() {
+            sortSelectOptions(this);
+        });
+        
+        // Actualizar contador
+        totalForms.val(formCount + 1);
+    });
+    
+    // Manejar el cierre del modal
+    $('.btn-close, .btn-secondary[data-bs-dismiss="modal"]').click(function() {
+        $('.modal').modal('hide');
+        $('body').removeClass('modal-open');
+        $('.modal-backdrop').remove();
+    });
+});
+</script>

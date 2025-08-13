@@ -16,7 +16,36 @@ class Alergenos(ModeloBaseCentro):
     def __str__(self):
         return f"{self.nombre}"
     
+class Trazas(ModeloBaseCentro):
+    nombre = models.CharField('Nombre', max_length=100)
+    codigo = models.CharField(max_length=10, blank=True, null=True) 
+    imagen = models.ImageField(default='trazas/default.jpg', upload_to='trazas/', blank=True, null=True)
+    estado = models. BooleanField(default=True)
+        
+    class Meta:
+        verbose_name = 'Traza'
+        verbose_name_plural = "Trazas"
+        unique_together = ('nombre', 'centro')  # Evitamos duplicados de alérgenos en el mismo centro
+        
+    def __str__(self):
+        return f"{self.nombre}"    
     
+
+class UnidadDeMedida(ModeloBaseCentro):
+    nombre = models.CharField(max_length=50, unique=True)  # Ej: "Kilogramo", "Gramo", "Litro"
+    abreviatura = models.CharField(max_length=10, unique=True) 
+    estado = models. BooleanField(default=True)
+
+    class Meta:
+        ordering = ['nombre']
+        verbose_name = 'Unidad de Medida'
+        verbose_name_plural = 'Unidades de Medida'
+        
+        
+    def __str__(self):
+        return f"{self.nombre}"
+    
+        
 class TipoAlimento(ModeloBaseCentro):
     nombre = models.CharField('Nombre', max_length=100)
     estado = models. BooleanField(default=True)
@@ -70,7 +99,9 @@ class Alimento(ModeloBaseCentro):
         verbose_name = "Alimento"
         verbose_name_plural = 'Alimentos'    
         
-
+    def __str__(self):
+        return self.nombre 
+    
     def stock_minimo_format(self):
         return int(self.stock_minimo) if self.stock_minimo % 1 == 0 else self.stock_minimo
 
@@ -85,7 +116,7 @@ class InformacionNutricional(models.Model):
     proteinas = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
     grasas = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
     azucares = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
-    sal_mg = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
+    sal_mg = models.DecimalField(default=0, max_digits=7, decimal_places=2, blank=True)
     acido_folico = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
     vitamina_c = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
     vitamina_a = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)

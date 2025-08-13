@@ -97,34 +97,45 @@
               <span class="menu-title">Dashboard</span>
             </a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'dashuser:AlimentoList' %}">
-              <i class="menu-icon mdi mdi-ticket-confirmation"></i>
-              <span class="menu-title">Alimentos</span>
-            </a>
+          <li class="nav-item nav-category">Sistema</li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'dashuser:AlimentoList' %}">
+                <i class="menu-icon mdi mdi-food-variant"></i>
+                <span class="menu-title">Alimentos</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'platos:PlatoList' %}">
+                <i class="menu-icon mdi mdi-food-turkey"></i>
+                <span class="menu-title">Platos</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">
+                <i class="menu-icon mdi mdi-book-open-page-variant"></i>
+                <span class="menu-title">Recetas</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">
+                <i class="menu-icon mdi mdi-tag"></i>
+                <span class="menu-title">Etiquetas</span>
+              </a>
+            </li>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">
-              <i class="menu-icon mdi mdi-food-turkey"></i>
-              <span class="menu-title">Platos</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">
-              <i class="menu-icon mdi mdi-food-turkey"></i>
-              <span class="menu-title">Etiquetas</span>
-            </a>
-          </li>
-          <li class="nav-item nav-category">Configuración</li>
+          <li class="nav-item nav-category">Opciones</li>
             <li class="nav-item">
               <a class="nav-link" data-bs-toggle="collapse" href="#confi" aria-expanded="false" aria-controls="confi">
                 <i class="menu-icon mdi mdi-filter"></i>
-                <span class="menu-title">Opciones</span>
+                <span class="menu-title">configuración</span>
                 <i class="menu-arrow"></i>
               </a>
               <div class="collapse" id="confi">
                 <ul class="nav flex-column sub-menu">
-                  <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:AlergenosList' %}">Alergenos</a></li>
+                  <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:AlergenosList' %}">Alérgenos</a></li>
+                </ul>
+                <ul class="nav flex-column sub-menu">
+                  <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:TrazasList' %}">Trazas de alérgenos</a></li>
                 </ul>
                 <ul class="nav flex-column sub-menu">
                   <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:LocalizacionList' %}">Ubicaciones</a></li>
@@ -134,6 +145,9 @@
                 </ul>
                 <ul class="nav flex-column sub-menu">
                   <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:TipoAlimentoList' %}">Tipos de Alimento</a></li>
+                </ul>
+                <ul class="nav flex-column sub-menu">
+                  <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:UnidadDeMedidaList' %}">Unidad de Medida</a></li>
                 </ul>
                 <ul class="nav flex-column sub-menu">
                   <li class="nav-item"> <a class="nav-link" href="{% url 'platos:TipoPlatoList' %}">Tipos de Plato</a></li>

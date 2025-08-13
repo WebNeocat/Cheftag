@@ -17,6 +17,16 @@ urlpatterns = [
     path('actualizar_alergeno/<int:pk>/', AlergenosUpdate.as_view(), name="AlergenosUpdate"),
     path('eliminar_alergeno/<int:pk>/', AlergenosDelete.as_view(), name="AlergenosDelete"),
     
+    path('trazas_lista/', TrazasList.as_view(), name='TrazasList'), 
+    path('crear_trazas/', TrazasCreate.as_view(), name='TrazasCreate'),
+    path('actualizar_trazas/<int:pk>/', TrazasUpdate.as_view(), name="TrazasUpdate"),
+    path('eliminar_trazas/<int:pk>/', TrazasDelete.as_view(), name="TrazasDelete"),
+    
+    path('lista_unidades_de_medida/', UnidadDeMedidaList.as_view(), name='UnidadDeMedidaList'), 
+    path('crear_unidades_de_medida/', UnidadDeMedidaCreate.as_view(), name='UnidadDeMedidaCreate'),
+    path('actualizar_unidad_de_medida/<int:pk>/', UnidadDeMedidaUpdate.as_view(), name="UnidadDeMedidaUpdate"),
+    path('eliminar_unidad_de_medida/<int:pk>/', UnidadDeMedidaDelete.as_view(), name="UnidadDeMedidaDelete"),
+    
     path('lista_tipos_de_alimento/', TipoAlimentoList.as_view(), name='TipoAlimentoList'), 
     path('crear_tipos_alimentos/', TipoAlimentoCreate.as_view(), name='TipoAlimentoCreate'),
     path('actualizar_tipo_alimento/<int:pk>/', TipoAlimentoUpdate.as_view(), name="TipoAlimentoUpdate"),

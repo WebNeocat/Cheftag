@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from app.super.models import UserProfile
 from django.utils.timezone import localtime
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib import messages
 from django.db.models import Q
 from django.urls import reverse_lazy, reverse
@@ -9,8 +9,8 @@ from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.mixins import LoginRequiredMixin
 from app.core.mixins import PaginationMixin
-from .models import TipoPlato
-from .forms import TipoPlatoForm
+from .models import TipoPlato, Plato
+from .forms import TipoPlatoForm, PlatoForm, AlimentoPlatoFormSet
 
 
 
@@ -172,3 +172,176 @@ class TipoPlatoDelete(LoginRequiredMixin, DeleteView):
         context = super().get_context_data(**kwargs)
         context['action_url'] = reverse('menu:TipoPlatoDelete', kwargs={'pk': self.object.pk})
         return context
+    
+    
+    
+######################################################################################
+###############################       PLATOS      ####################################
+######################################################################################    
+
+class PlatoList(PaginationMixin, LoginRequiredMixin, ListView):
+    model = Plato
+    template_name = 'platos/listar_platos.html'
+    context_object_name = 'platos'
+    paginate_by = 12
+
+    def get_queryset(self):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            queryset = Plato.objects.filter(centro=user_profile.centro).order_by('nombre')
+            
+            search_query = self.request.GET.get('buscar')
+            if search_query:
+                queryset = queryset.filter(nombre__icontains=search_query)
+            
+            return queryset
+        return Plato.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(datos_centro(self.request))
+        if not context['platos'].exists():
+            context['mensaje'] = "No tiene platos registrados."
+        return context
+    
+    
+    
+class PlatoCreate(LoginRequiredMixin, CreateView):
+    model = Plato
+    form_class = PlatoForm
+    template_name = 'platos/crear_plato.html'
+    success_url = reverse_lazy('platos:PlatoList')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['ingredientes_formset'] = AlimentoPlatoFormSet(
+                self.request.POST, 
+                self.request.FILES,
+                prefix='ingredientes'
+            )
+        else:
+            context['ingredientes_formset'] = AlimentoPlatoFormSet(
+                prefix='ingredientes'
+            )
+        return context
+
+    def form_valid(self, form):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if not user_profile.centro:
+            messages.error(self.request, 'No está asociado a ningún centro.')
+            return self.form_invalid(form)
+        
+        context = self.get_context_data()
+        ingredientes_formset = context['ingredientes_formset']
+        
+        self.object = form.save(commit=False)
+        self.object.centro = user_profile.centro
+        self.object.save()
+        
+        if ingredientes_formset.is_valid():
+            ingredientes = ingredientes_formset.save(commit=False)
+            for ingrediente in ingredientes:
+                ingrediente.plato = self.object
+                ingrediente.centro = user_profile.centro
+                ingrediente.save()
+            
+            for obj in ingredientes_formset.deleted_objects:
+                obj.delete()
+            
+            messages.success(self.request, 'Plato creado correctamente.')
+            return super().form_valid(form)
+        else:
+            # Mostrar errores específicos del formset
+            for form_ing in ingredientes_formset:
+                if form_ing.errors:
+                    for field, errors in form_ing.errors.items():
+                        for error in errors:
+                            messages.error(self.request, f"Ingrediente: {field} - {error}")
+            return self.form_invalid(form)    
+        
+        
+class PlatoUpdate(LoginRequiredMixin, UpdateView):
+    model = Plato
+    form_class = PlatoForm
+    template_name = 'platos/detalle_plato.html'
+    success_url = reverse_lazy('platos:PlatoList')
+    context_object_name = 'plato'
+
+    def get_queryset(self):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            return Plato.objects.filter(centro=user_profile.centro)
+        return Plato.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['ingredientes_formset'] = AlimentoPlatoFormSet(
+                self.request.POST, 
+                self.request.FILES, 
+                instance=self.object
+            )
+        else:
+            context['ingredientes_formset'] = AlimentoPlatoFormSet(instance=self.object)
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        ingredientes_formset = context['ingredientes_formset']
+        
+        if ingredientes_formset.is_valid():
+            self.object = form.save()
+            ingredientes = ingredientes_formset.save(commit=False)
+            
+            for ingrediente in ingredientes:
+                ingrediente.centro = self.object.centro
+                ingrediente.save()
+            
+            for obj in ingredientes_formset.deleted_objects:
+                obj.delete()
+            
+            messages.success(self.request, 'Plato actualizado correctamente.')
+            return super().form_valid(form)
+        else:
+            return self.form_invalid(form)
+        
+
+class PlatoDetail(LoginRequiredMixin, DetailView):
+    model = Plato
+    template_name = 'platos/datos_plato.html'
+    context_object_name = 'plato'
+
+    def get_queryset(self):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            return Plato.objects.filter(centro=user_profile.centro)
+        return Plato.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        ingredientes = self.object.ingredientes.all().select_related('alimento', 'unidad_medida')
+        context['ingredientes'] = ingredientes
+        context['alergenos'] = self.object.get_alergenos()
+
+        return context
+
+    
+    
+
+class PlatoDelete(LoginRequiredMixin, DeleteView):
+    model = Plato
+    template_name = 'platos/plato_confirm_delete.html'
+    success_url = reverse_lazy('platos:PlatoList')
+    context_object_name = 'plato'
+
+    def get_queryset(self):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            return Plato.objects.filter(centro=user_profile.centro)
+        else:
+            return Plato.objects.none()
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'Plato eliminado correctamente.')
+        return super().delete(request, *args, **kwargs)        

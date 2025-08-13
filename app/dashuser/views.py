@@ -12,8 +12,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from app.core.mixins import PaginationMixin
 from app.super.models import UserProfile
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Alergenos, TipoAlimento, Alimento, localizacion, Conservacion, InformacionNutricional
-from .forms import AlergenosForm, TipoAlimento, LocalizacionForm, TipoAlimentosForm, ConservacionForm, InformacionNutricionalForm, AlimentoForm
+from .models import Alergenos, TipoAlimento, Alimento, localizacion, Conservacion, InformacionNutricional, UnidadDeMedida, Trazas
+from .forms import AlergenosForm, TipoAlimento, LocalizacionForm, TipoAlimentosForm, ConservacionForm, InformacionNutricionalForm, AlimentoForm, UnidadDeMedidaForm, TrazasForm
 
 
 @login_required
@@ -156,11 +156,240 @@ class AlergenosDelete(LoginRequiredMixin, DeleteView):
     def post(self, request, *args, **kwargs):
         obj = self.get_object()
         obj.last_modified_by = request.user
-        obj.save(update_fields=['last_modified_by'])
+        obj.save
         messages.success(self.request, 'Alérgeno eliminado correctamente.')
         return super().delete(request, *args, **kwargs) 
     
+
+######################################################################################
+############################# TRAZAS ALERGENOS  ######################################
+######################################################################################
+
+
+class TrazasList(PaginationMixin, LoginRequiredMixin, ListView):
+    model = Trazas
+    template_name = 'dashuser/listar_trazas.html'
+    context_object_name = 'trazas'
+    paginate_by = 10  # Número de registros por página
+
+    def get_queryset(self):
+        try:
+            user_profile = UserProfile.objects.filter(user=self.request.user).first()
+            if user_profile and user_profile.centro:
+                centro = user_profile.centro
+                queryset = Trazas.objects.filter(centro=centro).order_by('id')
+
+                # Permitir búsqueda dentro de los alérgenos del centro
+                search_query = self.request.GET.get('buscar')
+                if search_query:
+                    queryset = queryset.filter(
+                        Q(nombre__icontains=search_query) |
+                        Q(codigo__icontains=search_query)
+                    )
+                return queryset
+            else:
+                return Trazas.objects.none()
+        except ObjectDoesNotExist:
+            return Trazas.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(datos_centro(self.request))
+
+        # Añadir un mensaje si no hay trazas de alérgenos asociados
+        if not context['trazas'].exists():
+            context['mensaje'] = "No tiene trazas de alergenos asociados."
+
+        return context
+    
+class TrazasCreate(LoginRequiredMixin, CreateView):
+    model = Trazas
+    form_class = TrazasForm
+    template_name = 'dashuser/crear_trazas.html'
+    success_url = reverse_lazy('dashuser:TrazasList')
+
+    def form_valid(self, form):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            trazas = form.save(commit=False)
+            trazas.centro = user_profile.centro
+            trazas.save()
+            messages.success(self.request, 'Traza de alérgeno creado correctamente.')
+            return super().form_valid(form)
+        else:
+            messages.error(self.request, 'No está asociado a ningún centro.')
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f"Error en el campo '{field}': {error}")
+        return super().form_invalid(form)
+    
+    
+class TrazasUpdate(LoginRequiredMixin, UpdateView):
+    model = Trazas
+    template_name = 'dashuser/detalle_trazas.html'
+    form_class = TrazasForm
+    success_url = reverse_lazy('dashuser:TrazasList')
+    context_object_name = 'traza'
+
+    def get_queryset(self):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            return Trazas.objects.filter(centro_id=user_profile.centro_id)
+        else:
+            messages.error(self.request, 'No está asociado a ningún centro.')
+            return Trazas.objects.none()
+
+    def form_valid(self, form):
+        self.object = form.save()
+        messages.success(self.request, 'Trazas de alérgeno actualizado correctamente.')
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f"Error en el campo '{field}': {error}")
+        return super().form_invalid(form)   
+    
+
+class TrazasDelete(LoginRequiredMixin, DeleteView):
+    model = Trazas
+    template_name = 'dashuser/trazas_confirm_delete.html'
+    success_url = reverse_lazy('dashuser:TrazasList')
+    context_object_name = 'traza'
+
+    def get_queryset(self):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            return Trazas.objects.filter(centro=user_profile.centro)
+        else:
+            return Trazas.objects.none()
+
+    def post(self, request, *args, **kwargs):
+        obj = self.get_object()
+        obj.last_modified_by = request.user
+        obj.save
+        messages.success(self.request, 'Traza de alérgeno eliminado correctamente.')
+        return super().delete(request, *args, **kwargs) 
+    
+
+######################################################################################
+###############################  UNIDADES DE MEDIDA  #################################
+######################################################################################    
+
+
+class UnidadDeMedidaList(PaginationMixin, LoginRequiredMixin, ListView):
+    model = UnidadDeMedida
+    template_name = 'dashuser/listar_unidaddemedida.html'
+    context_object_name = 'unidaddemedidas'
+    paginate_by = 10  # Número de registros por página
+
+    def get_queryset(self):
+        try:
+            user_profile = UserProfile.objects.filter(user=self.request.user).first()
+            if user_profile and user_profile.centro:
+                centro = user_profile.centro
+                queryset = UnidadDeMedida.objects.filter(centro=centro).order_by('id')
+
+                # Permitir búsqueda dentro de los alérgenos del centro
+                search_query = self.request.GET.get('buscar')
+                if search_query:
+                    queryset = queryset.filter(
+                        Q(nombre__icontains=search_query) |
+                        Q(abreviatura__icontains=search_query)
+                    )
+                return queryset
+            else:
+                return UnidadDeMedida.objects.none()
+        except ObjectDoesNotExist:
+            return UnidadDeMedida.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(datos_centro(self.request))
+
+        # Añadir un mensaje si no hay alérgenos asociados
+        if not context['unidaddemedidas'].exists():
+            context['mensaje'] = "No tiene tipos de alimento asociados."
+
+        return context
+    
+    
+class UnidadDeMedidaCreate(LoginRequiredMixin, CreateView):
+    model = UnidadDeMedida
+    form_class = UnidadDeMedidaForm
+    template_name = 'dashuser/crear_unidaddemedida.html'
+    success_url = reverse_lazy('dashuser:UnidadDeMedidaList')
+
+    def form_valid(self, form):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            unidaddemedidas = form.save(commit=False)
+            unidaddemedidas.centro = user_profile.centro
+            unidaddemedidas.save()
+            messages.success(self.request, 'Unidad de medida creada correctamente.')
+            return super().form_valid(form)
+        else:
+            messages.error(self.request, 'No está asociado a ningún centro.')
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f"Error en el campo '{field}': {error}")
+        return super().form_invalid(form)   
      
+    
+class UnidadDeMedidaUpdate(LoginRequiredMixin, UpdateView):
+    model = UnidadDeMedida
+    template_name = 'dashuser/detalle_unidaddemedida.html'
+    form_class = UnidadDeMedidaForm
+    success_url = reverse_lazy('dashuser:UnidadDeMedidaList')
+    context_object_name = 'unidaddemedida'
+
+    def get_queryset(self):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            return UnidadDeMedida.objects.filter(centro_id=user_profile.centro_id)
+        else:
+            messages.error(self.request, 'No está asociado a ningún centro.')
+            return UnidadDeMedida.objects.none()
+
+    def form_valid(self, form):
+        self.object = form.save()
+        messages.success(self.request, 'Unidad de medida actualizado correctamente.')
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f"Error en el campo '{field}': {error}")
+        return super().form_invalid(form)
+    
+
+class UnidadDeMedidaDelete(LoginRequiredMixin, DeleteView):
+    model = UnidadDeMedida
+    template_name = 'dashuser/unidaddemedida_confirm_delete.html'
+    success_url = reverse_lazy('dashuser:UnidadDeMedidaList')
+    context_object_name = 'unidaddemedida'
+
+    def get_queryset(self):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            return UnidadDeMedida.objects.filter(centro=user_profile.centro)
+        else:
+            return UnidadDeMedida.objects.none()
+
+    def post(self, request, *args, **kwargs):
+        obj = self.get_object()
+        obj.last_modified_by = request.user
+        obj.save
+        messages.success(self.request, 'Unidad de medida eliminada correctamente.')
+        return super().delete(request, *args, **kwargs)
+    
+         
 ######################################################################################
 ###############################  TIPO ALIMENTOS  ####################################
 ######################################################################################

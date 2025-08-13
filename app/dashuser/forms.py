@@ -1,5 +1,5 @@
 from django import forms
-from .models import Alergenos, TipoAlimento, localizacion, Conservacion, Alimento, InformacionNutricional
+from .models import Alergenos, Trazas, UnidadDeMedida, TipoAlimento, localizacion, Conservacion, Alimento, InformacionNutricional
 
 class AlergenosForm(forms.ModelForm):
     
@@ -12,8 +12,31 @@ class AlergenosForm(forms.ModelForm):
             'imagen': forms.FileInput(attrs={"class":"form-control form-control-border"}),
             'estado': forms.CheckboxInput(attrs={"class":"form-check-input"}),
         }
-      
         
+class TrazasForm(forms.ModelForm):
+    
+    class Meta:
+        model = Trazas
+        fields=['nombre', 'codigo','estado','imagen']
+        widgets = {
+            'nombre': forms.TextInput(attrs={"class":"form-control form-control-border"}),
+            'codigo': forms.TextInput(attrs={"class":"form-control form-control-border"}),
+            'imagen': forms.FileInput(attrs={"class":"form-control form-control-border"}),
+            'estado': forms.CheckboxInput(attrs={"class":"form-check-input"}),
+        }        
+      
+
+class UnidadDeMedidaForm(forms.ModelForm):
+    class Meta:
+        model = UnidadDeMedida
+        fields=['nombre', 'abreviatura','estado']
+        widgets = {
+            'nombre': forms.TextInput(attrs={"class":"form-control form-control-border"}),
+            'abreviatura': forms.TextInput(attrs={"class":"form-control form-control-border"}),
+            'estado': forms.CheckboxInput(attrs={"class":"form-check-input"}),
+        }
+        
+                
 class TipoAlimentosForm(forms.ModelForm):
     
     class Meta:

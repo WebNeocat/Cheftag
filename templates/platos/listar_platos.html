@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .nav-tabs .nav-link {
+        padding: 12px 32px;
+        font-size: 16px;
+        border-radius: 8px 8px 0 0;
+        padding-right:150px;
+        padding-left:150px;
+        line-height: 0.8;
+        font-size: 14px;
+        background-color: #E1F1FA;
+    }
+    .nav-tabs .nav-link.active {
+        background-color: #8FA0EC;
+        font-weight: bold;
+    }
+</style>
+
+<div class="content-wrapper">
+    <div class="card shadow-lg">
+        <!-- Pestañas -->
+        <ul class="nav nav-tabs">
+            <li class="nav-item">
+                <a class="nav-link active"
+                href="#">
+                    <i class="fa fa-cutlery"></i> Platos
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'SalsaList' %}active{% endif %}"
+                href="#">
+                    <i class="fa fa-tint"></i> Salsas
+                </a>
+            </li>
+        </ul>
+
+        <!-- Encabezado -->
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="m-0">Listado de Platos</h3>
+            <a class="btn btn-light btn-sm text-primary rounded" onclick="abrir_modal_edicion('{% url 'platos:PlatoCreate' %}')">
+                <i class="fa fa-plus-circle"></i>&nbsp; Crear Nuevo
+            </a>
+        </div>
+
+        <div class="card-body">
+            <!-- Barra de controles -->
+            <form method="get" class="row g-2 align-items-center mb-3">
+
+                <!-- Selector de orden -->
+                <div class="col-md-5">
+                    <select class="form-select form-select-sm" name="ordenar" id="ordenar" onchange="this.form.submit()">
+                        <option value="" disabled selected>Ordenar por...</option>
+                        <option value="nombre" {% if ordenar == 'nombre' %}selected{% endif %}>Nombre</option>
+                    </select>
+                </div>
+
+                <!-- Campo de búsqueda -->
+                <div class="col-md-4">
+                    <input type="text" class="form-control form-control-sm" placeholder="Buscar..." name="buscar" value="{{ request.GET.buscar }}">
+                </div>
+
+                <!-- Botón buscar -->
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-secondary btn-lg" style="padding-top: 12px; padding-bottom:12px;">
+                        <i class="fa fa-search"></i>
+                    </button>
+                </div>
+
+                <!-- Botones vista -->
+                <div class="col-auto">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button id="btn-lista" type="button" class="btn btn-primary">
+                            <i class="fa fa-list"></i>
+                        </button>
+                        <button id="btn-cuadricula" type="button" class="btn btn-outline-primary">
+                            <i class="fa fa-th"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+
+            {% if platos %}
+
+            <!-- Vista Lista -->
+            <div id="vista-lista">
+                <div class="table-wrapper">
+                    <table class="table table-hover tabla-responsive align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Tipo de plato</th>
+                                <th>Imagen</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for plato in platos %}
+                            <tr>
+                                <td><strong>{{ plato.nombre }}</strong></td>
+                                <td>{{ plato.tipoplato }}</td>
+                                <td>
+                                    {% if plato.imagen %}
+                                        <img src="{{ plato.imagen.url }}" alt="{{ plato.nombre }}" style="max-width: 80px; max-height: 80px; border-radius: 5px;">
+                                    {% else %}
+                                        <span class="text-muted">Sin imagen</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a class="btn btn-success btn-sm" onclick="abrir_modal_edicion('{% url 'platos:PlatoDetail' plato.pk %}')" title="Ver plato">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+                                    <a class="btn btn-warning btn-sm" onclick="" title="Ver receta">
+                                        <i class="fa fa-list"></i>
+                                    </a>
+                                    <a class="btn btn-info btn-sm" onclick="abrir_modal_edicion('{% url 'platos:PlatoUpdate' plato.pk %}')" title="Editar plato">
+                                        <i class="fa fa-pencil"></i>
+                                    </a>
+                                    <a class="btn btn-danger btn-sm" onclick="abrir_modal_edicion('{% url 'platos:PlatoDelete' plato.pk %}')" title="Eliminar plato">
+                                        <i class="fa fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Vista Cuadrícula -->
+            <div id="vista-cuadricula" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4" style="display:none;">
+                {% for plato in platos %}
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        {% if plato.imagen %}
+                            <img src="{{ plato.imagen.url }}" class="card-img-top" alt="{{ plato.nombre }}" style="height:200px; object-fit:cover;">
+                        {% else %}
+                            <img src="https://via.placeholder.com/300x200?text=Sin+imagen" class="card-img-top" alt="Sin imagen">
+                        {% endif %}
+                        <div class="card-body text-center">
+                            <h5 class="card-title mb-3">{{ plato.nombre }}</h5>
+                            <p class="text-muted">{{ plato.tipoplato }}</p>
+                            <div class="d-flex justify-content-center gap-2">
+                                <a class="btn btn-success btn-sm" onclick="abrir_modal_edicion('{% url 'platos:PlatoDetail' plato.pk %}')" title="Ver plato">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                                <a class="btn btn-warning btn-sm" onclick="" title="Ver receta">
+                                    <i class="fa fa-list"></i>
+                                </a>
+                                <a class="btn btn-info btn-sm" onclick="abrir_modal_edicion('{% url 'platos:PlatoUpdate' plato.pk %}')" title="Editar plato">
+                                    <i class="fa fa-pencil"></i>
+                                </a>
+                                <a class="btn btn-danger btn-sm" onclick="abrir_modal_edicion('{% url 'platos:PlatoDelete' plato.pk %}')" title="Eliminar plato">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Paginación -->
+            {% include "core/pagination.html" %}
+
+            {% else %}
+            <div class="alert alert-warning text-center mt-3">
+                <i class="fa fa-exclamation-circle"></i> No se encontraron alimentos.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="consulta" role="dialog"></div>
+</div>
+{% endblock content %}
+
+{% block extrajs %}
+<script type="text/javascript">
+    var $ = jQuery.noConflict();
+    function abrir_modal_edicion(url){
+        $('#consulta').load(url, function(){
+            $(this).modal('show');
+        });
+    }
+
+    // Funciones para cambiar vista
+    function activarLista(){
+        document.getElementById('vista-lista').style.display = 'block';
+        document.getElementById('vista-cuadricula').style.display = 'none';
+        document.getElementById('btn-lista').classList.add('btn-primary');
+        document.getElementById('btn-lista').classList.remove('btn-outline-primary');
+        document.getElementById('btn-cuadricula').classList.add('btn-outline-primary');
+        document.getElementById('btn-cuadricula').classList.remove('btn-primary');
+        localStorage.setItem('vistaPlatos', 'lista');
+    }
+
+    function activarCuadricula(){
+        document.getElementById('vista-lista').style.display = 'none';
+        document.getElementById('vista-cuadricula').style.display = 'flex';
+        document.getElementById('btn-cuadricula').classList.add('btn-primary');
+        document.getElementById('btn-cuadricula').classList.remove('btn-outline-primary');
+        document.getElementById('btn-lista').classList.add('btn-outline-primary');
+        document.getElementById('btn-lista').classList.remove('btn-primary');
+        localStorage.setItem('vistaPlatos', 'cuadricula');
+    }
+
+    // Eventos de botones
+    document.getElementById('btn-lista').addEventListener('click', activarLista);
+    document.getElementById('btn-cuadricula').addEventListener('click', activarCuadricula);
+
+    // Al cargar la página, recuperar la vista guardada
+    document.addEventListener('DOMContentLoaded', function(){
+        const vistaGuardada = localStorage.getItem('vistaPlatos');
+        if (vistaGuardada === 'cuadricula') {
+            activarCuadricula();
+        } else {
+            activarLista(); // Por defecto lista
+        }
+    });
+</script>
+
+{% endblock extrajs %}

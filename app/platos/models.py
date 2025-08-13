@@ -1,6 +1,6 @@
 from django.db import models
 from app.super.models import ModeloBaseCentro   
-from app.dashuser.models import Alimento
+from app.dashuser.models import Alimento, UnidadDeMedida, Alergenos
 
 class TipoPlato(ModeloBaseCentro):
     nombre = models.CharField(max_length=100)
@@ -28,10 +28,19 @@ class Plato(ModeloBaseCentro):
     def __str__(self):
         return f"{self.nombre}"  
     
+    def get_alergenos(self):
+        """Devuelve un queryset de alérgenos únicos presentes en el plato"""
+        alergenos_plato = Alergenos.objects.filter(
+        alimento__alimentoplato__plato=self
+        )
+        return (alergenos_plato).distinct()
+    
+    
 class AlimentoPlato(ModeloBaseCentro):
     plato = models.ForeignKey(Plato, on_delete=models.CASCADE, related_name='ingredientes')
     alimento = models.ForeignKey(Alimento, on_delete=models.CASCADE)
     cantidad = models.DecimalField(max_digits=10, decimal_places=2)
+    unidad_medida = models.ForeignKey(UnidadDeMedida, on_delete=models.CASCADE, blank=True)
     notas = models.TextField(blank=True, null=True)  # Opcional para notas específicas
 
     class Meta:

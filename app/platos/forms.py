@@ -33,13 +33,24 @@ class AlimentoPlatoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Ordenar el campo alimento por nombre
         self.fields['alimento'].queryset = self.fields['alimento'].queryset.order_by('nombre')
-
+        # Ordenar el campo unidad_medida por nombre
+        self.fields['unidad_medida'].queryset = self.fields['unidad_medida'].queryset.order_by('nombre')
         
     class Meta:
         model = AlimentoPlato
-        fields = ['alimento', 'cantidad', 'notas']
+        fields = ['alimento', 'cantidad', 'unidad_medida', 'notas']
         widgets = {
             'alimento': forms.Select(attrs={"class":"form-select form-select-sm form-control-border"}),
             'cantidad': forms.TextInput(attrs={"class":"form-control form-control-sm form-control-border"}),
+            'unidad_medida': forms.Select(attrs={"class":"form-select form-select-sm form-control-border"}),
             'notas': forms.Textarea(attrs={"class":"form-control form-control-sm form-control-border", 'rows': 2}),
         }
+
+# Formset para los ingredientes
+AlimentoPlatoFormSet = forms.inlineformset_factory(
+    Plato, 
+    AlimentoPlato, 
+    form=AlimentoPlatoForm,
+    extra=1,
+    can_delete=True
+)        
