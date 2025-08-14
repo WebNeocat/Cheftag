@@ -15,8 +15,8 @@
     display: none; /* Ocultamos el checkbox */
 }
 .alergeno-checkbox img {
-    width: 60px;
-    height: 60px;
+    width: 58px;
+    height: 58px;
     object-fit: cover;
     border: 2px solid transparent;
     border-radius: 8px;
@@ -60,7 +60,7 @@
                         <div class="tab-pane fade show active" id="datos">
                             <div class="row g-3">
                                 {% for field in alimento_form %}
-                                    {% if field.name != 'alergenos' %}
+                                    {% if field.name != 'alergenos' and field.name != 'trazas' %}
                                     <div class="col-md-6">
                                         <label class="form-label fw-bold">{{ field.label }}</label>
                                         {{ field }}
@@ -85,6 +85,20 @@
                                     {% endwith %}
                                 {% endfor %}
                             </div>
+
+                            <!-- Trazas de alergenos como imágenes clicables -->
+                            <h4 class="mt-4 mb-3">Trazas de alergenos</h4>
+                            <div class="d-flex flex-wrap gap-3">
+                                {% for choice in alimento_form.trazas %}
+                                    {% with traza=choice.choice_label %}
+                                    <label class="alergeno-checkbox">
+                                        {{ choice.tag }}
+                                        <img src="{{ traza.imagen.url }}" alt="{{ traza.nombre }}">
+                                        <span>{{ traza.nombre }}</span>
+                                    </label>
+                                    {% endwith %}
+                                {% endfor %}
+                            </div>                            
                         </div>
 
                         <!-- TAB: Nutrición -->

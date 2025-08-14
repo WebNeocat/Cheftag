@@ -103,9 +103,14 @@ class AlimentoForm(forms.ModelForm):
         required=False,
     )
     
+    trazas = AlergenosModelMultipleChoiceField(
+        queryset=Trazas.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+    )
     class Meta:
         model = Alimento
-        fields = ['nombre', 'alergenos', 'nombre_alternativo', 'descripcion', 'conservacion', 'localizacion', 'tipo_alimento', 'stock_minimo', 'imagen']
+        fields = ['nombre', 'alergenos', 'trazas', 'nombre_alternativo', 'descripcion', 'conservacion', 'localizacion', 'tipo_alimento', 'stock_minimo', 'imagen']
         widgets = {
             'nombre': forms.TextInput(attrs={"class": "form-control form-control-sm form-control-border"}),
             'nombre_alternativo': forms.TextInput(attrs={"class": "form-control form-control-sm form-control-border"}),

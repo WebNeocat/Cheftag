@@ -790,6 +790,8 @@ class AlimentoCreate(View):
             alimento = alimento_form.save(commit=False)  # No guardamos aún
             alimento.centro = request.user.userprofile.centro  # asignamos el centro del usuario
             alimento.save()
+
+            alimento_form.save_m2m()  # ✅ ahora guarda alergenos y trazas
             
             nutricion = nutricion_form.save(commit=False)
             nutricion.alimento = alimento

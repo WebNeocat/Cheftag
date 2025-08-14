@@ -30,27 +30,58 @@
                     </div>
                 </div>
 
-                <!-- Alérgenos -->
                 <div class="mt-5">
-                    <h4 class="mb-3">Alérgenos</h4>
-                    {% if alimento.alergenos.all %}
-                        <div class="d-flex flex-wrap gap-3">
-                            {% for alergeno in alimento.alergenos.all %}
-                                <div class="text-center" style="width: 80px;">
-                                    {% if alergeno.imagen %}
-                                        <img src="{{ alergeno.imagen.url }}" class="img-thumbnail rounded-circle border" alt="{{ alergeno.nombre }}" title="{{ alergeno.nombre }}">
-                                    {% else %}
-                                        <img src="#" class="img-thumbnail rounded-circle border" alt="{{ alergeno.nombre }}" title="{{ alergeno.nombre }}">
-                                    {% endif %}
-                                    <small class="d-block mt-1">{{ alergeno.nombre }}</small>
-                                </div>
-                            {% endfor %}
+                    <div class="row">
+                        <!-- Títulos en la misma fila -->
+                        <div class="col text-center">
+                            <h4 class="mb-3">Alérgenos</h4>
                         </div>
-                    {% else %}
-                        <p class="text-muted fst-italic">Sin alérgenos asociados</p>
-                    {% endif %}
-                </div>
+                        <div class="col text-center">
+                            <h4 class="mb-3">Trazas de alérgenos</h4>
+                        </div>
+                    </div>
 
+                    <div class="row">
+                        <!-- Fila de iconos -->
+                        <div class="col">
+                            {% if alimento.alergenos.all %}
+                                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                                    {% for alergeno in alimento.alergenos.all %}
+                                        <div class="text-center" style="width: 80px;">
+                                            {% if alergeno.imagen %}
+                                                <img src="{{ alergeno.imagen.url }}" class="img-thumbnail rounded-circle border" alt="{{ alergeno.nombre }}" title="{{ alergeno.nombre }}">
+                                            {% else %}
+                                                <img src="#" class="img-thumbnail rounded-circle border" alt="{{ alergeno.nombre }}" title="{{ alergeno.nombre }}">
+                                            {% endif %}
+                                            <small class="d-block mt-1">{{ alergeno.nombre }}</small>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted fst-italic text-center">Sin alérgenos asociados</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="col">
+                            {% if alimento.trazas.all %}
+                                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                                    {% for traza in alimento.trazas.all %}
+                                        <div class="text-center" style="width: 80px;">
+                                            {% if traza.imagen %}
+                                                <img src="{{ traza.imagen.url }}" class="img-thumbnail rounded-circle border" alt="{{ traza.nombre }}" title="{{ traza.nombre }}">
+                                            {% else %}
+                                                <img src="#" class="img-thumbnail rounded-circle border" alt="{{ traza.nombre }}" title="{{ traza.nombre }}">
+                                            {% endif %}
+                                            <small class="d-block mt-1">{{ traza.nombre }}</small>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted fst-italic text-center">Sin trazas de alérgenos asociadas</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
                 <!-- Información nutricional -->
                 <div class="mt-5">
                     <h4 class="mb-4">Información Nutricional (por 100g)</h4>
