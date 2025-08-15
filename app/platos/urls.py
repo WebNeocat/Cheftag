@@ -15,4 +15,10 @@ urlpatterns = [
     path('platos/<int:pk>/', PlatoDetail.as_view(), name='PlatoDetail'),
     path('platos/<int:pk>/editar/', PlatoUpdate.as_view(), name='PlatoUpdate'),
     path('platos/<int:pk>/eliminar/', PlatoDelete.as_view(), name='PlatoDelete'),
+    
+    path('salsas/', SalsaList.as_view(), name='SalsaList'),
+    path('salsas/crear/', SalsaCreate.as_view(), name='SalsaCreate'),
+    path('salsas/<int:pk>/', SalsaDetail.as_view(), name='SalsaDetail'),
+    path('salsas/<int:pk>/editar/', SalsaUpdate.as_view(), name='SalsaUpdate'),
+    path('salsas/<int:pk>/eliminar/', SalsaDelete.as_view(), name='SalsaDelete'),
 ]    

@@ -9,8 +9,8 @@ from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.mixins import LoginRequiredMixin
 from app.core.mixins import PaginationMixin
-from .models import TipoPlato, Plato
-from .forms import TipoPlatoForm, PlatoForm, AlimentoPlatoFormSet
+from .models import TipoPlato, Plato, Salsa
+from .forms import TipoPlatoForm, PlatoForm, AlimentoPlatoFormSet, SalsaForm, AlimentoSalsaFormSet
 
 
 
@@ -170,7 +170,7 @@ class TipoPlatoDelete(LoginRequiredMixin, DeleteView):
     def get_context_data(self, **kwargs):
         """Añade datos adicionales al contexto"""
         context = super().get_context_data(**kwargs)
-        context['action_url'] = reverse('menu:TipoPlatoDelete', kwargs={'pk': self.object.pk})
+        context['action_url'] = reverse('platos:TipoPlatoDelete', kwargs={'pk': self.object.pk})
         return context
     
     
@@ -324,6 +324,13 @@ class PlatoDetail(LoginRequiredMixin, DetailView):
         context['ingredientes'] = ingredientes
         context['alergenos'] = self.object.get_alergenos()
 
+        # Ingredientes de la salsa (si el plato tiene salsa)
+        if self.object.salsa:
+            ingredientes_salsa = self.object.salsa.ingredientes.all().select_related('alimento', 'unidad_medida')
+        else:
+            ingredientes_salsa = []
+        context['ingredientes_salsa'] = ingredientes_salsa
+        
         return context
 
     
@@ -345,3 +352,173 @@ class PlatoDelete(LoginRequiredMixin, DeleteView):
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, 'Plato eliminado correctamente.')
         return super().delete(request, *args, **kwargs)        
+    
+    
+######################################################################################
+##############################   SALSAS Y FONDOS   ###################################
+######################################################################################
+
+
+class SalsaList(PaginationMixin, LoginRequiredMixin, ListView):
+    model = Salsa
+    template_name = 'platos/listar_salsas.html'
+    context_object_name = 'salsas'
+    paginate_by = 10
+
+    def get_queryset(self):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            queryset = Salsa.objects.filter(centro=user_profile.centro).order_by('nombre')
+            
+            search_query = self.request.GET.get('buscar')
+            if search_query:
+                queryset = queryset.filter(nombre__icontains=search_query)
+            
+            return queryset
+        return Plato.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(datos_centro(self.request))
+        if not context['salsas'].exists():
+            context['mensaje'] = "No tiene salsas registradas."
+        return context
+    
+
+class SalsaCreate(LoginRequiredMixin, CreateView):
+    model = Salsa
+    form_class = SalsaForm
+    template_name = 'platos/crear_salsa.html'
+    success_url = reverse_lazy('platos:SalsaList')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['ingredientes_formset'] = AlimentoSalsaFormSet(
+                self.request.POST, 
+                self.request.FILES,
+                prefix='ingredientes'
+            )
+        else:
+            context['ingredientes_formset'] = AlimentoSalsaFormSet(
+                prefix='ingredientes'
+            )
+        return context
+
+    def form_valid(self, form):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if not user_profile.centro:
+            messages.error(self.request, 'No está asociado a ningún centro.')
+            return self.form_invalid(form)
+        
+        context = self.get_context_data()
+        ingredientes_formset = context['ingredientes_formset']
+        
+        self.object = form.save(commit=False)
+        self.object.centro = user_profile.centro
+        self.object.save()
+        
+        if ingredientes_formset.is_valid():
+            ingredientes = ingredientes_formset.save(commit=False)
+            for ingrediente in ingredientes:
+                ingrediente.salsa = self.object
+                ingrediente.centro = user_profile.centro
+                ingrediente.save()
+            
+            for obj in ingredientes_formset.deleted_objects:
+                obj.delete()
+            
+            messages.success(self.request, 'Salsa creada correctamente.')
+            return super().form_valid(form)
+        else:
+            # Mostrar errores específicos del formset
+            for form_ing in ingredientes_formset:
+                if form_ing.errors:
+                    for field, errors in form_ing.errors.items():
+                        for error in errors:
+                            messages.error(self.request, f"Ingrediente: {field} - {error}")
+            return self.form_invalid(form)
+
+
+class SalsaUpdate(LoginRequiredMixin, UpdateView):
+    model = Salsa
+    form_class = SalsaForm
+    template_name = 'platos/detalle_salsa.html'
+    success_url = reverse_lazy('platos:SalsaList')
+    context_object_name = 'salsa'
+
+    def get_queryset(self):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            return Salsa.objects.filter(centro=user_profile.centro)
+        return Salsa.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['ingredientes_formset'] = AlimentoSalsaFormSet(
+                self.request.POST, 
+                self.request.FILES, 
+                instance=self.object
+            )
+        else:
+            context['ingredientes_formset'] = AlimentoSalsaFormSet(instance=self.object)
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        ingredientes_formset = context['ingredientes_formset']
+        
+        if ingredientes_formset.is_valid():
+            self.object = form.save()
+            ingredientes = ingredientes_formset.save(commit=False)
+            
+            for ingrediente in ingredientes:
+                ingrediente.centro = self.object.centro
+                ingrediente.save()
+            
+            for obj in ingredientes_formset.deleted_objects:
+                obj.delete()
+            
+            messages.success(self.request, 'Salsa actualizada correctamente.')
+            return super().form_valid(form)
+        else:
+            return self.form_invalid(form)
+        
+
+class SalsaDetail(LoginRequiredMixin, DetailView):
+    model = Salsa
+    template_name = 'platos/datos_salsa.html'
+    context_object_name = 'salsa'
+
+    def get_queryset(self):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            return Salsa.objects.filter(centro=user_profile.centro)
+        return Salsa.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        ingredientes = self.object.ingredientes.all().select_related('alimento', 'unidad_medida')
+        context['ingredientes'] = ingredientes
+        context['alergenos'] = self.object.get_alergenos()
+        return context
+    
+    
+
+class SalsaDelete(LoginRequiredMixin, DeleteView):
+    model = Salsa
+    template_name = 'platos/salsa_confirm_delete.html'
+    success_url = reverse_lazy('platos:SalsaList')
+    context_object_name = 'salsa'
+
+    def get_queryset(self):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            return Salsa.objects.filter(centro=user_profile.centro)
+        else:
+            return Salsa.objects.none()
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'Salsa eliminada correctamente.')
+        return super().delete(request, *args, **kwargs)

@@ -23,14 +23,14 @@
         <ul class="nav nav-tabs">
             <li class="nav-item">
                 <a class="nav-link active"
-                href="#">
+                href="{% url 'platos:PlatoList' %}">
                     <i class="fa fa-cutlery"></i> Platos
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {% if request.resolver_match.url_name == 'SalsaList' %}active{% endif %}"
-                href="#">
-                    <i class="fa fa-tint"></i> Salsas
+                href="{% url 'platos:SalsaList' %}">
+                    <i class="fa fa-tint"></i> Salsas y Fondos
                 </a>
             </li>
         </ul>

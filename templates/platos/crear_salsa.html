@@ -1,35 +1,27 @@
-<div class="modal-dialog modal-xl" role="document">
+<div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
-        <div class="modal-header bg-primary text-white">
-            <h2 class="modal-title">{% if object %}Editar{% else %}<i class="fa fa-plus-circle"></i>&nbsp; Crear{% endif %} Plato</h2>
+        <div class="modal-header bg-primary">
+            <h2 class="modal-title">{% if object %}Editar{% else %}Crear{% endif %} Salsa</h2>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-            <form method="post" action="{% url 'platos:PlatoCreate' %}" enctype="multipart/form-data" id="plato-form">
+            <form method="post" action="{% url 'platos:SalsaCreate' %}" enctype="multipart/form-data" id="salsa-form">
                 {% csrf_token %}
                 
-                <!-- Datos del Plato - Estilo similar a crear_centro.html -->
+                <!-- Datos de la Salsa - Estilo similar a crear_centro.html -->
                 <div class="card mb-3">
-                    <div class="card-header bg-inverse-primary">Datos del Plato</div>
+                    <div class="card-header">Datos de la Salsa</div>
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Nombre</label>
                                 {{ form.nombre }}
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Tipo de plato</label>
-                                {{ form.tipoplato }}
-                            </div>
                             <div class="col-12">
                                 <label class="form-label">Descripción</label>
                                 {{ form.descripcion }}
-                            </div>                            
-                            <div class="col-5">
-                                <label class="form-label">Salsa</label>
-                                {{ form.salsa }}
                             </div>
-                            <div class="col-7">
+                            <div class="col-12">
                                 <label class="form-label">Imagen</label>
                                 {{ form.imagen }}
                             </div>
@@ -39,7 +31,7 @@
                 
                 <!-- Ingredientes - Estilo similar pero adaptado para el formset -->
                 <div class="card mb-3">
-                    <div class="card-header bg-inverse-primary">Ingredientes</div>
+                    <div class="card-header">Ingredientes</div>
                     <div class="card-body">
                         {{ ingredientes_formset.management_form }}
                         
@@ -78,8 +70,8 @@
                             {% endfor %}
                         </div>
                         
-                        <button type="button" id="add-ingrediente" class="btn btn-inverse-success">
-                            <i class="fa fa-plus-circle"></i>&nbsp; Añadir ingrediente
+                        <button type="button" id="add-ingrediente" class="btn btn-outline-primary">
+                            <i class="fa fa-plus"></i> Añadir ingrediente
                         </button>
                     </div>
                 </div>

@@ -1,0 +1,95 @@
+<div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-success">
+            <h2 class="modal-title">Detalles de la Salsa</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="container">
+                <h2>{{ salsa.nombre }}</h2>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header">Información General</div>
+                            <div class="card-body">
+                                {% if salsa.imagen %}
+                                <img src="{{ salsa.imagen.url }}" class="img-fluid mb-3" alt="{{ salsa.nombre }}">
+                                {% endif %}
+                                <p><strong>Descripción:</strong> {{ salsa.descripcion|default:"Sin descripción" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">Ingredientes</div>
+                            <div class="card-body">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Alimento</th>
+                                            <th>Cantidad</th>
+                                            <th>Unidad</th>
+                                            <th>Notas</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for ingrediente in ingredientes %}
+                                        <tr>
+                                            <td>{{ ingrediente.alimento.nombre }}</td>
+                                            <td>{{ ingrediente.cantidad }}</td>
+                                            <td>{{ ingrediente.unidad_medida.abreviatura }}</td>
+                                            <td>{{ ingrediente.notas|default:"" }}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="4" class="text-center">No hay ingredientes registrados</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-12">
+                            <div class="card mb-3">
+                                <div class="card-header">Alérgenos del plato</div>
+                                <div class="card-body">
+                                    {% if alergenos %}
+                                    <div class="d-flex flex-wrap gap-2">
+                                        {% for alergeno in alergenos %}
+                                            <div class="alergeno-item text-center p-2 border rounded shadow" style="width: 90px;">
+                                                <img src="{{ alergeno.imagen.url }}" 
+                                                    alt="{{ alergeno.nombre }}" 
+                                                    class="img-fluid rounded mb-1"
+                                                    style="max-height:40px; object-fit:contain;">
+                                                <small>{{ alergeno.nombre }}</small>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                        <p class="text-muted">No contiene alérgenos declarados.</p>
+                                    {% endif %}
+                                </div>
+                            </div>  
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-success" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Agrega un evento de clic a los botones de cerrar y cancelar
+    $('.modal .close, .modal .btn-danger').click(function() {
+        // Oculta el modal
+        $('.modal').modal('hide');
+        // Elimina el fondo oscuro
+        $('.modal-backdrop').remove();
+    });
+</script>
