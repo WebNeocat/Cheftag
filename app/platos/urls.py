@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import *
+from . import views
 
 app_name = 'platos'
 
@@ -21,4 +22,14 @@ urlpatterns = [
     path('salsas/<int:pk>/', SalsaDetail.as_view(), name='SalsaDetail'),
     path('salsas/<int:pk>/editar/', SalsaUpdate.as_view(), name='SalsaUpdate'),
     path('salsas/<int:pk>/eliminar/', SalsaDelete.as_view(), name='SalsaDelete'),
-]    
+    
+    path('platos/<int:plato_id>/receta/crear/', RecetaCreate.as_view(), name='crear_receta'),
+    path('recetas/<int:pk>/editar/', RecetaUpdate.as_view(), name='editar_receta'),
+    path('recetas/<int:pk>/', RecetaDetailView.as_view(), name='RecetaDetail'),
+    
+    path('plato/<int:pk>/etiqueta/', EtiquetaDetail.as_view(), name='etiqueta_plato'),
+    
+    path("etiquetas/generar/", views.generar_etiqueta, name="generar_etiqueta"),
+    path("etiquetas/<int:etiqueta_id>/preview/", views.preview_etiqueta, name="preview_etiqueta"),
+]   
+ 

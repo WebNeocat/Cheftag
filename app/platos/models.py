@@ -1,6 +1,6 @@
 from django.db import models
-from django.db.models import Prefetch
-from app.super.models import ModeloBaseCentro   
+from app.super.models import ModeloBaseCentro  
+from decimal import Decimal 
 from app.dashuser.models import Alimento, UnidadDeMedida, Alergenos
 
 
@@ -68,6 +68,11 @@ class Plato(ModeloBaseCentro):
     def __str__(self):
         return f"{self.nombre}"  
     
+    @property
+    def receta(self):
+        """Devuelve la receta asociada a este plato si existe"""
+        return self.receta_set.first()  # Usamos first() porque es una ForeignKey
+    
     def get_alergenos(self):
         """Devuelve un queryset de alérgenos únicos presentes en el plato y salsa."""
         alergenos_plato = Alergenos.objects.filter(
@@ -82,6 +87,72 @@ class Plato(ModeloBaseCentro):
             alergenos_salsa = Alergenos.objects.none()
 
         return (alergenos_plato | alergenos_salsa).distinct()
+    
+    def calcular_nutricion(self, peso_real: Decimal):
+        ingredientes = self.ingredientes.all()
+        peso_total_receta = sum(i.cantidad for i in ingredientes)
+
+        # valores acumulados
+        nutricion = {
+            "energia": 0,
+            "carbohidratos": 0,
+            "proteinas": 0,
+            "grasas": 0,
+            "azucares": 0,
+            "sal_mg": 0,
+            "fibra": 0,
+        }
+
+        for ing in ingredientes:
+            if not hasattr(ing.alimento, "nutricion"):
+                continue  # skip si no hay info nutricional
+
+            factor = ing.cantidad / Decimal(100)  # escalar porque nutrición es por 100g
+            n = ing.alimento.nutricion
+            nutricion["energia"] += n.energia * factor
+            nutricion["carbohidratos"] += n.carbohidratos * factor
+            nutricion["proteinas"] += n.proteinas * factor
+            nutricion["grasas"] += n.grasas * factor
+            nutricion["azucares"] += n.azucares * factor
+            nutricion["sal_mg"] += n.sal_mg * factor
+            nutricion["fibra"] += n.fibra * factor
+
+        # Escalar a peso real
+        factor_escalado = peso_real / peso_total_receta
+        for k in nutricion:
+            nutricion[k] *= factor_escalado
+
+        return nutricion
+    
+    def get_ingredientes_con_info(self):
+        """
+        Devuelve ingredientes del plato + ingredientes de la salsa (si la tiene)
+        con sus alérgenos y trazas.
+        """
+        ingredientes = []
+
+        # Ingredientes del plato
+        for ingrediente in self.ingredientes.all():
+            alimento = ingrediente.alimento
+            ingredientes.append({
+                "nombre": alimento.nombre,
+                "alergenos": list(alimento.alergenos.values_list("nombre", flat=True)),
+                "trazas": list(alimento.trazas.values_list("nombre", flat=True)),
+                "origen": "Plato"
+            })
+
+        # Ingredientes de la salsa (si existe)
+        if self.salsa:
+            for ingrediente in self.salsa.ingredientes.all():
+                alimento = ingrediente.alimento
+                ingredientes.append({
+                    "nombre": alimento.nombre,
+                    "alergenos": list(alimento.alergenos.values_list("nombre", flat=True)),
+                    "trazas": list(alimento.trazas.values_list("nombre", flat=True)),
+                    "origen": f"Salsa: {self.salsa.nombre}"
+                })
+
+        return ingredientes
     
     
 class AlimentoPlato(ModeloBaseCentro):
@@ -114,3 +185,25 @@ class Receta(ModeloBaseCentro):
     
     def __str__(self):
         return f"{self.plato}"     
+    
+    
+class EtiquetaPlato(ModeloBaseCentro):
+    plato = models.ForeignKey(Plato, on_delete=models.CASCADE)
+    peso = models.DecimalField(max_digits=6, decimal_places=2, help_text="Peso real en gramos")
+    fecha = models.DateField(auto_now_add=True)
+
+    # Guardamos los valores nutricionales calculados
+    energia = models.DecimalField(max_digits=8, decimal_places=2)
+    carbohidratos = models.DecimalField(max_digits=8, decimal_places=2)
+    proteinas = models.DecimalField(max_digits=8, decimal_places=2)
+    grasas = models.DecimalField(max_digits=8, decimal_places=2)
+    azucares = models.DecimalField(max_digits=8, decimal_places=2)
+    sal_mg = models.DecimalField(max_digits=8, decimal_places=2)
+    fibra = models.DecimalField(max_digits=8, decimal_places=2)
+
+    class Meta:
+        verbose_name = "Etiqueta de Plato"
+        verbose_name_plural = "Etiquetas de Platos"
+
+    def __str__(self):
+        return f"Etiqueta {self.plato.nombre} ({self.peso} g)"    

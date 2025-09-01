@@ -1,0 +1,77 @@
+<div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-primary">
+            <h2>Crear Receta para: {{ plato.nombre }}</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="{% url 'platos:crear_receta' plato_id=plato.pk %}" enctype="multipart/form-data" id="plato-form">
+                {% csrf_token %}                
+                <!-- Mostrar errores generales -->
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <!-- Campos del formulario -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Tiempo preparación (min)*</label>
+                        {{ form.tiempo_preparacion }}
+                        {% if form.tiempo_preparacion.errors %}
+                            <div class="text-danger">{{ form.tiempo_preparacion.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Tiempo cocción (min)</label>
+                        {{ form.tiempo_coccion }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Porciones*</label>
+                        {{ form.rendimiento }}
+                        {% if form.rendimiento.errors %}
+                            <div class="text-danger">{{ form.rendimiento.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <label class="form-label">Instrucciones*</label>
+                        {{ form.instrucciones }}
+                        {% if form.instrucciones.errors %}
+                            <div class="text-danger">{{ form.instrucciones.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="text-end mt-4">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fa fa-save"></i> Guardar Receta
+                    </button>
+                    <a href="{% url 'platos:PlatoList' %}" class="btn btn-danger">
+                        <i class="fa fa-times"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<style>
+    /* Fuerza la altura del textarea */
+    textarea.form-control {
+        min-height: 200px;  /* Altura equivalente a ~10 filas */
+        resize: vertical;   /* Permite redimensionar solo verticalmente */
+    }
+</style>
+<script>
+    // Manejar el cierre del modal
+    $('.btn-close, .btn-secondary[data-bs-dismiss="modal"]').click(function() {
+        $('.modal').modal('hide');
+        $('body').removeClass('modal-open');
+        $('.modal-backdrop').remove();
+    });
+</script>

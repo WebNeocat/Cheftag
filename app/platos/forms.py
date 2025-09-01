@@ -1,5 +1,5 @@
 from django import forms
-from .models import Plato, AlimentoPlato, TipoPlato, Salsa, AlimentoSalsa
+from .models import Plato, AlimentoPlato, TipoPlato, Salsa, AlimentoSalsa, Receta
 
 class SalsaForm(forms.ModelForm):    
     class Meta:
@@ -99,3 +99,34 @@ AlimentoPlatoFormSet = forms.inlineformset_factory(
     extra=1,
     can_delete=True
 )        
+
+
+class RecetaForm(forms.ModelForm):
+    class Meta:
+        model = Receta
+        fields = ['tiempo_preparacion', 'tiempo_coccion', 'rendimiento', 'instrucciones']
+        widgets = {
+            'instrucciones': forms.Textarea(attrs={'rows': 10,'class': 'form-control form-control-sm','placeholder': 'Describe cada paso de la receta en orden...'}),
+            'tiempo_preparacion': forms.NumberInput(attrs={'class': 'form-control form-control-sm','min': 0}),
+            'tiempo_coccion': forms.NumberInput(attrs={'class': 'form-control form-control-sm','min': 0}),
+            'rendimiento': forms.NumberInput(attrs={'class': 'form-control form-control-sm','min': 1})
+        }
+        labels = {
+            'instrucciones': 'Pasos de preparación'
+        }  
+                  
+    def __init__(self, *args, **kwargs):
+        self.plato_id = kwargs.pop('plato_id', None)
+        super().__init__(*args, **kwargs)
+        
+        
+class GenerarEtiquetaForm(forms.Form):
+    plato = forms.ModelChoiceField(
+        queryset=Plato.objects.all(),
+        label="Selecciona un plato"
+    )
+    peso = forms.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        label="Peso real (g)"
+    )           

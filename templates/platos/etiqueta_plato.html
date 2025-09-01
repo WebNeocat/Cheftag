@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Etiqueta de Plato - {{ plato.nombre }}</title>
+    <style>
+        /* Estilos normales para pantalla */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            display: flex;
+            justify-content: center;
+        }
+        .etiqueta-container {
+            width: 800px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .plato-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eaeaea;
+            padding-bottom: 15px;
+        }
+        .plato-imagen {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-right: 20px;
+        }
+        .plato-info {
+            flex: 1;
+        }
+        .plato-nombre {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .plato-tipo {
+            color: #888;
+            font-style: italic;
+        }
+        .seccion {
+            margin-bottom: 25px;
+        }
+        .seccion-titulo {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #444;
+            border-bottom: 1px solid #eaeaea;
+            padding-bottom: 5px;
+        }
+        .tabla-ingredientes {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .tabla-ingredientes th, .tabla-ingredientes td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #eaeaea;
+        }
+        .tabla-ingredientes th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .alergeno-item {
+            display: inline-block;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            padding: 5px 10px;
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .alergeno-imagen {
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+        .info-nutricional-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .nutriente-item {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .nutriente-nombre {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .nutriente-valor {
+            color: #007bff;
+            font-weight: bold;
+        }
+        .nutriente-unidad {
+            font-size: 12px;
+            color: #6c757d;
+        }
+        .salsa-seccion {
+            background-color: #f1f8ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        .tiempos-preparacion {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .tiempo-item {
+            padding: 10px;
+        }
+        .tiempo-valor {
+            font-size: 18px;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .tiempo-label {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        .botones-accion {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .tabla-nutricion {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .tabla-nutricion th, .tabla-nutricion td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eaeaea;
+        }
+        .tabla-nutricion th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .tabla-nutricion tr:last-child td {
+            border-bottom: none;
+        }
+        .nota-nutricional {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        /* Estilos específicos para impresión a 6cm */
+        @media print {
+            @page {
+                size: 60mm auto;
+                margin: 0;
+            }
+            body {
+                width: 60mm !important;
+                padding: 2mm !important;
+                background-color: white;
+                display: block;
+            }
+            .etiqueta-container {
+                width: 56mm !important;
+                max-width: 56mm !important;
+                padding: 2mm !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
+            .plato-header {
+                flex-direction: column;
+                text-align: center;
+                margin-bottom: 10px;
+                padding-bottom: 5px;
+            }
+            .plato-imagen {
+                width: 40px !important;
+                height: 40px !important;
+                margin-right: 0;
+                margin-bottom: 5px;
+            }
+            .plato-nombre {
+                font-size: 12px !important;
+                margin: 0;
+            }
+            .plato-tipo {
+                font-size: 10px !important;
+            }
+            .seccion {
+                margin-bottom: 10px;
+            }
+            .seccion-titulo {
+                font-size: 11px !important;
+                margin-bottom: 5px;
+                padding-bottom: 2px;
+            }
+            .tabla-ingredientes {
+                font-size: 9px;
+            }
+            .tabla-ingredientes th, 
+            .tabla-ingredientes td {
+                padding: 3px 4px;
+            }
+            .alergeno-item {
+                font-size: 8px;
+                margin-right: 3px;
+                margin-bottom: 3px;
+                padding: 2px 4px;
+            }
+            .alergeno-imagen {
+                width: 12px;
+                height: 12px;
+            }
+            .info-nutricional-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 3px;
+            }
+            .nutriente-item {
+                padding: 3px;
+            }
+            .nutriente-nombre {
+                font-size: 9px;
+                margin-bottom: 2px;
+            }
+            .nutriente-valor {
+                font-size: 9px;
+            }
+            .nutriente-unidad {
+                font-size: 8px;
+            }
+            .nota-nutricional {
+                font-size: 8px;
+            }
+            .no-print {
+                display: none !important;
+            }
+            
+            /* Ajustar tablas para que quepan en 6cm */
+            table {
+                width: 100% !important;
+            }
+            th, td {
+                word-break: break-word;
+                font-size: 8px;
+            }
+            
+            /* Asegurar que todo el contenido sea visible */
+            * {
+                overflow: visible !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="etiqueta-container">
+        <div class="plato-header">
+            {% if plato.imagen %}
+            <img src="{{ plato.imagen.url }}" alt="{{ plato.nombre }}" class="plato-imagen">
+            {% endif %}
+            <div class="plato-info">
+                <h1 class="plato-nombre">{{ plato.nombre }}</h1>
+                {% if plato.tipoplato %}
+                <p class="plato-tipo">Tipo: {{ plato.tipoplato.nombre }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Ingredientes del plato -->
+        <div class="seccion-salsa">
+            <table class="tabla-ingredientes">
+                <thead>
+                    <tr>
+                        <th>Ingrediente</th>
+                        <th>Cantidad</th>
+                        <th>Unidad</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ingrediente in ingredientes %}
+                    <tr>
+                        <td>{{ ingrediente.alimento.nombre }}</td>
+                        <td>{{ ingrediente.cantidad }}</td>
+                        <td>{{ ingrediente.unidad_medida.abreviatura }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                {% if plato.salsa %}
+                <tbody>
+                    {% for ingrediente in ingredientes_salsa %}
+                    <tr>
+                        <td>{{ ingrediente.alimento.nombre }}</td>
+                        <td>{{ ingrediente.cantidad }}</td>
+                        <td>{{ ingrediente.unidad_medida.abreviatura }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                {% endif %}
+            </table>
+        </div>
+
+        <!-- Información nutricional total -->
+        <div class="seccion">
+            <h2 class="seccion-titulo">Información Nutricional</h2>
+            
+            <p class="nota-nutricional">
+                * Valores calculados basados en la composición nutricional de cada ingrediente por 100g/100ml
+                y ajustados según las cantidades utilizadas en la receta.
+            </p>
+            
+            {% if plato.receta and plato.receta.rendimiento > 0 %}
+            <h3>Por porción</h3>
+            <div class="info-nutricional-grid">
+                <div class="nutriente-item">
+                    <div class="nutriente-nombre">Valor energético</div>
+                    <div class="nutriente-valor">{{ info_nutricional_porcion.energia }} <span class="nutriente-unidad">kcal</span></div>
+                </div>
+                <div class="nutriente-item">
+                    <div class="nutriente-nombre">Hidratos de carbono</div>
+                    <div class="nutriente-valor">{{ info_nutricional_porcion.carbohidratos }} <span class="nutriente-unidad">g</span></div>
+                </div>
+                <div class="nutriente-item">
+                    <div class="nutriente-nombre">Proteínas</div>
+                    <div class="nutriente-valor">{{ info_nutricional_porcion.proteinas }} <span class="nutriente-unidad">g</span></div>
+                </div>
+                <div class="nutriente-item">
+                    <div class="nutriente-nombre">Grasas</div>
+                    <div class="nutriente-valor">{{ info_nutricional_porcion.grasas }} <span class="nutriente-unidad">g</span></div>
+                </div>
+                <div class="nutriente-item">
+                    <div class="nutriente-nombre">Azúcares</div>
+                    <div class="nutriente-valor">{{ info_nutricional_porcion.azucares }} <span class="nutriente-unidad">g</span></div>
+                </div>
+                <div class="nutriente-item">
+                    <div class="nutriente-nombre">Fibra alimentaria</div>
+                    <div class="nutriente-valor">{{ info_nutricional_porcion.fibra }} <span class="nutriente-unidad">g</span></div>
+                </div>
+                <div class="nutriente-item">
+                    <div class="nutriente-nombre">Sal</div>
+                    <div class="nutriente-valor">{{ info_nutricional_porcion.sal_mg }} <span class="nutriente-unidad">mg</span></div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Alérgenos -->
+        <div class="seccion">
+            <h2 class="seccion-titulo">Alérgenos</h2>
+            {% if alergenos %}
+                {% for alergeno in alergenos %}
+                <div class="alergeno-item">
+                    {% if alergeno.imagen %}
+                    <img src="{{ alergeno.imagen.url }}" alt="{{ alergeno.nombre }}" class="alergeno-imagen">
+                    {% endif %}
+                    {{ alergeno.nombre }}{% if alergeno.codigo %} ({{ alergeno.codigo }}){% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>Este plato no contiene alérgenos conocidos.</p>
+            {% endif %}
+        </div>
+        <div class="botones-accion no-print">
+            <button onclick="window.print()" class="btn btn-primary">
+                Imprimir Etiqueta
+            </button>
+            <a href="{% url 'platos:PlatoList' %}" class="btn btn-secondary">
+                Volver al Listado
+            </a>
+        </div>
+    </div>
+</body>
+</html>

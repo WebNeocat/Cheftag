@@ -111,14 +111,26 @@
                                     <a class="btn btn-success btn-sm" onclick="abrir_modal_edicion('{% url 'platos:PlatoDetail' plato.pk %}')" title="Ver plato">
                                         <i class="fa fa-eye"></i>
                                     </a>
-                                    <a class="btn btn-warning btn-sm" onclick="" title="Ver receta">
-                                        <i class="fa fa-list"></i>
-                                    </a>
+                                    {% if plato.receta %}
+                                        <a href="{% url 'platos:RecetaDetail' plato.receta.pk %}" class="btn btn-warning btn-sm" title="Ver Receta">
+                                            <i class="fa fa-list"></i>
+                                        </a>
+                                    {% else %}
+                                        <a onclick="abrir_modal_edicion('{% url 'platos:crear_receta' plato_id=plato.pk %}')" class="btn btn-warning btn-sm" title="Crear Receta">
+                                            <i class="fa fa-plus"></i>
+                                        </a>
+                                    {% endif %}
                                     <a class="btn btn-info btn-sm" onclick="abrir_modal_edicion('{% url 'platos:PlatoUpdate' plato.pk %}')" title="Editar plato">
                                         <i class="fa fa-pencil"></i>
                                     </a>
+                                    <a class="btn btn-primary btn-sm" href="{% url 'platos:etiqueta_plato' plato.pk %}" title="Etiqueta plato">
+                                        <i class="fa fa-tag"></i>
+                                    </a>
                                     <a class="btn btn-danger btn-sm" onclick="abrir_modal_edicion('{% url 'platos:PlatoDelete' plato.pk %}')" title="Eliminar plato">
                                         <i class="fa fa-trash"></i>
+                                    </a>
+                                    <a class="btn btn-danger btn-sm" href="{% url 'platos:generar_etiqueta' %}" title="Generar etiqueta">
+                                        <i class="fa fa-apple"></i>
                                     </a>
                                 </td>
                             </tr>
@@ -145,9 +157,15 @@
                                 <a class="btn btn-success btn-sm" onclick="abrir_modal_edicion('{% url 'platos:PlatoDetail' plato.pk %}')" title="Ver plato">
                                     <i class="fa fa-eye"></i>
                                 </a>
-                                <a class="btn btn-warning btn-sm" onclick="" title="Ver receta">
-                                    <i class="fa fa-list"></i>
-                                </a>
+                                {% if plato.receta %}
+                                    <a href="{% url 'platos:RecetaDetail' plato.receta.pk %}" class="btn btn-warning btn-sm" title="Ver Receta">
+                                        <i class="fa fa-list"></i>
+                                    </a>
+                                {% else %}
+                                    <a onclick="abrir_modal_edicion('{% url 'platos:crear_receta' plato_id=plato.pk %}')" class="btn btn-warning btn-sm" title="Crear Receta">
+                                        <i class="fa fa-plus"></i>
+                                    </a>
+                                {% endif %}
                                 <a class="btn btn-info btn-sm" onclick="abrir_modal_edicion('{% url 'platos:PlatoUpdate' plato.pk %}')" title="Editar plato">
                                     <i class="fa fa-pencil"></i>
                                 </a>

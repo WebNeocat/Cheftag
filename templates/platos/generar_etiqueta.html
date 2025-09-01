@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+
+            <!-- Card para el formulario -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Generar Etiqueta de Plato</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {% for field in form %}
+                            <div class="mb-3">
+                                {{ field.label_tag }}
+                                {{ field }}
+                                {% if field.help_text %}
+                                    <div class="form-text">{{ field.help_text }}</div>
+                                {% endif %}
+                                {% for error in field.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                        <button type="submit" class="btn btn-primary w-100">Generar Etiqueta</button>
+                    </form>
+                </div>
+            </div>
+
+            {% if etiqueta %}
+            <!-- Card para la etiqueta generada -->
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Etiqueta Generada</h5>
+                </div>
+                <div class="card-body">
+                    <h6><strong>Plato:</strong> {{ etiqueta.plato.nombre }}</h6>
+                    <h6><strong>Peso:</strong> {{ etiqueta.peso }} g</h6>
+
+                    <ul class="list-group list-group-flush mt-3 mb-3">
+                        <li class="list-group-item">Energía: {{ etiqueta.energia }} kcal</li>
+                        <li class="list-group-item">Carbohidratos: {{ etiqueta.carbohidratos }} g</li>
+                        <li class="list-group-item">Proteínas: {{ etiqueta.proteinas }} g</li>
+                        <li class="list-group-item">Grasas: {{ etiqueta.grasas }} g</li>
+                        <li class="list-group-item">Azúcares: {{ etiqueta.azucares }} g</li>
+                        <li class="list-group-item">Sal: {{ etiqueta.sal_mg }} mg</li>
+                        <li class="list-group-item">Fibra: {{ etiqueta.fibra }} g</li>
+                    </ul>
+
+                    <a href="{% url 'platos:preview_etiqueta' etiqueta.id %}" class="btn btn-success w-100">
+                        Ver / Imprimir
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+

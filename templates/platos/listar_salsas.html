@@ -16,103 +16,146 @@
         font-weight: bold;
     }
 </style>
+
 <div class="content-wrapper">
     <div class="card shadow-lg">
+        <!-- Pestañas -->
         <ul class="nav nav-tabs">
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'platos:PlatoList' %}">
-                    <i class="fa fa-cutlery"></i>&nbsp;&nbsp;&nbsp; Platos
+                <a class="nav-link {% if request.resolver_match.url_name == 'PlatoList' %}active{% endif %}"
+                href="{% url 'platos:PlatoList' %}">
+                    <i class="fa fa-cutlery"></i> Platos
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link active" href="{% url 'platos:SalsaList' %}">
-                    <i class="fa fa-tint"></i>&nbsp;&nbsp;&nbsp; Salsas y Fondos
+                <a class="nav-link active"
+                href="{% url 'platos:SalsaList' %}">
+                    <i class="fa fa-tint"></i> Salsas y Fondos
                 </a>
             </li>
         </ul>
+
+        <!-- Encabezado -->
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h3 class="m-0">Listado de Salsas y fondos</h3>
+            <h3 class="m-0">Listado de Salsas</h3>
             <a class="btn btn-light btn-sm text-primary rounded" onclick="abrir_modal_edicion('{% url 'platos:SalsaCreate' %}')">
-                <i class="fa fa-plus-circle"></i>&nbsp; Crear Nuevo
+                <i class="fa fa-plus-circle"></i>&nbsp; Crear Nueva
             </a>
         </div>
+
         <div class="card-body">
-            <form method="get" class="row g-2 align-items-center">
-                <div class="col-md-6 d-flex">
+            <!-- Barra de controles -->
+            <form method="get" class="row g-2 align-items-center mb-3">
+
+                <!-- Selector de orden -->
+                <div class="col-md-5">
                     <select class="form-select form-select-sm" name="ordenar" id="ordenar" onchange="this.form.submit()">
                         <option value="" disabled selected>Ordenar por...</option>
                         <option value="nombre" {% if ordenar == 'nombre' %}selected{% endif %}>Nombre</option>
                     </select>
                 </div>
-                <div class="col-md-6 d-flex justify-content-end">
-                    <input type="text" class="form-control form-control-sm me-2" placeholder="Buscar..." name="buscar" style="max-width: 450px;">
-                    <button type="submit" class="btn btn-secondary btn-sm rounded" >
-                        <i class="fa fa-search"></i>&nbsp; Buscar
+
+                <!-- Campo de búsqueda -->
+                <div class="col-md-4">
+                    <input type="text" class="form-control form-control-sm" placeholder="Buscar..." name="buscar" value="{{ request.GET.buscar }}">
+                </div>
+
+                <!-- Botón buscar -->
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-secondary btn-lg" style="padding-top: 12px; padding-bottom:12px;">
+                        <i class="fa fa-search"></i>
                     </button>
+                </div>
+
+                <!-- Botones vista -->
+                <div class="col-auto">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button id="btn-lista" type="button" class="btn btn-primary">
+                            <i class="fa fa-list"></i>
+                        </button>
+                        <button id="btn-cuadricula" type="button" class="btn btn-outline-primary">
+                            <i class="fa fa-th"></i>
+                        </button>
+                    </div>
                 </div>
             </form>
 
             {% if salsas %}
-            <div class="table-wrapper">
-                <table class="table table-hover tabla-responsive align-middle">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Descripción</th>
-                            <th>Imagen</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for salsa in salsas %}
-                        <tr>
-                            <td data-label="Nombre"><strong>{{ salsa.nombre }}</strong></td>
-                            <td data-label="Descripción">{{ salsa.descripcion|truncatewords:10 }}</td>
-                            <td data-label="Imagen">
-                                {% if salsa.imagen %}
-                                    <img src="{{ salsa.imagen.url }}" alt="{{ salsa.nombre }}" style="max-width: 80px; max-height: 80px; border-radius: 5px;">
-                                {% else %}
-                                    <span class="text-muted">Sin imagen</span>
-                                {% endif %}
-                            </td>
-                            <td data-label="Acciones">
-                                <a class="btn btn-success" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'platos:SalsaDetail' salsa.pk %}')" data-toggle="tooltip" title="Ver salsa">
+
+            <!-- Vista Lista -->
+            <div id="vista-lista">
+                <div class="table-wrapper">
+                    <table class="table table-hover tabla-responsive align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Tipo de salsa</th>
+                                <th>Imagen</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for salsa in salsas %}
+                            <tr>
+                                <td><strong>{{ salsa.nombre }}</strong></td>
+                                <td>{{ salsa.tiposalsa }}</td>
+                                <td>
+                                    {% if salsa.imagen %}
+                                        <img src="{{ salsa.imagen.url }}" alt="{{ salsa.nombre }}" style="max-width: 80px; max-height: 80px; border-radius: 5px;">
+                                    {% else %}
+                                        <span class="text-muted">Sin imagen</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a class="btn btn-success btn-sm" onclick="abrir_modal_edicion('{% url 'platos:SalsaDetail' salsa.pk %}')" title="Ver salsa">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+                                    <a class="btn btn-info btn-sm" onclick="abrir_modal_edicion('{% url 'platos:SalsaUpdate' salsa.pk %}')" title="Editar salsa">
+                                        <i class="fa fa-pencil"></i>
+                                    </a>
+                                    <a class="btn btn-danger btn-sm" onclick="abrir_modal_edicion('{% url 'platos:SalsaDelete' salsa.pk %}')" title="Eliminar salsa">
+                                        <i class="fa fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Vista Cuadrícula -->
+            <div id="vista-cuadricula" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4" style="display:none;">
+                {% for salsa in salsas %}
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        {% if salsa.imagen %}
+                            <img src="{{ salsa.imagen.url }}" class="card-img-top" alt="{{ salsa.nombre }}" style="height:200px; object-fit:cover;">
+                        {% else %}
+                            <img src="https://via.placeholder.com/300x200?text=Sin+imagen" class="card-img-top" alt="Sin imagen">
+                        {% endif %}
+                        <div class="card-body text-center">
+                            <h5 class="card-title mb-3">{{ salsa.nombre }}</h5>
+                            <p class="text-muted">{{ salsa.tiposalsa }}</p>
+                            <div class="d-flex justify-content-center gap-2">
+                                <a class="btn btn-success btn-sm" onclick="abrir_modal_edicion('{% url 'platos:SalsaDetail' salsa.pk %}')" title="Ver salsa">
                                     <i class="fa fa-eye"></i>
                                 </a>
-                                {% if plato.receta %}
-                                    <!-- Botón para ver receta (página completa) -->
-                                    <a href="#" 
-                                    class="btn btn-warning" 
-                                    style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" 
-                                    data-toggle="tooltip" 
-                                    title="Ver Receta">
-                                        <i class="fa fa-list"></i>
-                                    </a>
-                                {% else %}
-                                    <!-- Botón para crear receta (modal) -->
-                                    <a onclick="#" 
-                                    class="btn btn-warning" 
-                                    style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" 
-                                    data-toggle="tooltip" 
-                                    title="Crear Receta">
-                                        <i class="fa fa-plus"></i>
-                                    </a>
-                                {% endif %}
-                                <a class="btn btn-info" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'platos:SalsaUpdate' salsa.pk %}')" data-toggle="tooltip" title="Editar salsa">
+                                <a class="btn btn-info btn-sm" onclick="abrir_modal_edicion('{% url 'platos:SalsaUpdate' salsa.pk %}')" title="Editar salsa">
                                     <i class="fa fa-pencil"></i>
                                 </a>
-                                <a class="btn btn-danger" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'platos:SalsaDelete' salsa.pk %}')" data-toggle="tooltip" title="Eliminar salsa">
+                                <a class="btn btn-danger btn-sm" onclick="abrir_modal_edicion('{% url 'platos:SalsaDelete' salsa.pk %}')" title="Eliminar salsa">
                                     <i class="fa fa-trash"></i>
                                 </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
 
             <!-- Paginación -->
-            {% include "core/pagination.html"  %}
+            {% include "core/pagination.html" %}
 
             {% else %}
             <div class="alert alert-warning text-center mt-3">
@@ -120,10 +163,11 @@
             </div>
             {% endif %}
         </div>
-        <div class="modal fade" id="consulta" role="dialog">
     </div>
-</div>
 
+    <!-- Modal -->
+    <div class="modal fade" id="consulta" role="dialog"></div>
+</div>
 {% endblock content %}
 
 {% block extrajs %}
@@ -134,6 +178,40 @@
             $(this).modal('show');
         });
     }
-</script>
 
+    // Funciones para cambiar vista
+    function activarLista(){
+        document.getElementById('vista-lista').style.display = 'block';
+        document.getElementById('vista-cuadricula').style.display = 'none';
+        document.getElementById('btn-lista').classList.add('btn-primary');
+        document.getElementById('btn-lista').classList.remove('btn-outline-primary');
+        document.getElementById('btn-cuadricula').classList.add('btn-outline-primary');
+        document.getElementById('btn-cuadricula').classList.remove('btn-primary');
+        localStorage.setItem('vistaSalsas', 'lista');
+    }
+
+    function activarCuadricula(){
+        document.getElementById('vista-lista').style.display = 'none';
+        document.getElementById('vista-cuadricula').style.display = 'flex';
+        document.getElementById('btn-cuadricula').classList.add('btn-primary');
+        document.getElementById('btn-cuadricula').classList.remove('btn-outline-primary');
+        document.getElementById('btn-lista').classList.add('btn-outline-primary');
+        document.getElementById('btn-lista').classList.remove('btn-primary');
+        localStorage.setItem('vistaSalsas', 'cuadricula');
+    }
+
+    // Eventos de botones
+    document.getElementById('btn-lista').addEventListener('click', activarLista);
+    document.getElementById('btn-cuadricula').addEventListener('click', activarCuadricula);
+
+    // Al cargar la página, recuperar la vista guardada
+    document.addEventListener('DOMContentLoaded', function(){
+        const vistaGuardada = localStorage.getItem('vistaSalsas');
+        if (vistaGuardada === 'cuadricula') {
+            activarCuadricula();
+        } else {
+            activarLista(); // Por defecto lista
+        }
+    });
+</script>
 {% endblock extrajs %}
