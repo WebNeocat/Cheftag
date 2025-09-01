@@ -90,6 +90,8 @@
                         <thead class="table-dark">
                             <tr>
                                 <th>Nombre</th>
+                                <th>Código</th>
+                                <th>Días caducidad</th>
                                 <th>Tipo de plato</th>
                                 <th>Imagen</th>
                                 <th>Acciones</th>
@@ -99,6 +101,8 @@
                             {% for plato in platos %}
                             <tr>
                                 <td><strong>{{ plato.nombre }}</strong></td>
+                                <td>{{ plato.codigo }}</td>
+                                <td>{{ plato.vida_util }}</td>
                                 <td>{{ plato.tipoplato }}</td>
                                 <td>
                                     {% if plato.imagen %}

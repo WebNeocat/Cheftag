@@ -1,6 +1,8 @@
 from django.db import models
 from app.super.models import ModeloBaseCentro  
 from decimal import Decimal 
+from django.utils import timezone
+from datetime import timedelta
 from app.dashuser.models import Alimento, UnidadDeMedida, Alergenos
 
 
@@ -55,6 +57,8 @@ class TipoPlato(ModeloBaseCentro):
     
 class Plato(ModeloBaseCentro):
     nombre = models.CharField(max_length=100)
+    codigo = models.CharField(max_length=10, unique=True, help_text="Código único para el plato")
+    vida_util = models.PositiveIntegerField(default=0, help_text="Número de días que se suman a la fecha de producción para calcular la caducidad", null=True, blank=True)
     tipoplato = models.ForeignKey(TipoPlato, on_delete=models.CASCADE, null=True, blank=True)
     imagen = models.ImageField(upload_to='platos/', null=True, blank=True)
     salsa = models.ForeignKey(Salsa, on_delete=models.CASCADE, null=True, blank=True)
@@ -190,9 +194,11 @@ class Receta(ModeloBaseCentro):
 class EtiquetaPlato(ModeloBaseCentro):
     plato = models.ForeignKey(Plato, on_delete=models.CASCADE)
     peso = models.DecimalField(max_digits=6, decimal_places=2, help_text="Peso real en gramos")
-    fecha = models.DateField(auto_now_add=True)
+    fecha = models.DateTimeField(auto_now_add=True)
+    caducidad = models.DateField(blank=True, null=True, editable=False)  # NUEVO CAMPO
+    lote = models.CharField(max_length=50, blank=True, null=True, editable=False)
 
-    # Guardamos los valores nutricionales calculados
+    # Valores nutricionales
     energia = models.DecimalField(max_digits=8, decimal_places=2)
     carbohidratos = models.DecimalField(max_digits=8, decimal_places=2)
     proteinas = models.DecimalField(max_digits=8, decimal_places=2)
@@ -205,5 +211,23 @@ class EtiquetaPlato(ModeloBaseCentro):
         verbose_name = "Etiqueta de Plato"
         verbose_name_plural = "Etiquetas de Platos"
 
-    def __str__(self):
-        return f"Etiqueta {self.plato.nombre} ({self.peso} g)"    
+    def save(self, *args, **kwargs):
+        # Asegurarnos de tener fecha completa
+        if not self.fecha:
+            self.fecha = timezone.now()
+
+        # Generar lote si no existe
+        if not self.lote:
+            fecha_str = self.fecha.strftime("%d%m%y")
+            turno = "A" if self.fecha.hour < 12 else "B"
+            codigo_plato = getattr(self.plato, "codigo", self.plato.id)
+            self.lote = f"L{fecha_str}-{codigo_plato}-{turno}"
+
+        # Calcular caducidad si no existe
+        if not self.caducidad:
+            dias = getattr(self.plato, "vida_util_dias", 3)  # Por defecto 3 días
+            self.caducidad = (self.fecha + timedelta(days=dias)).date()  # solo fecha
+
+        super().save(*args, **kwargs)
+    
+    

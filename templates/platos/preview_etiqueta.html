@@ -86,7 +86,7 @@
 
         .fechas-lote {
             margin-top: 5px;
-            font-weight: bold;
+            font-size: 0.8em;
         }
 
     </style>
@@ -140,8 +140,8 @@
         </p>
 
         <div class="fechas-lote">
-            <div>Caducidad: {{ etiqueta.caducidad }}</div>
-            <div>Lote: {{ etiqueta.lote }}</div>
+            <div><strong>Caducidad:</strong> {{ etiqueta.caducidad|date:"d/m/Y" }}</div>
+            <div><strong>Lote:</strong> {{ etiqueta.lote }}</div>
         </div>
         <h2></h2>
         <p class="informacion" style="text-align: center;">

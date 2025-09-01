@@ -892,7 +892,7 @@ def preview_etiqueta(request, etiqueta_id):
             "sal": float(etiqueta.sal_mg)
         },
         #"caducidad": etiqueta.caducidad.isoformat() if etiqueta.caducidad else "",
-        #"lote": str(etiqueta.lote) if etiqueta.lote else ""
+        "lote": str(etiqueta.lote) if etiqueta.lote else ""
     }
 
     qr_json = json.dumps(qr_data, ensure_ascii=False)

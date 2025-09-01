@@ -66,11 +66,13 @@ class PlatoForm(forms.ModelForm):
     )
     class Meta:
         model = Plato
-        fields = ['nombre', 'imagen', 'descripcion', 'salsa', 'tipoplato']
+        fields = ['nombre', 'imagen', 'codigo','descripcion', 'vida_util', 'salsa', 'tipoplato']
         widgets = {
             'nombre': forms.TextInput(attrs={"class":"form-control form-control-sm form-control-border"}),
+            'codigo': forms.TextInput(attrs={"class":"form-control form-control-sm form-control-border"}),
             'imagen': forms.FileInput(attrs={"class":"form-control form-control-sm form-control-border"}),
             'descripcion': forms.Textarea(attrs={"class":"form-control form-control-sm form-control-border", 'rows': 3}),
+            'vida_util': forms.NumberInput(attrs={'class': 'form-control form-control-sm form-control-border', 'min': 1}),
         }
 
 class AlimentoPlatoForm(forms.ModelForm):
