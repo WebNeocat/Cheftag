@@ -3,8 +3,14 @@ from app.super.models import UserProfile
 from django.utils.timezone import localtime
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib import messages
+from collections import defaultdict
 from django.db.models import Q
 from io import BytesIO
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from weasyprint import HTML
+from PyPDF2 import PdfMerger
+import weasyprint
 from django.urls import reverse_lazy, reverse
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
@@ -667,7 +673,6 @@ class RecetaUpdate(LoginRequiredMixin, UpdateView):
 ######################################################################################    
 
 
-# Añade esto en tu archivo views.py de la app platos
 class EtiquetaDetail(LoginRequiredMixin, DetailView):
     model = Plato
     template_name = 'platos/etiqueta_plato.html'
@@ -822,18 +827,14 @@ class EtiquetaDetail(LoginRequiredMixin, DetailView):
 
 
 def generar_etiqueta(request):
-    etiqueta = None
-
     if request.method == "POST":
         form = GenerarEtiquetaForm(request.POST)
         if form.is_valid():
             plato = form.cleaned_data["plato"]
             peso = form.cleaned_data["peso"]
 
-            # Usamos el método del modelo Plato que calculamos antes
             nutricion = plato.calcular_nutricion(peso)
 
-            # Guardamos la etiqueta
             etiqueta = EtiquetaPlato.objects.create(
                 plato=plato,
                 peso=peso,
@@ -844,19 +845,32 @@ def generar_etiqueta(request):
                 azucares=nutricion["azucares"],
                 sal_mg=nutricion["sal_mg"],
                 fibra=nutricion["fibra"],
-                centro=plato.centro  # porque hereda de ModeloBaseCentro
+                centro=plato.centro
             )
 
-            return redirect("platos:preview_etiqueta", etiqueta_id=etiqueta.id)
+            # Guardar en sesión
+            if "etiquetas_ids" not in request.session:
+                request.session["etiquetas_ids"] = []
+            request.session["etiquetas_ids"].append(etiqueta.id)
+            request.session.modified = True
+
+            return redirect("platos:generar_etiqueta")
     else:
         form = GenerarEtiquetaForm()
 
+    # Recuperar etiquetas en sesión
+    etiquetas_ids = request.session.get("etiquetas_ids", [])
+    etiquetas = EtiquetaPlato.objects.filter(impresa=False, id__in=etiquetas_ids)
+    
+    # Obtener datos del centro para el contexto
+    contexto_centro = datos_centro(request)
+
     return render(request, "platos/generar_etiqueta.html", {
         "form": form,
-        "etiqueta": etiqueta
-    }) 
+        "etiquetas": etiquetas, 
+        **contexto_centro
+    })
     
-
 
 def preview_etiqueta(request, etiqueta_id):
     etiqueta = get_object_or_404(EtiquetaPlato, id=etiqueta_id)
@@ -911,6 +925,156 @@ def preview_etiqueta(request, etiqueta_id):
         "qr_base64": qr_base64
     }
 
-    return render(request, "platos/preview_etiqueta.html", context)
+    # Renderizamos la plantilla como HTML
+    html = render_to_string("platos/preview_etiqueta.html", context)
+
+    # Creamos respuesta PDF
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'inline; filename="etiqueta_{etiqueta.id}.pdf"'
+
+    # Generamos PDF
+    weasyprint.HTML(string=html, base_url=request.build_absolute_uri()).write_pdf(response)
+
+    return response
+
+
+def imprimir_etiquetas(request):
+    if request.method == "POST":
+        ids = request.POST.getlist("etiquetas")
+        etiquetas = EtiquetaPlato.objects.filter(id__in=ids)
+
+        merger = PdfMerger()
+
+        for etiqueta in etiquetas:
+            # Reutilizamos preview_etiqueta pero generando string
+            plato = etiqueta.plato
+            ingredientes_info = plato.get_ingredientes_con_info()
+
+            todos_alergenos = set()
+            todas_trazas = set()
+            for ing in ingredientes_info:
+                if ing.get("alergenos"):
+                    todos_alergenos.update(ing["alergenos"])
+                if ing.get("trazas"):
+                    todas_trazas.update(ing["trazas"])
+
+            qr_data = {
+                "nombre": plato.nombre,
+                "peso": float(etiqueta.peso),
+                "nutricion": {
+                    "energia": float(etiqueta.energia),
+                    "proteinas": float(etiqueta.proteinas),
+                    "grasas": float(etiqueta.grasas),
+                    "carbohidratos": float(etiqueta.carbohidratos),
+                    "azucares": float(etiqueta.azucares),
+                    "sal": float(etiqueta.sal_mg),
+                },
+                "lote": str(etiqueta.lote) if etiqueta.lote else ""
+            }
+
+            qr_json = json.dumps(qr_data, ensure_ascii=False)
+            qr_img = qrcode.make(qr_json)
+            buffer = BytesIO()
+            qr_img.save(buffer, format="PNG")
+            qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+            context = {
+                "etiqueta": etiqueta,
+                "ingredientes_info": ingredientes_info,
+                "todos_alergenos": list(todos_alergenos),
+                "todas_trazas": list(todas_trazas),
+                "qr_base64": qr_base64
+            }
+
+            html = render_to_string("platos/preview_etiqueta.html", context)
+            # ✅ marcar como impresa
+            etiqueta.impresa = True
+            etiqueta.save()
+            
+            pdf_buffer = BytesIO()
+            HTML(string=html, base_url=request.build_absolute_uri()).write_pdf(pdf_buffer)
+            pdf_buffer.seek(0)
+            merger.append(pdf_buffer)
+
+        response = HttpResponse(content_type="application/pdf")
+        response["Content-Disposition"] = 'inline; filename="etiquetas.pdf"'
+        merger.write(response)
+        merger.close()
+        return response
+    
+
+######################################################################################
+##################################     LOTES   #######################################
+######################################################################################
+
 
     
+class LotesPorDiaTurnoListView(ListView):
+    model = EtiquetaPlato
+    template_name = "platos/lotes_por_dia_turno.html"
+    context_object_name = "lotes"
+
+    def get_queryset(self):
+        # Obtener todas las etiquetas ordenadas por fecha
+        return EtiquetaPlato.objects.all().order_by("-fecha", "lote")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        etiquetas = context["lotes"]
+
+        # Agrupar por fecha y turno
+        lotes_agrupados = defaultdict(lambda: {"A": [], "B": []})
+
+        for e in etiquetas:
+            fecha_str = e.fecha.strftime("%Y-%m-%d")
+            turno = "A" if e.fecha.hour < 12 else "B"
+            lotes_agrupados[fecha_str][turno].append(e)
+
+        context["lotes_agrupados"] = dict(lotes_agrupados)
+        return context    
+    
+class LotesResumenListView(ListView):
+    model = EtiquetaPlato
+    template_name = "platos/lotes_resumen.html"
+    context_object_name = "etiquetas"
+
+    def get_queryset(self):
+        # Recuperamos TODAS las etiquetas impresas, no solo de hoy
+        return EtiquetaPlato.objects.filter(impresa=True).order_by("fecha", "lote")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        etiquetas = EtiquetaPlato.objects.all().order_by("-fecha")
+
+        from collections import defaultdict
+        lotes_agrupados = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {"cantidad_total": 0, "num_platos": 0})))
+
+        for e in etiquetas:
+            # ✅ usamos la fecha de creación o la fecha guardada en etiqueta
+            fecha_str = e.fecha.strftime("%d/%m/%Y") if e.fecha else "Sin fecha"
+
+            # ✅ extraemos turno correctamente del lote
+            turno = "A"
+            if e.lote and "-" in e.lote:
+                partes = e.lote.split("-")
+                if len(partes) >= 3:
+                    turno = partes[-2]  # el turno siempre está antes del número
+
+            plato_nombre = e.plato.nombre
+
+            lotes_agrupados[fecha_str][turno][plato_nombre]["cantidad_total"] += float(e.peso)
+            lotes_agrupados[fecha_str][turno][plato_nombre]["num_platos"] += 1
+
+        # Convertimos defaultdict a dict
+        def recursive_dict(d):
+            if isinstance(d, defaultdict):
+                return {k: recursive_dict(v) for k, v in d.items()}
+            return d
+
+        context["lotes_agrupados"] = recursive_dict(lotes_agrupados)
+
+        # ✅ Añadir datos del centro
+        from .views import datos_centro  # importa tu función si está en el mismo módulo
+        context.update(datos_centro(self.request))
+
+        return context

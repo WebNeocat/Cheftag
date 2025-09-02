@@ -127,14 +127,8 @@
                                     <a class="btn btn-info btn-sm" onclick="abrir_modal_edicion('{% url 'platos:PlatoUpdate' plato.pk %}')" title="Editar plato">
                                         <i class="fa fa-pencil"></i>
                                     </a>
-                                    <a class="btn btn-primary btn-sm" href="{% url 'platos:etiqueta_plato' plato.pk %}" title="Etiqueta plato">
-                                        <i class="fa fa-tag"></i>
-                                    </a>
                                     <a class="btn btn-danger btn-sm" onclick="abrir_modal_edicion('{% url 'platos:PlatoDelete' plato.pk %}')" title="Eliminar plato">
                                         <i class="fa fa-trash"></i>
-                                    </a>
-                                    <a class="btn btn-danger btn-sm" href="{% url 'platos:generar_etiqueta' %}" title="Generar etiqueta">
-                                        <i class="fa fa-apple"></i>
                                     </a>
                                 </td>
                             </tr>

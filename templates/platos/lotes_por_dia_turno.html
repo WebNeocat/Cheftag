@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Lotes creados por día y turno</h2>
+
+    {% for fecha, turnos in lotes_agrupados.items %}
+        <div class="card mb-3">
+            <div class="card-header bg-secondary text-white">
+                Fecha: {{ fecha }}
+            </div>
+            <div class="card-body">
+                {% for turno, etiquetas in turnos.items %}
+                    <h5>Turno {{ turno }}:</h5>
+                    {% if etiquetas %}
+                        <ul>
+                            {% for e in etiquetas %}
+                                <li>{{ e.plato.nombre }} - {{ e.peso }} g - Lote: {{ e.lote }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No hay etiquetas</p>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

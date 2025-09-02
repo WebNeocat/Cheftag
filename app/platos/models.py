@@ -196,7 +196,7 @@ class EtiquetaPlato(ModeloBaseCentro):
     peso = models.DecimalField(max_digits=6, decimal_places=2, help_text="Peso real en gramos")
     fecha = models.DateTimeField(auto_now_add=True)
     caducidad = models.DateField(blank=True, null=True, editable=False)  # NUEVO CAMPO
-    lote = models.CharField(max_length=50, blank=True, null=True, editable=False)
+    lote = models.CharField(max_length=50, blank=True, null=True)
 
     # Valores nutricionales
     energia = models.DecimalField(max_digits=8, decimal_places=2)
@@ -206,6 +206,7 @@ class EtiquetaPlato(ModeloBaseCentro):
     azucares = models.DecimalField(max_digits=8, decimal_places=2)
     sal_mg = models.DecimalField(max_digits=8, decimal_places=2)
     fibra = models.DecimalField(max_digits=8, decimal_places=2)
+    impresa = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Etiqueta de Plato"
@@ -216,12 +217,31 @@ class EtiquetaPlato(ModeloBaseCentro):
         if not self.fecha:
             self.fecha = timezone.now()
 
-        # Generar lote si no existe
+        # Generar lote base (sin número) si no existe
         if not self.lote:
             fecha_str = self.fecha.strftime("%d%m%y")
             turno = "A" if self.fecha.hour < 12 else "B"
             codigo_plato = getattr(self.plato, "codigo", self.plato.id)
-            self.lote = f"L{fecha_str}-{codigo_plato}-{turno}"
+            lote_base = f"L{fecha_str}-{codigo_plato}-{turno}"
+
+            # Contar cuántos ya existen con este mismo lote base
+            ultimo = (
+                EtiquetaPlato.objects
+                .filter(lote__startswith=lote_base)
+                .order_by("-lote")
+                .first()
+            )
+
+            if ultimo and "-" in ultimo.lote:
+                try:
+                    secuencia = int(ultimo.lote.split("-")[-1]) + 1
+                except ValueError:
+                    secuencia = 1
+            else:
+                secuencia = 1
+
+            # Asignar lote con secuencia formateada a 3 dígitos
+            self.lote = f"{lote_base}-{secuencia:03d}"
 
         # Calcular caducidad si no existe
         if not self.caducidad:
@@ -229,5 +249,6 @@ class EtiquetaPlato(ModeloBaseCentro):
             self.caducidad = (self.fecha + timedelta(days=dias)).date()  # solo fecha
 
         super().save(*args, **kwargs)
+
     
     

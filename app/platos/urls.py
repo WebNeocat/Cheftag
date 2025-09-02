@@ -27,9 +27,11 @@ urlpatterns = [
     path('recetas/<int:pk>/editar/', RecetaUpdate.as_view(), name='editar_receta'),
     path('recetas/<int:pk>/', RecetaDetailView.as_view(), name='RecetaDetail'),
     
-    path('plato/<int:pk>/etiqueta/', EtiquetaDetail.as_view(), name='etiqueta_plato'),
-    
     path("etiquetas/generar/", views.generar_etiqueta, name="generar_etiqueta"),
     path("etiquetas/<int:etiqueta_id>/preview/", views.preview_etiqueta, name="preview_etiqueta"),
+    path("etiquetas/imprimir/", views.imprimir_etiquetas, name="imprimir_etiquetas"),
+    
+    path('lotes/', LotesPorDiaTurnoListView.as_view(), name='LotesPorDiaTurnoListView'),
+    path('lotes/historicos/', LotesResumenListView.as_view(), name='LotesResumenListView'),
 ]   
  

@@ -1,64 +1,108 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
+<div class="container-fluid mt-4">
 
-            <!-- Card para el formulario -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">Generar Etiqueta de Plato</h4>
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        {% for field in form %}
-                            <div class="mb-3">
-                                {{ field.label_tag }}
-                                {{ field }}
-                                {% if field.help_text %}
-                                    <div class="form-text">{{ field.help_text }}</div>
-                                {% endif %}
-                                {% for error in field.errors %}
-                                    <div class="text-danger">{{ error }}</div>
-                                {% endfor %}
-                            </div>
+    <!-- Card del formulario -->
+    <div class="card shadow-sm mb-5">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Generar Etiqueta de Plato</h4>
+        </div>
+        <div class="card-body">
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <div class="form-text">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <div class="text-danger small">{{ error }}</div>
                         {% endfor %}
-                        <button type="submit" class="btn btn-primary w-100">Generar Etiqueta</button>
-                    </form>
+                    </div>
+                {% endfor %}
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-plus-circle"></i> Generar Etiqueta
+                    </button>
                 </div>
-            </div>
+            </form>
+        </div>
+    </div>
 
-            {% if etiqueta %}
-            <!-- Card para la etiqueta generada -->
-            <div class="card shadow">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">Etiqueta Generada</h5>
+    <!-- Tabla de etiquetas -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Etiquetas generadas</h4>
+        </div>
+        <div class="card-body p-0">
+            {% if etiquetas %}
+                <form id="form-imprimir" method="post" action="{% url 'platos:imprimir_etiquetas' %}" target="_blank">
+                    {% csrf_token %}
+                    <table class="table table-striped table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th><input type="checkbox" id="select-all"></th>
+                                <th>Plato</th>
+                                <th>Peso</th>
+                                <th>Lote</th>
+                                <th>Caducidad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for e in etiquetas %}
+                            <tr>
+                                <td><input type="checkbox" name="etiquetas" value="{{ e.id }}"></td>
+                                <td>{{ e.plato.nombre }}</td>
+                                <td>{{ e.peso }} g</td>
+                                <td>{{ e.lote }}</td>
+                                <td>{{ e.caducidad|date:"d/m/Y" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <button type="submit" class="btn btn-success w-100">Imprimir seleccionadas</button>
+                </form>
+            {% else %}
+                <div class="p-3 text-muted text-center">
+                    No hay etiquetas generadas todavía.
                 </div>
-                <div class="card-body">
-                    <h6><strong>Plato:</strong> {{ etiqueta.plato.nombre }}</h6>
-                    <h6><strong>Peso:</strong> {{ etiqueta.peso }} g</h6>
-
-                    <ul class="list-group list-group-flush mt-3 mb-3">
-                        <li class="list-group-item">Energía: {{ etiqueta.energia }} kcal</li>
-                        <li class="list-group-item">Carbohidratos: {{ etiqueta.carbohidratos }} g</li>
-                        <li class="list-group-item">Proteínas: {{ etiqueta.proteinas }} g</li>
-                        <li class="list-group-item">Grasas: {{ etiqueta.grasas }} g</li>
-                        <li class="list-group-item">Azúcares: {{ etiqueta.azucares }} g</li>
-                        <li class="list-group-item">Sal: {{ etiqueta.sal_mg }} mg</li>
-                        <li class="list-group-item">Fibra: {{ etiqueta.fibra }} g</li>
-                    </ul>
-
-                    <a href="{% url 'platos:preview_etiqueta' etiqueta.id %}" class="btn btn-success w-100">
-                        Ver / Imprimir
-                    </a>
-                </div>
-            </div>
             {% endif %}
-
         </div>
     </div>
 </div>
 {% endblock %}
+
+{% block extrajs %}
+<script>
+document.getElementById("select-all").addEventListener("click", function(e) {
+    document.querySelectorAll("input[name='etiquetas']").forEach(cb => cb.checked = e.target.checked);
+});
+
+document.getElementById("form-imprimir").addEventListener("submit", function(e) {
+    const seleccionados = document.querySelectorAll("input[name='etiquetas']:checked");
+
+    if (seleccionados.length === 0) {
+        e.preventDefault(); // cancelamos el submit
+        alert("⚠️ Debes seleccionar al menos una etiqueta para imprimir.");
+        return;
+    }
+
+    // Guardamos las filas seleccionadas antes de enviar
+    const filas = [];
+    seleccionados.forEach(cb => {
+        filas.push(cb.closest("tr"));
+    });
+
+    // Dejamos que el formulario se envíe y se abra la nueva pestaña
+    setTimeout(() => {
+        filas.forEach(fila => fila.remove()); // eliminamos solo las filas seleccionadas
+    }, 500);
+});
+</script>
+{% endblock extrajs %}
+
+
 

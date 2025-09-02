@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Receta, AlimentoPlato, Plato, TipoPlato, Salsa, AlimentoSalsa
+from .models import Receta, AlimentoPlato, Plato, TipoPlato, Salsa, AlimentoSalsa, EtiquetaPlato
 
 admin.site.register(AlimentoPlato)
 admin.site.register(Receta)
@@ -7,5 +7,6 @@ admin.site.register(Plato)
 admin.site.register(TipoPlato)
 admin.site.register(Salsa)
 admin.site.register(AlimentoSalsa)
+admin.site.register(EtiquetaPlato)
 
 # Register your models here.

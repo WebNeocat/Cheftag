@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4 text-center text-primary fw-bold">
+        📦 Histórico de Lotes
+    </h2>
+
+    {% for fecha, turnos in lotes_agrupados.items %}
+        <div class="card shadow-sm mb-4 border-0">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <span class="fw-bold">
+                    📅 {{ fecha }}
+                </span>
+                <span class="badge bg-light text-dark">
+                    {{ turnos|length }} turnos
+                </span>
+            </div>
+            <div class="card-body">
+                {% for turno, platos in turnos.items %}
+                    <div class="mb-3">
+                        <h5 class="text-secondary fw-bold">
+                            🔄 Turno {{ turno }}
+                        </h5>
+                        <ul class="list-group">
+                            {% for plato_nombre, datos in platos.items %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        🍽️ <strong>{{ plato_nombre }}</strong>
+                                    </div>
+                                    <div>
+                                        <span class="badge bg-success me-2">
+                                            {{ datos.cantidad_total|floatformat:2 }} Kg
+                                        </span>
+                                        <span class="badge bg-info text-dark">
+                                            {{ datos.num_platos }} platos
+                                        </span>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% empty %}
+        <div class="alert alert-warning text-center">
+            ⚠️ No hay lotes históricos registrados.
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+
