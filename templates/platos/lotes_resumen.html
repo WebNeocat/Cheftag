@@ -6,49 +6,111 @@
         📦 Histórico de Lotes
     </h2>
 
-    {% for fecha, turnos in lotes_agrupados.items %}
-        <div class="card shadow-sm mb-4 border-0">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <span class="fw-bold">
-                    📅 {{ fecha }}
-                </span>
-                <span class="badge bg-light text-dark">
-                    {{ turnos|length }} turnos
-                </span>
-            </div>
-            <div class="card-body">
-                {% for turno, platos in turnos.items %}
-                    <div class="mb-3">
-                        <h5 class="text-secondary fw-bold">
-                            🔄 Turno {{ turno }}
-                        </h5>
-                        <ul class="list-group">
-                            {% for plato_nombre, datos in platos.items %}
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <div>
-                                        🍽️ <strong>{{ plato_nombre }}</strong>
-                                    </div>
-                                    <div>
-                                        <span class="badge bg-success me-2">
-                                            {{ datos.cantidad_total|floatformat:2 }} Kg
-                                        </span>
-                                        <span class="badge bg-info text-dark">
-                                            {{ datos.num_platos }} platos
-                                        </span>
-                                    </div>
-                                </li>
-                            {% endfor %}
-                        </ul>
+    <div class="row">
+        {% for fecha, turnos in lotes_agrupados.items %}
+            <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 mb-4">
+                <div class="card shadow-sm h-100 border-0" style="min-height: 300px;">
+                    <div class="card-header bg-primary text-white text-center">
+                        <span class="fw-bold d-block">
+                            📅 {{ fecha }}
+                        </span>
                     </div>
-                {% endfor %}
+                    <div class="card-body p-2">
+                        {% for turno, platos in turnos.items %}
+                            <div class="mb-2">
+                                <h6 class="text-secondary fw-bold mb-1">
+                                    🔄 Turno {{ turno }}
+                                </h6>
+                                <div class="scrollable-platos" style="max-height: 200px; overflow-y: auto;">
+                                    {% for plato_nombre, datos in platos.items %}
+                                        <div class="card mb-2 border-0 bg-light">
+                                            <div class="card-body py-2 px-3">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div class="flex-grow-1">
+                                                        <strong class="d-block text-truncate" style="max-width: 240px;" title="{{ plato_nombre }}">
+                                                             {{ plato_nombre }}
+                                                        </strong>
+                                                    </div>
+                                                    <div class="text-end">
+                                                        <span class="badge bg-success d-block mb-1">
+                                                            {{ datos.cantidad_total|floatformat:2 }} Kg
+                                                        </span>
+                                                        <span class="badge bg-info text-dark">
+                                                            {{ datos.num_platos }} Raciones
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
-        </div>
-    {% empty %}
-        <div class="alert alert-warning text-center">
-            ⚠️ No hay lotes históricos registrados.
-        </div>
-    {% endfor %}
+            
+            {# Crear nuevas filas cada 4 tarjetas en XL, 3 en LG, 2 en MD #}
+            {% if forloop.counter|divisibleby:3 %}
+                <div class="w-100 d-none d-xl-block"></div>
+            {% endif %}
+            {% if forloop.counter|divisibleby:2 %}
+                <div class="w-100 d-none d-lg-block d-xl-none"></div>
+            {% endif %}
+            {% if forloop.counter|divisibleby:2 %}
+                <div class="w-100 d-none d-md-block d-lg-none"></div>
+            {% endif %}
+            
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-warning text-center">
+                    ⚠️ No hay lotes históricos registrados.
+                </div>
+            </div>
+        {% endfor %}
+    </div>
 </div>
+
+<style>
+    .card {
+        border-radius: 12px;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+    }
+    
+    .card-header {
+        border-top-left-radius: 12px !important;
+        border-top-right-radius: 12px !important;
+        padding: 12px 15px;
+    }
+    
+    .scrollable-platos::-webkit-scrollbar {
+        width: 5px;
+    }
+    
+    .scrollable-platos::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .scrollable-platos::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+    }
+    
+    .scrollable-platos::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+    
+    .badge {
+        font-size: 0.75em;
+        padding: 0.35em 0.65em;
+    }
+</style>
 {% endblock %}
 
 

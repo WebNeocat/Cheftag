@@ -1050,10 +1050,10 @@ class LotesResumenListView(ListView):
         lotes_agrupados = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {"cantidad_total": 0, "num_platos": 0})))
 
         for e in etiquetas:
-            # ✅ usamos la fecha de creación o la fecha guardada en etiqueta
+            # usamos la fecha de creación o la fecha guardada en etiqueta
             fecha_str = e.fecha.strftime("%d/%m/%Y") if e.fecha else "Sin fecha"
 
-            # ✅ extraemos turno correctamente del lote
+            # extraemos turno correctamente del lote
             turno = "A"
             if e.lote and "-" in e.lote:
                 partes = e.lote.split("-")
@@ -1073,8 +1073,6 @@ class LotesResumenListView(ListView):
 
         context["lotes_agrupados"] = recursive_dict(lotes_agrupados)
 
-        # ✅ Añadir datos del centro
-        from .views import datos_centro  # importa tu función si está en el mismo módulo
         context.update(datos_centro(self.request))
 
         return context

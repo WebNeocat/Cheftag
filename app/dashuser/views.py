@@ -18,7 +18,8 @@ from .forms import AlergenosForm, TipoAlimento, LocalizacionForm, TipoAlimentosF
 
 @login_required
 def home(request):
-    return render(request, 'dashuser/home.html')
+    context = datos_centro(request)
+    return render(request, 'dashuser/home.html', context)
 
 def datos_centro(request):
     hora_actual = localtime().hour  # Obtiene la hora actual en la zona horaria configurada
