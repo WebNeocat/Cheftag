@@ -738,14 +738,14 @@ class AlimentoList(PaginationMixin, LoginRequiredMixin, ListView):
     model = Alimento
     template_name = 'dashuser/listar_alimentos.html'
     context_object_name = 'alimentos'
-    paginate_by = 12  # Número de registros por página
+    paginate_by = 20  # Número de registros por página
 
     def get_queryset(self):
         try:
             user_profile = UserProfile.objects.filter(user=self.request.user).first()
             if user_profile and user_profile.centro:
                 centro = user_profile.centro
-                queryset = Alimento.objects.filter(centro=centro).order_by('id')
+                queryset = Alimento.objects.filter(centro=centro).order_by('nombre')
 
 
                 search_query = self.request.GET.get('buscar')

@@ -5,7 +5,8 @@
     <title>Etiqueta de {{ etiqueta.plato.nombre }}</title>
     <style>
         @page {
-            size: 6cm 27cm; 
+            width: 6cm; 
+            height: auto;
             margin: 0;      /* Sin márgenes extra */
     }
         body {
@@ -18,6 +19,11 @@
             width: 6cm;
             padding: 10px;
             border: 1px solid #000;
+
+            /* evitar que corte entre medias */
+            page-break-inside: avoid;
+            break-inside: avoid;
+            
             box-sizing: border-box;
         }
 
@@ -142,7 +148,11 @@
         <p class="informacion">
             Conservar entre 0ºC y 5ºC. Producto listo para el consumo. Retirar la tapa y calentar durante dos minutos a máxima potencia (800W) en el microondas. Una vez abierto, consumir en 24 horas.
         </p>
-
+        <h2>Elaborado y Embasado:</h2>
+        <p class="informacion">
+            <strong>Catering Solutions S.L.</strong> <br><strong>CIF</strong> B-12345678<br>
+            C/ Falsa, 123 - 28080 Madrid<br>       
+        </p>
         <div class="fechas-lote">
             <div><strong>Caducidad:</strong> {{ etiqueta.caducidad|date:"d/m/Y" }}</div>
             <div><strong>Lote:</strong> {{ etiqueta.lote }}</div>

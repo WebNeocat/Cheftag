@@ -48,7 +48,7 @@
             <form method="get" class="row g-2 align-items-center mb-3">
 
                 <!-- Selector de orden -->
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <select class="form-select form-select-sm" name="ordenar" id="ordenar" onchange="this.form.submit()">
                         <option value="" disabled selected>Ordenar por...</option>
                         <option value="nombre" {% if ordenar == 'nombre' %}selected{% endif %}>Nombre</option>
@@ -62,18 +62,18 @@
 
                 <!-- Botón buscar -->
                 <div class="col-md-2">
-                    <button type="submit" class="btn btn-secondary btn-lg" style="padding-top: 12px; padding-bottom:12px;">
+                    <button type="submit" class="btn btn-inverse-secondary" style="padding-top: 12px; padding-bottom:12px;">
                         <i class="fa fa-search"></i>
                     </button>
                 </div>
 
                 <!-- Botones vista -->
                 <div class="col-auto">
-                    <div class="btn-group btn-group-sm" role="group">
-                        <button id="btn-lista" type="button" class="btn btn-primary">
+                    <div class="btn-group" role="group">
+                        <button id="btn-lista" type="button" class="btn btn-inverse-primary">
                             <i class="fa fa-list"></i>
                         </button>
-                        <button id="btn-cuadricula" type="button" class="btn btn-outline-primary">
+                        <button id="btn-cuadricula" type="button" class="btn btn-outline-primary btn-inverse">
                             <i class="fa fa-th"></i>
                         </button>
                     </div>
@@ -112,22 +112,22 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <a class="btn btn-success btn-sm" onclick="abrir_modal_edicion('{% url 'platos:PlatoDetail' plato.pk %}')" title="Ver plato">
+                                    <a class="btn btn-inverse-success" onclick="abrir_modal_edicion('{% url 'platos:PlatoDetail' plato.pk %}')" title="Ver plato">
                                         <i class="fa fa-eye"></i>
                                     </a>
                                     {% if plato.receta %}
-                                        <a href="{% url 'platos:RecetaDetail' plato.receta.pk %}" class="btn btn-warning btn-sm" title="Ver Receta">
+                                        <a href="{% url 'platos:RecetaDetail' plato.receta.pk %}" class="btn btn-inverse-warning" title="Ver Receta">
                                             <i class="fa fa-list"></i>
                                         </a>
                                     {% else %}
-                                        <a onclick="abrir_modal_edicion('{% url 'platos:crear_receta' plato_id=plato.pk %}')" class="btn btn-warning btn-sm" title="Crear Receta">
+                                        <a onclick="abrir_modal_edicion('{% url 'platos:crear_receta' plato_id=plato.pk %}')" class="btn btn-inverse-warning" title="Crear Receta">
                                             <i class="fa fa-plus"></i>
                                         </a>
                                     {% endif %}
-                                    <a class="btn btn-info btn-sm" onclick="abrir_modal_edicion('{% url 'platos:PlatoUpdate' plato.pk %}')" title="Editar plato">
+                                    <a class="btn btn-inverse-info" onclick="abrir_modal_edicion('{% url 'platos:PlatoUpdate' plato.pk %}')" title="Editar plato">
                                         <i class="fa fa-pencil"></i>
                                     </a>
-                                    <a class="btn btn-danger btn-sm" onclick="abrir_modal_edicion('{% url 'platos:PlatoDelete' plato.pk %}')" title="Eliminar plato">
+                                    <a class="btn btn-inverse-danger" onclick="abrir_modal_edicion('{% url 'platos:PlatoDelete' plato.pk %}')" title="Eliminar plato">
                                         <i class="fa fa-trash"></i>
                                     </a>
                                 </td>
@@ -152,22 +152,22 @@
                             <h5 class="card-title mb-3">{{ plato.nombre }}</h5>
                             <p class="text-muted">{{ plato.tipoplato }}</p>
                             <div class="d-flex justify-content-center gap-2">
-                                <a class="btn btn-success btn-sm" onclick="abrir_modal_edicion('{% url 'platos:PlatoDetail' plato.pk %}')" title="Ver plato">
+                                <a class="btn btn-inverse-success" onclick="abrir_modal_edicion('{% url 'platos:PlatoDetail' plato.pk %}')" title="Ver plato">
                                     <i class="fa fa-eye"></i>
                                 </a>
                                 {% if plato.receta %}
-                                    <a href="{% url 'platos:RecetaDetail' plato.receta.pk %}" class="btn btn-warning btn-sm" title="Ver Receta">
+                                    <a href="{% url 'platos:RecetaDetail' plato.receta.pk %}" class="btn btn-inverse-warning" title="Ver Receta">
                                         <i class="fa fa-list"></i>
                                     </a>
                                 {% else %}
-                                    <a onclick="abrir_modal_edicion('{% url 'platos:crear_receta' plato_id=plato.pk %}')" class="btn btn-warning btn-sm" title="Crear Receta">
+                                    <a onclick="abrir_modal_edicion('{% url 'platos:crear_receta' plato_id=plato.pk %}')" class="btn btn-inverse-warning" title="Crear Receta">
                                         <i class="fa fa-plus"></i>
                                     </a>
                                 {% endif %}
-                                <a class="btn btn-info btn-sm" onclick="abrir_modal_edicion('{% url 'platos:PlatoUpdate' plato.pk %}')" title="Editar plato">
+                                <a class="btn btn-inverse-info" onclick="abrir_modal_edicion('{% url 'platos:PlatoUpdate' plato.pk %}')" title="Editar plato">
                                     <i class="fa fa-pencil"></i>
                                 </a>
-                                <a class="btn btn-danger btn-sm" onclick="abrir_modal_edicion('{% url 'platos:PlatoDelete' plato.pk %}')" title="Eliminar plato">
+                                <a class="btn btn-inverse-danger" onclick="abrir_modal_edicion('{% url 'platos:PlatoDelete' plato.pk %}')" title="Eliminar plato">
                                     <i class="fa fa-trash"></i>
                                 </a>
                             </div>

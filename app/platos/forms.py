@@ -125,10 +125,13 @@ class RecetaForm(forms.ModelForm):
 class GenerarEtiquetaForm(forms.Form):
     plato = forms.ModelChoiceField(
         queryset=Plato.objects.all(),
-        label="Selecciona un plato"
+        label="Selecciona un plato",
+        widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border",
+                                   "style": "color: black !important; font-size: 16px;"}),
     )
     peso = forms.DecimalField(
         max_digits=6,
         decimal_places=2,
-        label="Peso real (g)"
+        label="Peso real (g)",
+        widget=forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"})
     )           

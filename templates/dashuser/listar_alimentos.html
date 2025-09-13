@@ -8,6 +8,11 @@
         font-size: 12px;
         line-height: 1.2;
     }
+    /* Ajustar el tamaño de las imágenes en la vista de cuadrícula */
+    .card-img-top-grid {
+        height: 180px;
+        object-fit: cover;
+    }
 </style>
 {% endblock head %}
 {% block content %}
@@ -40,18 +45,18 @@
 
                 <!-- Botón buscar -->
                 <div class="col">
-                    <button type="submit" class="btn btn-secondary">
+                    <button type="submit" class="btn btn-inverse-secondary">
                         <i class="fa fa-search"></i>
                     </button>
                 </div>
 
                 <!-- Botones vista -->
                 <div class="col-auto">
-                    <div class="btn-group btn-group-sm" role="group">
-                        <button id="btn-lista" type="button" class="btn btn-primary">
+                    <div class="btn-group" role="group">
+                        <button id="btn-lista" type="button" class="btn btn-inverse-primary">
                             <i class="fa fa-list"></i>
                         </button>
-                        <button id="btn-cuadricula" type="button" class="btn btn-outline-primary">
+                        <button id="btn-cuadricula" type="button" class="btn btn-outline-primary btn-inverse">
                             <i class="fa fa-th"></i>
                         </button>
                     </div>
@@ -82,13 +87,13 @@
                                 <td data-label="Stock actual">{{ alimento.stock_actual }}</td>
                                 <td data-label="Imagen"><img src="{{ alimento.imagen.url }}"></td>
                                 <td data-label="Opciones">
-                                    <a class="btn btn-success" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'dashuser:AlimentoDetail' alimento.pk %}')" data-toggle="tooltip" title="Ver Detalles">
+                                    <a class="btn btn-inverse-success" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'dashuser:AlimentoDetail' alimento.pk %}')" data-toggle="tooltip" title="Ver Detalles">
                                         <i class="fa fa-eye"></i>
                                     </a>
-                                    <a class="btn btn-info" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" href="{% url 'dashuser:AlimentoUpdate' alimento.pk %}" data-toggle="tooltip" title="Editar Alimento">
+                                    <a class="btn btn-inverse-info" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" href="{% url 'dashuser:AlimentoUpdate' alimento.pk %}" data-toggle="tooltip" title="Editar Alimento">
                                         <i class="fa fa-pencil"></i>
                                     </a>
-                                    <a class="btn btn-danger" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'dashuser:AlimentoDelete' alimento.pk %}')" data-toggle="tooltip" title="Eliminar Alimento">
+                                    <a class="btn btn-inverse-danger" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'dashuser:AlimentoDelete' alimento.pk %}')" data-toggle="tooltip" title="Eliminar Alimento">
                                         <i class="fa fa-trash"></i>
                                     </a>
                                 </td>
@@ -98,27 +103,27 @@
                     </table>
                 </div>
             </div>
-            <!-- Vista cuadrícula -->
-            <div id="vista-cuadricula" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4" style="display:none;">
+            <!-- Vista cuadrícula (modificado a 5 columnas) -->
+            <div id="vista-cuadricula" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3" style="display:none;">
                 {% for alimento in alimentos %}
                 <div class="col">
                     <div class="card h-100 shadow-sm">
                         {% if alimento.imagen %}
-                            <img src="{{ alimento.imagen.url }}" class="card-img-top" alt="{{ alimento.nombre }}" style="height:200px; object-fit:cover;">
+                            <img src="{{ alimento.imagen.url }}" class="card-img-top card-img-top-grid" alt="{{ alimento.nombre }}">
                         {% else %}
-                            <img src="https://via.placeholder.com/300x200?text=Sin+imagen" class="card-img-top" alt="Sin imagen">
+                            <img src="https://via.placeholder.com/300x200?text=Sin+imagen" class="card-img-top card-img-top-grid" alt="Sin imagen">
                         {% endif %}
-                        <div class="card-body text-center">
-                            <h5 class="card-title mb-2">{{ alimento.nombre }}</h5>
+                        <div class="card-body text-center d-flex flex-column">
+                            <h6 class="card-title mb-2">{{ alimento.nombre }}</h6>
                             <p class="text-muted small mb-3">Stock: {{ alimento.stock_actual }}</p>
-                            <div class="d-flex justify-content-center gap-2">
-                                <a class="btn btn-success" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'dashuser:AlimentoDetail' alimento.pk %}')" data-toggle="tooltip" title="Ver Detalles">
+                            <div class="d-flex justify-content-center gap-1 mt-auto">
+                                <a class="btn btn-inverse-success" onclick="abrir_modal_edicion('{% url 'dashuser:AlimentoDetail' alimento.pk %}')" data-toggle="tooltip" title="Ver Detalles">
                                     <i class="fa fa-eye"></i>
                                 </a>
-                                <a class="btn btn-info" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" href="{% url 'dashuser:AlimentoUpdate' alimento.pk %}" data-toggle="tooltip" title="Editar Alimento">
+                                <a class="btn btn-inverse-info" href="{% url 'dashuser:AlimentoUpdate' alimento.pk %}" data-toggle="tooltip" title="Editar Alimento">
                                     <i class="fa fa-pencil"></i>
                                 </a>
-                                <a class="btn btn-danger" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'dashuser:AlimentoDelete' alimento.pk %}')" data-toggle="tooltip" title="Eliminar Alimento">
+                                <a class="btn btn-inverse-danger" onclick="abrir_modal_edicion('{% url 'dashuser:AlimentoDelete' alimento.pk %}')" data-toggle="tooltip" title="Eliminar Alimento">
                                     <i class="fa fa-trash"></i>
                                 </a>
                             </div>
