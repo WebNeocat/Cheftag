@@ -2,33 +2,79 @@
     <div class="modal-content">
         <div class="modal-header bg-success">
             <h2 class="modal-title">Detalles del Plato</h2>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-            </button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
             <div class="container">
+
                 <h2>{{ plato.nombre }}</h2>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card mb-3">
-                            <div class="card-header">Información General</div>
-                            <div class="card-body">
-                                {% if plato.imagen %}
-                                <img src="{{ plato.imagen.url }}" class="img-fluid mb-3" alt="{{ plato.nombre }}">
-                                {% endif %}
-                                <p><strong>Descripción:</strong> {{ plato.descripcion|default:"Sin descripción" }}</p>
+
+                <!-- Tabs -->
+                <ul class="nav nav-tabs" id="platoTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="datos-tab" data-bs-toggle="tab" data-bs-target="#datos" type="button" role="tab">Datos</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="nutricion-tab" data-bs-toggle="tab" data-bs-target="#nutricion" type="button" role="tab">Nutricionales</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="ingredientes-tab" data-bs-toggle="tab" data-bs-target="#ingredientes" type="button" role="tab">Ingredientes</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="alergenos-tab" data-bs-toggle="tab" data-bs-target="#alergenos" type="button" role="tab">Alérgenos</button>
+                    </li>
+                </ul>
+
+                <!-- Tab content -->
+                <div class="tab-content mt-3" id="platoTabsContent">
+
+                    <!-- Datos Generales -->
+                    <div class="tab-pane fade show active" id="datos" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">Información General</div>
+                                    <div class="card-body">
+                                        {% if plato.imagen %}
+                                        <img src="{{ plato.imagen.url }}" class="img-fluid mb-3" alt="{{ plato.nombre }}">
+                                        {% endif %}
+                                        <p><strong>Descripción:</strong> {{ plato.descripcion|default:"Sin descripción" }}</p>
+                                        <p><strong>Código:</strong> {{ plato.codigo }}</p>
+                                        <p><strong>Días caducidad:</strong> {{ plato.vida_util }}</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <p>Código: {{ plato.codigo }}</p>
-                        <p>Días caducidad: {{ plato.vida_util }}</p>
                     </div>
-                    
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">Ingredientes</div>
+
+                    <!-- Datos Nutricionales -->
+                    <div class="tab-pane fade" id="nutricion" role="tabpanel">
+                        <div class="card mb-3">
+                            <div class="card-header">Datos Nutricionales (por 100 g)</div>
                             <div class="card-body">
-                                <table class="table">
+                                {% if nutricion %}
+                                <ul class="list-unstyled mb-0">
+                                    <li><strong>Energía:</strong> {{ nutricion.energia }} kJ</li>
+                                    <li><strong>Hidratos de Carbono:</strong> {{ nutricion.hidratosdecarbono }} g</li>
+                                    <li><strong>Proteínas:</strong> {{ nutricion.proteinas }} g</li>
+                                    <li><strong>Grasas Totales:</strong> {{ nutricion.grasas_totales }} g</li>
+                                    <li><strong>Grasas Saturadas:</strong> {{ nutricion.grasas_saturadas }} g</li>
+                                    <li><strong>Azúcares:</strong> {{ nutricion.azucares }} g</li>
+                                    <li><strong>Sal:</strong> {{ nutricion.sal }} g</li>
+                                </ul>
+                                {% else %}
+                                <p class="text-muted mb-0">No hay datos nutricionales registrados para este plato.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ingredientes -->
+                    <div class="tab-pane fade" id="ingredientes" role="tabpanel">
+                        <div class="card mb-3">
+                            <div class="card-header">Ingredientes</div>
+                            <div class="card-body" style="max-height:300px; overflow-y:auto;">
+                                <table class="table table-sm table-striped">
                                     <thead>
                                         <tr>
                                             <th>Alimento</th>
@@ -52,72 +98,85 @@
                                         {% endfor %}
                                     </tbody>
                                 </table>
-                            </div>
-                        {% if ingredientes_salsa %}    
-                        <div class="card mt-4">
-                            <div class="card-header">Ingredientes de la Salsa</div>
-                            <div class="card-body">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th>Alimento</th>
-                                            <th>Cantidad</th>
-                                            <th>Unidad</th>
-                                            <th>Notas</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for ingrediente in ingredientes_salsa %}
-                                        <tr>
-                                            <td>{{ ingrediente.alimento.nombre }}</td>
-                                            <td>{{ ingrediente.cantidad }}</td>
-                                            <td>{{ ingrediente.unidad_medida.abreviatura }}</td>
-                                            <td>{{ ingrediente.notas|default:"" }}</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        {% endif %}
-                        </div> <div class="col-md-12">
-                            <div class="card mb-3">
-                                <div class="card-header">Alérgenos del plato</div>
-                                <div class="card-body">
-                                    {% if alergenos %}
-                                    <div class="d-flex flex-wrap gap-2">
-                                        {% for alergeno in alergenos %}
-                                            <div class="alergeno-item text-center p-2 border rounded shadow" style="width: 90px;">
-                                                <img src="{{ alergeno.imagen.url }}" 
-                                                    alt="{{ alergeno.nombre }}" 
-                                                    class="img-fluid rounded mb-1"
-                                                    style="max-height:40px; object-fit:contain;">
-                                                <small>{{ alergeno.nombre }}</small>
-                                            </div>
-                                        {% endfor %}
+
+                                {% if ingredientes_salsa %}
+                                <div class="card mt-3">
+                                    <div class="card-header">Ingredientes de la Salsa</div>
+                                    <div class="card-body">
+                                        <table class="table table-sm table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Alimento</th>
+                                                    <th>Cantidad</th>
+                                                    <th>Unidad</th>
+                                                    <th>Notas</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for ingrediente in ingredientes_salsa %}
+                                                <tr>
+                                                    <td>{{ ingrediente.alimento.nombre }}</td>
+                                                    <td>{{ ingrediente.cantidad }}</td>
+                                                    <td>{{ ingrediente.unidad_medida.abreviatura }}</td>
+                                                    <td>{{ ingrediente.notas|default:"" }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
                                     </div>
-                                    {% else %}
-                                        <p class="text-muted">No contiene alérgenos declarados.</p>
-                                    {% endif %}
                                 </div>
-                            </div>  
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
-                </div>
+
+                    <!-- Alérgenos -->
+                    <div class="tab-pane fade" id="alergenos" role="tabpanel">
+                        <div class="card mb-3">
+                            <div class="card-header">Alérgenos del Plato</div>
+                            <div class="card-body">
+                                {% if alergenos %}
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for alergeno in alergenos %}
+                                    <div class="alergeno-item text-center p-2 border rounded shadow" style="width: 90px;">
+                                        <img src="{{ alergeno.imagen.url }}" 
+                                            alt="{{ alergeno.nombre }}" 
+                                            class="img-fluid rounded mb-1"
+                                            style="max-height:40px; object-fit:contain;">
+                                        <small>{{ alergeno.nombre }}</small>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <p class="text-muted">No contiene alérgenos declarados.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                </div> <!-- /tab-content -->
+
             </div>
         </div>
+
         <div class="modal-footer">
             <button type="button" class="btn btn-success" data-bs-dismiss="modal">Cerrar</button>
         </div>
     </div>
 </div>
+<style>
+/* Tabs compactas */
+.nav-tabs .nav-link {
+    padding: 1rem 4rem;   /* Reduce padding vertical y horizontal */
+    min-width: 90px;          /* Anchura mínima para que sean uniformes */
+    text-align: center;        /* Centrar el texto */
+}
 
+</style>
 <script>
-    // Agrega un evento de clic a los botones de cerrar y cancelar
+    // Cierra modal correctamente
     $('.modal .close, .modal .btn-danger').click(function() {
-        // Oculta el modal
         $('.modal').modal('hide');
-        // Elimina el fondo oscuro
         $('.modal-backdrop').remove();
     });
 </script>

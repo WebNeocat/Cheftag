@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -6,69 +7,67 @@
     <style>
         @page {
             width: 6cm; 
-            height: auto;
-            margin: 0;      /* Sin márgenes extra */
-    }
+            height: 24.5cm;
+            margin: 0;
+        }
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
+            font-size: 0.9em; /* Reducir tamaño base de fuente */
         }
 
         .etiqueta {
             width: 6cm;
-            padding: 10px;
+            padding: 8px; /* Reducir padding */
             border: 1px solid #000;
-
-            /* evitar que corte entre medias */
             page-break-inside: avoid;
             break-inside: avoid;
-            
             box-sizing: border-box;
         }
 
         .etiqueta h1 {
-            font-size: 1.2em;
-            margin: 0 0 5px 0;
+            font-size: 1.1em; /* Reducir tamaño */
+            margin: 0 0 3px 0; /* Reducir margen */
             text-align: center;
         }
 
         .peso {
-            font-size: 1.5em;
+            font-size: 1.3em; /* Reducir tamaño */
             font-weight: bold;
             text-align: center;
-            margin: 10px 0;
+            margin: 8px 0; /* Reducir margen */
         }
 
         h2 {
-            font-size: 1em;
-            margin: 10px 0 5px 0;
+            font-size: 0.95em; /* Reducir tamaño */
+            margin: 8px 0 3px 0; /* Reducir márgenes */
             border-bottom: 1px solid #000;
             padding-bottom: 2px;
         }
 
         ul {
-            margin: 0 0 10px 15px;
+            margin: 0 0 8px 12px; /* Reducir márgenes */
             padding: 0;
             list-style-type: disc;
-            font-size: 0.85em;
+            font-size: 0.8em; /* Reducir tamaño */
         }
 
         .alergenos-ingrediente {
             font-weight: bold;
-            font-size: 0.85em;
+            font-size: 0.8em; /* Reducir tamaño */
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.85em;
-            margin-bottom: 10px;
+            font-size: 0.8em; /* Reducir tamaño */
+            margin-bottom: 8px; /* Reducir margen */
         }
 
         table th, table td {
             border: 1px solid #000;
-            padding: 2px 4px;
+            padding: 2px 3px; /* Reducir padding */
             text-align: left;
         }
 
@@ -77,28 +76,54 @@
         }
 
         .informacion {
-            font-size: 0.75em;
-            margin-top: 5px;
+            font-size: 0.7em; /* Reducir tamaño */
+            margin-top: 3px; /* Reducir margen */
         }
 
         .resumen-alergenos {
             font-weight: bold;
             border: 1px solid #000;
-            padding: 3px;
-            margin-bottom: 5px;
+            padding: 2px; /* Reducir padding */
+            margin-bottom: 3px; /* Reducir margen */
+            font-size: 0.75em; /* Reducir tamaño */
         }
 
         .resumen-trazas {
             font-weight: bold;
             border: 1px solid #000;
-            padding: 3px;
+            padding: 2px; /* Reducir padding */
+            font-size: 0.75em; /* Reducir tamaño */
         }
 
         .fechas-lote {
-            margin-top: 5px;
-            font-size: 0.8em;
+            margin-top: 3px; /* Reducir margen */
+            font-size: 0.75em; /* Reducir tamaño */
         }
 
+        /* ESTILOS PARA LOGOS - MÁS PEQUEÑOS */
+        .logos-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px; /* Reducir margen */
+            padding-top: 3px; /* Reducir padding */
+            border-top: 1px dashed #ccc;
+            width: 100%;
+            gap: 5px; /* Reducir espacio entre logos */
+        }
+
+        .logo-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .logo {
+            max-width: 100%;
+            max-height: 1cm; /* Reducir altura máxima */
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -136,12 +161,16 @@
                 <th>Componente</th>
                 <th>Cantidad</th>
             </tr>
-            <tr><td>Energía</td><td>{{ etiqueta.energia|floatformat:2 }} kcal</td></tr>
+            <tr>
+                <td>Energía</td>
+                <td>{{ datos_nutricionales.energia|floatformat:2 }} Kj / {{ datos_nutricionales.energia_kcal|floatformat:2 }} Kcal</td>
+            </tr>
+            <tr><td>Grasas Totales</td><td>{{ etiqueta.grasas_totales|floatformat:2 }} g</td></tr>
+            <tr><td>De las cuales saturadas</td><td>{{ etiqueta.grasas_saturadas|floatformat:2 }} g</td></tr>
             <tr><td>Proteínas</td><td>{{ etiqueta.proteinas|floatformat:2 }} g</td></tr>
-            <tr><td>Grasas</td><td>{{ etiqueta.grasas|floatformat:2 }} g</td></tr>
-            <tr><td>Carbohidratos</td><td>{{ etiqueta.carbohidratos|floatformat:2 }} g</td></tr>
+            <tr><td>Hidratos de carbono</td><td>{{ etiqueta.carbohidratos|floatformat:2 }} g</td></tr>
             <tr><td>Azúcares</td><td>{{ etiqueta.azucares|floatformat:2 }} g</td></tr>
-            <tr><td>Sal</td><td>{{ etiqueta.sal_mg|floatformat:2 }} g</td></tr>
+            <tr><td>Sal</td><td>{{ etiqueta.sal|floatformat:2 }} g</td></tr>
         </table>
 
         <h2>Modo de empleo</h2>
@@ -159,8 +188,21 @@
         </div>
         <h2></h2>
         <p class="informacion" style="text-align: center;">
-            <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR Plato" style="width: 5cm; height: 5cm;">
+            <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR Plato" style="width: 4.5cm; height: 4.5cm;">
         </p>
+        
+        <!-- CONTENEDOR DE LOGOS -->
+        <div class="logos-container">
+            <div class="logo-wrapper">
+                <img src="{% static 'img/punto_verde.png' %}" alt="Punto verde" class="logo">
+            </div>
+            <div class="logo-wrapper">
+                <img src="{% static 'img/azul.png' %}" alt="Contenedor azul" class="logo">
+            </div>
+            <div class="logo-wrapper">
+                <img src="{% static 'img/amarillo.png' %}" alt="Contenedor amarillo" class="logo">
+            </div>
+        </div>
     </div>
 </body>
 </html>

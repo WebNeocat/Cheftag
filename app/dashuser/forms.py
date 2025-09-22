@@ -122,24 +122,14 @@ class AlimentoForm(forms.ModelForm):
 class InformacionNutricionalForm(forms.ModelForm):
     class Meta:
         model = InformacionNutricional
-        fields = ['energia', 'carbohidratos', 'proteinas', 'grasas', 'azucares', 'sal_mg', 'acido_folico', 'vitamina_c', 'vitamina_a', 'zinc', 'hierro', 'calcio' , 'colesterol', 'acidos_grasos_polinsaturados', 'acidos_grasos_monoinsaturados', 'acidos_grasos_saturados', 'fibra']
+        fields = ['energia', 'hidratosdecarbono', 'proteinas', 'grasas_totales', 'azucares', 'sal', 'grasas_saturadas']
         widgets = {
             'energia': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'carbohidratos': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'hidratosdecarbono': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
             'proteinas': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'grasas': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'grasas_totales': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
             'azucares': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'sal_mg': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'acido_folico': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'vitamina_c': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'vitamina_a': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'zinc': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'hierro': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'calcio': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'colesterol': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'acidos_grasos_polinsaturados': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'acidos_grasos_monoinsaturados': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'acidos_grasos_saturados': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'fibra': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),                   
+            'sal': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'grasas_saturadas': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),                   
         }
         exclude = ['alimento']        

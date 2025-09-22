@@ -1,5 +1,5 @@
 from django import forms
-from .models import Plato, AlimentoPlato, TipoPlato, Salsa, AlimentoSalsa, Receta
+from .models import Plato, AlimentoPlato, TipoPlato, Salsa, AlimentoSalsa, Receta, DatosNuticionales
 
 class SalsaForm(forms.ModelForm):    
     class Meta:
@@ -98,7 +98,7 @@ AlimentoPlatoFormSet = forms.inlineformset_factory(
     Plato, 
     AlimentoPlato, 
     form=AlimentoPlatoForm,
-    extra=1,
+    extra=0,
     can_delete=True
 )        
 
@@ -134,4 +134,19 @@ class GenerarEtiquetaForm(forms.Form):
         decimal_places=2,
         label="Peso real (g)",
         widget=forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"})
-    )           
+    )  
+    
+class DatosNuticionalesForm(forms.ModelForm):
+    class Meta:
+        model = DatosNuticionales
+        fields = ['energia', 'hidratosdecarbono', 'proteinas', 'grasas_totales', 'azucares', 'sal', 'grasas_saturadas']
+        widgets = {
+            'energia': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'hidratosdecarbono': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'proteinas': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'grasas_totales': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'azucares': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'sal': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'grasas_saturadas': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),                   
+        }
+        exclude = ['plato']                

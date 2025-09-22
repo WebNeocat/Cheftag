@@ -1,108 +1,163 @@
-<div class="modal-dialog modal-xl" role="document">
-    <div class="modal-content">
-        <div class="modal-header bg-primary text-white">
-            <h2 class="modal-title">{% if object %}Editar{% else %}<i class="fa fa-plus-circle"></i>&nbsp; Crear{% endif %} Plato</h2>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-            <form method="post" action="{% url 'platos:PlatoCreate' %}" enctype="multipart/form-data" id="plato-form">
-                {% csrf_token %}
-                
-                <!-- Datos del Plato - Estilo similar a crear_centro.html -->
-                <div class="card mb-3">
-                    <div class="card-header bg-inverse-primary">Datos del Plato</div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Nombre</label>
-                                {{ form.nombre }}
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Tipo de plato</label>
-                                {{ form.tipoplato }}
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Descripción</label>
-                                {{ form.descripcion }}
-                            </div> 
-                            <div class="col-md-6">
-                                <label class="form-label">Código</label>
-                                {{ form.codigo }}
-                            </div> 
-                            <div class="col-md-6">
-                                <label class="form-label">Días de caducidad</label>
-                                {{ form.vida_util }}
-                            </div>                          
-                            <div class="col-5">
-                                <label class="form-label">Salsa</label>
-                                {{ form.salsa }}
-                            </div>
-                            <div class="col-7">
-                                <label class="form-label">Imagen</label>
-                                {{ form.imagen }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Ingredientes - Estilo similar pero adaptado para el formset -->
-                <div class="card mb-3">
-                    <div class="card-header bg-inverse-primary">Ingredientes</div>
-                    <div class="card-body">
-                        {{ ingredientes_formset.management_form }}
-                        
-                        <div id="ingredientes-container">
-                            {% for form in ingredientes_formset %}
-                            <div class="ingrediente-form mb-3 p-3 border rounded">
-                                <div class="row g-3">
-                                    <div class="col-md-5">
-                                        <label class="form-label">Alimento</label>
-                                        {{ form.alimento }}
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Cantidad</label>
-                                        {{ form.cantidad }}
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Unidad de Medida</label>
-                                        {{ form.unidad_medida }}
-                                    </div>
-                                    <div class="col-md-12">
-                                        <label class="form-label">Notas</label>
-                                        {{ form.notas }}
-                                    </div>
-                                    {% if form.instance.pk %}
-                                    <div class="col-md-12 mt-2">
-                                        <div class="form-check">
-                                            {{ form.DELETE }}
-                                            <label class="form-check-label text-danger" for="{{ form.DELETE.id_for_label }}">
-                                                Eliminar este ingrediente
-                                            </label>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        
-                        <button type="button" id="add-ingrediente" class="btn btn-inverse-success">
-                            <i class="fa fa-plus-circle"></i>&nbsp; Añadir ingrediente
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-success">
-                        <i class="fa fa-save"></i> Guardar
-                    </button>
-                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">
-                        <i class="fa fa-times"></i> Cancelar
-                    </button>
-                </div>
-            </form>
-        </div>
+<div class="modal-dialog modal-lg" role="document">
+  <div class="modal-content">
+    <div class="modal-header bg-primary text-white">
+      <h2 class="modal-title">
+        {% if object %}Editar{% else %}<i class="fa fa-plus-circle"></i>&nbsp; Crear{% endif %} Plato
+      </h2>
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
     </div>
+    <div class="modal-body">
+
+      <form method="post" action="{% url 'platos:PlatoCreate' %}" enctype="multipart/form-data" id="plato-form">
+        {% csrf_token %}
+
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs" id="platoTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="datos-tab" data-bs-toggle="tab" data-bs-target="#datos" type="button" role="tab">Datos del Plato</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="nutricion-tab" data-bs-toggle="tab" data-bs-target="#nutricion" type="button" role="tab">Datos Nutricionales</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ingredientes-tab" data-bs-toggle="tab" data-bs-target="#ingredientes" type="button" role="tab">Ingredientes</button>
+          </li>
+        </ul>
+
+        <!-- Tab content -->
+        <div class="tab-content mt-3">
+          <!-- Datos del Plato -->
+          <div class="tab-pane fade show active" id="datos" role="tabpanel">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Nombre</label>
+                {{ form.nombre }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Tipo de plato</label>
+                {{ form.tipoplato }}
+              </div>
+              <div class="col-12">
+                <label class="form-label">Descripción</label>
+                {{ form.descripcion }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Código</label>
+                {{ form.codigo }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Días de caducidad</label>
+                {{ form.vida_util }}
+              </div>
+              <div class="col-5">
+                <label class="form-label">Salsa</label>
+                {{ form.salsa }}
+              </div>
+              <div class="col-7">
+                <label class="form-label">Imagen</label>
+                {{ form.imagen }}
+              </div>
+            </div>
+            <div class="mt-3 text-end">
+              <button class="btn btn-primary next-tab" data-next="#nutricion-tab">Siguiente &raquo;</button>
+            </div>
+          </div>
+
+          <!-- Datos Nutricionales -->
+          <div class="tab-pane fade" id="nutricion" role="tabpanel">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">Energía</label>
+                {{ nutricion_form.energia }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Hidratos de Carbono</label>
+                {{ nutricion_form.hidratosdecarbono }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Proteínas</label>
+                {{ nutricion_form.proteinas }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Grasas Totales</label>
+                {{ nutricion_form.grasas_totales }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Grasas Saturadas</label>
+                {{ nutricion_form.grasas_saturadas }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Azúcares</label>
+                {{ nutricion_form.azucares }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Sal</label>
+                {{ nutricion_form.sal }}
+              </div>
+            </div>
+            <div class="mt-3 d-flex justify-content-between">
+              <button class="btn btn-secondary prev-tab" data-prev="#datos-tab">&laquo; Anterior</button>
+              <button class="btn btn-primary next-tab" data-next="#ingredientes-tab">Siguiente &raquo;</button>
+            </div>
+          </div>
+
+          <!-- Ingredientes -->
+          <div class="tab-pane fade" id="ingredientes" role="tabpanel">
+            {{ ingredientes_formset.management_form }}
+            <div id="ingredientes-container">
+              {% for form in ingredientes_formset %}
+              <div class="ingrediente-form mb-3 p-3 border rounded">
+                <div class="row g-3">
+                  <div class="col-md-5">
+                    <label class="form-label">Alimento</label>
+                    {{ form.alimento }}
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Cantidad</label>
+                    {{ form.cantidad }}
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Unidad de Medida</label>
+                    {{ form.unidad_medida }}
+                  </div>
+                  <div class="col-md-12">
+                    <label class="form-label">Notas</label>
+                    {{ form.notas }}
+                  </div>
+                  {% if form.instance.pk %}
+                  <div class="col-md-12 mt-2">
+                    <div class="form-check">
+                      {{ form.DELETE }}
+                      <label class="form-check-label text-danger" for="{{ form.DELETE.id_for_label }}">
+                        Eliminar este ingrediente
+                      </label>
+                    </div>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            <button type="button" id="add-ingrediente" class="btn btn-inverse-success">
+              <i class="fa fa-plus-circle"></i>&nbsp; Añadir ingrediente
+            </button>
+            <div class="mt-3 d-flex justify-content-between">
+              <button class="btn btn-secondary prev-tab" data-prev="#nutricion-tab">&laquo; Anterior</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">
+            <i class="fa fa-save"></i> Guardar
+          </button>
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">
+            <i class="fa fa-times"></i> Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -167,4 +222,18 @@ $(document).ready(function() {
         $('.modal-backdrop').remove();
     });
 });
+
+
+$(function(){
+  // botones siguiente/anterior
+  $('.next-tab').click(function(e){
+    e.preventDefault();
+    $($(this).data('next')).tab('show');
+  });
+  $('.prev-tab').click(function(e){
+    e.preventDefault();
+    $($(this).data('prev')).tab('show');
+  });
+});
+
 </script>

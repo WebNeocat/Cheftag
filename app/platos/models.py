@@ -92,41 +92,6 @@ class Plato(ModeloBaseCentro):
 
         return (alergenos_plato | alergenos_salsa).distinct()
     
-    def calcular_nutricion(self, peso_real: Decimal):
-        ingredientes = self.ingredientes.all()
-        peso_total_receta = sum(i.cantidad for i in ingredientes)
-
-        # valores acumulados
-        nutricion = {
-            "energia": 0,
-            "carbohidratos": 0,
-            "proteinas": 0,
-            "grasas": 0,
-            "azucares": 0,
-            "sal_mg": 0,
-            "fibra": 0,
-        }
-
-        for ing in ingredientes:
-            if not hasattr(ing.alimento, "nutricion"):
-                continue  # skip si no hay info nutricional
-
-            factor = ing.cantidad / Decimal(100)  # escalar porque nutrición es por 100g
-            n = ing.alimento.nutricion
-            nutricion["energia"] += n.energia * factor
-            nutricion["carbohidratos"] += n.carbohidratos * factor
-            nutricion["proteinas"] += n.proteinas * factor
-            nutricion["grasas"] += n.grasas * factor
-            nutricion["azucares"] += n.azucares * factor
-            nutricion["sal_mg"] += n.sal_mg * factor
-            nutricion["fibra"] += n.fibra * factor
-
-        # Escalar a peso real
-        factor_escalado = peso_real / peso_total_receta
-        for k in nutricion:
-            nutricion[k] *= factor_escalado
-
-        return nutricion
     
     def get_ingredientes_con_info(self):
         """
@@ -202,10 +167,10 @@ class EtiquetaPlato(ModeloBaseCentro):
     energia = models.DecimalField(max_digits=8, decimal_places=2)
     carbohidratos = models.DecimalField(max_digits=8, decimal_places=2)
     proteinas = models.DecimalField(max_digits=8, decimal_places=2)
-    grasas = models.DecimalField(max_digits=8, decimal_places=2)
+    grasas_totales = models.DecimalField(max_digits=8, decimal_places=2)
     azucares = models.DecimalField(max_digits=8, decimal_places=2)
-    sal_mg = models.DecimalField(max_digits=8, decimal_places=2)
-    fibra = models.DecimalField(max_digits=8, decimal_places=2)
+    sal = models.DecimalField(max_digits=8, decimal_places=2)
+    grasas_saturadas = models.DecimalField(max_digits=8, decimal_places=2)
     impresa = models.BooleanField(default=False)
 
     class Meta:
@@ -250,5 +215,22 @@ class EtiquetaPlato(ModeloBaseCentro):
 
         super().save(*args, **kwargs)
 
+
+class DatosNuticionales(ModeloBaseCentro):
+    plato = models.OneToOneField(Plato, on_delete=models.CASCADE, related_name='nutricion')
+    energia = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Energía en Kj por 100g")
+    grasas_totales = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Grasas totales en g por 100g")
+    grasas_saturadas = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Grasas saturadas en g por 100g")
+    hidratosdecarbono = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Hidratos de carbono en g por 100g")
+    azucares = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Azúcares en g por 100g")
+    proteinas = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Proteinas en g por 100g")
+    sal = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Sal en g por 100g")
+
+    class Meta:
+        verbose_name = "Datos Nutricionales"
+        verbose_name_plural = "Datos Nutricionales"
+
+    def __str__(self):
+        return f"Datos Nutricionales de {self.alimento.nombre}"
     
     

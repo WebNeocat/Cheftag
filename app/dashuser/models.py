@@ -112,23 +112,13 @@ class Alimento(ModeloBaseCentro):
     
 class InformacionNutricional(models.Model):
     alimento = models.OneToOneField(Alimento, on_delete=models.CASCADE, related_name="nutricion")
-    energia = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
-    carbohidratos = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
-    proteinas = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
-    grasas = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
-    azucares = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
-    sal_mg = models.DecimalField(default=0, max_digits=7, decimal_places=2, blank=True)
-    acido_folico = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
-    vitamina_c = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
-    vitamina_a = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
-    zinc = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
-    hierro = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
-    calcio = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
-    colesterol = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
-    acidos_grasos_polinsaturados = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
-    acidos_grasos_monoinsaturados = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
-    acidos_grasos_saturados = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
-    fibra = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
+    energia = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Energía en Kj por 100g")
+    grasas_totales = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Grasas totales en g por 100g")
+    grasas_saturadas = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Grasas saturadas en g por 100g")
+    hidratosdecarbono = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Hidratos de carbono en g por 100g")
+    azucares = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Azúcares en g por 100g")
+    proteinas = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Proteinas en g por 100g")
+    sal = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Sal en g por 100g")
 
     def __str__(self):
         return f"Información Nutricional de {self.alimento.nombre}"

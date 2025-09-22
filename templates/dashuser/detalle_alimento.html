@@ -89,7 +89,7 @@
                         <!-- Primeros 4 destacados -->
                         <div class="row g-4 mb-4">
                             <div class="col-md-3 col-6">
-                                <div class="card text-center border-0 shadow-sm h-100 bg-success text-white">
+                                <div class="card text-center border-0 shadow-sm h-100 bg-inverse-success">
                                     <div class="card-body">
                                         <h6 class="fw-bold">Energía</h6>
                                         <p class="display-6">{{ alimento.nutricion.energia }}<small class="fs-6"> kcal</small></p>
@@ -99,15 +99,39 @@
                             <div class="col-md-3 col-6">
                                 <div class="card text-center border-0 shadow-sm h-100 bg-success text-white">
                                     <div class="card-body">
-                                        <h6 class="fw-bold">Carbohidratos</h6>
-                                        <p class="display-6">{{ alimento.nutricion.carbohidratos }}<small class="fs-6"> g</small></p>
+                                        <h6 class="fw-bold">Grasas</h6>
+                                        <p class="display-6">{{ alimento.nutricion.grasas_totales }}<small class="fs-6"> g</small></p>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-3 col-6">
                                 <div class="card text-center border-0 shadow-sm h-100 bg-success text-white">
                                     <div class="card-body">
-                                        <h6 class="fw-bold">Proteínas</h6>
+                                        <h6 class="fw-bold">Grasas saturadas</h6>
+                                        <p class="display-6">{{ alimento.nutricion.grasas_saturadas }}<small class="fs-6"> g</small></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="card text-center border-0 shadow-sm h-100 bg-success text-white">
+                                    <div class="card-body">
+                                        <h6 class="fw-bold">Carbohidratos</h6>
+                                        <p class="display-6">{{ alimento.nutricion.hidratosdecarbono }}<small class="fs-6"> g</small></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="card text-center border-0 shadow-sm h-100 bg-success text-white">
+                                    <div class="card-body">
+                                        <h6 class="fw-bold">Azucares</h6>
+                                        <p class="display-6">{{ alimento.nutricion.azucares }}<small class="fs-6"> g</small></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="card text-center border-0 shadow-sm h-100 bg-success text-white">
+                                    <div class="card-body">
+                                        <h6 class="fw-bold">Proteinas</h6>
                                         <p class="display-6">{{ alimento.nutricion.proteinas }}<small class="fs-6"> g</small></p>
                                     </div>
                                 </div>
@@ -115,40 +139,13 @@
                             <div class="col-md-3 col-6">
                                 <div class="card text-center border-0 shadow-sm h-100 bg-success text-white">
                                     <div class="card-body">
-                                        <h6 class="fw-bold">Grasas</h6>
-                                        <p class="display-6">{{ alimento.nutricion.grasas }}<small class="fs-6"> g</small></p>
+                                        <h6 class="fw-bold">Sal</h6>
+                                        <p class="display-6">{{ alimento.nutricion.sal }}<small class="fs-6"> g</small></p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Resto en dos columnas estilo tabla -->
-                        <div class="row">
-                            <div class="col-md-6">
-                                <table class="table table-striped align-middle">
-                                    <tbody>
-                                        <tr><td><strong>Azúcares</strong></td><td class="text-end">{{ alimento.nutricion.azucares }} g</td></tr>
-                                        <tr><td><strong>Sal (Sodio)</strong></td><td class="text-end">{{ alimento.nutricion.sal_mg }} mg</td></tr>
-                                        <tr><td><strong>Ácido fólico</strong></td><td class="text-end">{{ alimento.nutricion.acido_folico }} µg</td></tr>
-                                        <tr><td><strong>Vitamina C</strong></td><td class="text-end">{{ alimento.nutricion.vitamina_c }} g</td></tr>
-                                        <tr><td><strong>Vitamina A</strong></td><td class="text-end">{{ alimento.nutricion.vitamina_a }} µg</td></tr>
-                                        <tr><td><strong>Zinc</strong></td><td class="text-end">{{ alimento.nutricion.zinc }} mg</td></tr>
-                                        <tr><td><strong>Fibra</strong></td><td class="text-end">{{ alimento.nutricion.fibra }} g</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="col-md-6">
-                                <table class="table table-striped align-middle">
-                                    <tbody>
-                                        <tr><td><strong>Hierro</strong></td><td class="text-end">{{ alimento.nutricion.hierro }} mg</td></tr>
-                                        <tr><td><strong>Calcio</strong></td><td class="text-end">{{ alimento.nutricion.calcio }} mg</td></tr>
-                                        <tr><td><strong>Colesterol</strong></td><td class="text-end">{{ alimento.nutricion.colesterol }} mg</td></tr>
-                                        <tr><td><strong>Ácidos grasos poliinsaturados</strong></td><td class="text-end">{{ alimento.nutricion.acidos_grasos_polinsaturados }} g</td></tr>
-                                        <tr><td><strong>Ácidos grasos monoinsaturados</strong></td><td class="text-end">{{ alimento.nutricion.acidos_grasos_monoinsaturados }} g</td></tr>
-                                        <tr><td><strong>Ácidos grasos saturados</strong></td><td class="text-end">{{ alimento.nutricion.acidos_grasos_saturados }} g</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
                         </div>
                     {% else %}
                         <p class="text-muted fst-italic">No hay información nutricional disponible.</p>

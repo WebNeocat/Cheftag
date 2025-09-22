@@ -8,7 +8,7 @@ from django.db.models import Q
 from io import BytesIO
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from weasyprint import HTML
+from weasyprint import HTML, CSS
 from PyPDF2 import PdfMerger
 import weasyprint
 from django.urls import reverse_lazy, reverse
@@ -17,7 +17,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.mixins import LoginRequiredMixin
 from app.core.mixins import PaginationMixin
 from .models import TipoPlato, Plato, Salsa, Receta, EtiquetaPlato
-from .forms import TipoPlatoForm, PlatoForm, AlimentoPlatoFormSet, SalsaForm, AlimentoSalsaFormSet, RecetaForm, GenerarEtiquetaForm
+from .forms import TipoPlatoForm, PlatoForm, AlimentoPlatoFormSet, SalsaForm, AlimentoSalsaFormSet, RecetaForm, GenerarEtiquetaForm, DatosNuticionalesForm
 import qrcode
 import json
 import base64
@@ -196,22 +196,30 @@ class PlatoList(PaginationMixin, LoginRequiredMixin, ListView):
     paginate_by = 12
 
     def get_queryset(self):
-        user_profile = get_object_or_404(UserProfile, user=self.request.user)
-        if user_profile.centro:
-            queryset = Plato.objects.filter(centro=user_profile.centro).order_by('nombre')
-            
-            search_query = self.request.GET.get('buscar')
-            if search_query:
-                queryset = queryset.filter(nombre__icontains=search_query)
-            
-            return queryset
-        return Plato.objects.none()
+        try: 
+            user_profile = get_object_or_404(UserProfile, user=self.request.user)
+            if user_profile.centro:
+                queryset = Plato.objects.filter(centro=user_profile.centro).order_by('nombre')
+                
+                search_query = self.request.GET.get('buscar')
+                if search_query:
+                    queryset = queryset.filter(
+                        Q(nombre__icontains=search_query)
+                    )         
+                return queryset
+            else:
+                return Plato.objects.none()
+        except ObjectDoesNotExist:
+            return Plato.objects.none()    
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(datos_centro(self.request))
+        
+        # Añadir un mensaje si no hay platos asociados
         if not context['platos'].exists():
             context['mensaje'] = "No tiene platos registrados."
+            
         return context
     
     
@@ -224,16 +232,17 @@ class PlatoCreate(LoginRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        # formset de ingredientes
         if self.request.POST:
             context['ingredientes_formset'] = AlimentoPlatoFormSet(
-                self.request.POST, 
-                self.request.FILES,
-                prefix='ingredientes'
+                self.request.POST, self.request.FILES, prefix='ingredientes'
             )
+            context['nutricion_form'] = DatosNuticionalesForm(self.request.POST, prefix='nutricion')
         else:
-            context['ingredientes_formset'] = AlimentoPlatoFormSet(
-                prefix='ingredientes'
-            )
+            context['ingredientes_formset'] = AlimentoPlatoFormSet(prefix='ingredientes')
+            context['nutricion_form'] = DatosNuticionalesForm(prefix='nutricion')
+
         return context
 
     def form_valid(self, form):
@@ -241,34 +250,49 @@ class PlatoCreate(LoginRequiredMixin, CreateView):
         if not user_profile.centro:
             messages.error(self.request, 'No está asociado a ningún centro.')
             return self.form_invalid(form)
-        
+
         context = self.get_context_data()
         ingredientes_formset = context['ingredientes_formset']
-        
+        nutricion_form = context['nutricion_form']
+
+        # Guardamos plato primero sin commit
         self.object = form.save(commit=False)
         self.object.centro = user_profile.centro
         self.object.save()
-        
-        if ingredientes_formset.is_valid():
+
+        # Ingredientes
+        if ingredientes_formset.is_valid() and nutricion_form.is_valid():
             ingredientes = ingredientes_formset.save(commit=False)
             for ingrediente in ingredientes:
                 ingrediente.plato = self.object
                 ingrediente.centro = user_profile.centro
                 ingrediente.save()
-            
+
             for obj in ingredientes_formset.deleted_objects:
                 obj.delete()
-            
+
+            # Guardar datos nutricionales
+            nutricion = nutricion_form.save(commit=False)
+            nutricion.plato = self.object
+            nutricion.centro = user_profile.centro
+            nutricion.save()
+
             messages.success(self.request, 'Plato creado correctamente.')
             return super().form_valid(form)
         else:
-            # Mostrar errores específicos del formset
+            # errores ingredientes
             for form_ing in ingredientes_formset:
                 if form_ing.errors:
                     for field, errors in form_ing.errors.items():
                         for error in errors:
                             messages.error(self.request, f"Ingrediente: {field} - {error}")
-            return self.form_invalid(form)    
+            # errores nutricion
+            for field, errors in nutricion_form.errors.items():
+                for error in errors:
+                    messages.error(self.request, f"Nutrición: {field} - {error}")
+
+            return self.form_invalid(form)
+
         
         
 class PlatoUpdate(LoginRequiredMixin, UpdateView):
@@ -286,35 +310,78 @@ class PlatoUpdate(LoginRequiredMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        # Formset de ingredientes
         if self.request.POST:
             context['ingredientes_formset'] = AlimentoPlatoFormSet(
-                self.request.POST, 
-                self.request.FILES, 
-                instance=self.object
+                self.request.POST,
+                self.request.FILES,
+                instance=self.object,
+                prefix='ingredientes'
             )
         else:
-            context['ingredientes_formset'] = AlimentoPlatoFormSet(instance=self.object)
+            context['ingredientes_formset'] = AlimentoPlatoFormSet(
+                instance=self.object,
+                prefix='ingredientes'
+            )
+
+        # Form de datos nutricionales
+        if self.request.POST:
+            if hasattr(self.object, 'nutricion'):
+                context['nutricion_form'] = DatosNuticionalesForm(
+                    self.request.POST,
+                    instance=self.object.nutricion
+                )
+            else:
+                context['nutricion_form'] = DatosNuticionalesForm(self.request.POST)
+        else:
+            if hasattr(self.object, 'nutricion'):
+                context['nutricion_form'] = DatosNuticionalesForm(instance=self.object.nutricion)
+            else:
+                context['nutricion_form'] = DatosNuticionalesForm()
+
         return context
 
     def form_valid(self, form):
         context = self.get_context_data()
         ingredientes_formset = context['ingredientes_formset']
-        
-        if ingredientes_formset.is_valid():
-            self.object = form.save()
+        nutricion_form = context['nutricion_form']
+
+        if ingredientes_formset.is_valid() and nutricion_form.is_valid():
+            self.object = form.save(commit=False)
+            user_profile = get_object_or_404(UserProfile, user=self.request.user)
+            self.object.centro = user_profile.centro
+            self.object.save()
+
+            # Guardar ingredientes
             ingredientes = ingredientes_formset.save(commit=False)
-            
             for ingrediente in ingredientes:
-                ingrediente.centro = self.object.centro
+                ingrediente.plato = self.object
+                ingrediente.centro = user_profile.centro
                 ingrediente.save()
-            
             for obj in ingredientes_formset.deleted_objects:
                 obj.delete()
-            
+
+            # Guardar datos nutricionales
+            nutricion = nutricion_form.save(commit=False)
+            nutricion.plato = self.object
+            # Asignar centro siempre
+            if not nutricion.centro_id:
+                nutricion.centro = self.object.centro
+            nutricion.save()
+
             messages.success(self.request, 'Plato actualizado correctamente.')
             return super().form_valid(form)
         else:
+            # Mostrar errores si los hay
+            for formset in [ingredientes_formset, nutricion_form]:
+                for f in getattr(formset, 'forms', [formset]):
+                    if f.errors:
+                        for field, errors in f.errors.items():
+                            for error in errors:
+                                messages.error(self.request, f"{field}: {error}")
             return self.form_invalid(form)
+
         
 
 class PlatoDetail(LoginRequiredMixin, DetailView):
@@ -330,6 +397,8 @@ class PlatoDetail(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        # Ingredientes del plato
         ingredientes = self.object.ingredientes.all().select_related('alimento', 'unidad_medida')
         context['ingredientes'] = ingredientes
         context['alergenos'] = self.object.get_alergenos()
@@ -340,8 +409,12 @@ class PlatoDetail(LoginRequiredMixin, DetailView):
         else:
             ingredientes_salsa = []
         context['ingredientes_salsa'] = ingredientes_salsa
-        
+
+        # Datos Nutricionales (puede ser None si no los hemos creado aún)
+        context['nutricion'] = getattr(self.object, 'nutricion', None)
+
         return context
+
 
     
     
@@ -704,127 +777,34 @@ class EtiquetaDetail(LoginRequiredMixin, DetailView):
         # Obtener alérgenos del plato
         context['alergenos'] = plato.get_alergenos()
         
-        # Calcular información nutricional total
-        info_nutricional_total = self.calcular_info_nutricional_total(ingredientes, ingredientes_salsa)
-        context['info_nutricional_total'] = info_nutricional_total
-        
-        # Calcular información nutricional por porción
-        if plato.receta and plato.receta.rendimiento > 0:
-            info_nutricional_porcion = self.calcular_info_nutricional_porcion(info_nutricional_total, plato.receta.rendimiento)
-            context['info_nutricional_porcion'] = info_nutricional_porcion
+        # Obtener datos nutricionales directamente del modelo
+        if hasattr(plato, 'nutricion') and plato.nutricion:
+            info_nutricional_total = self.obtener_info_nutricional_total(plato.nutricion)
+            context['info_nutricional_total'] = info_nutricional_total
+            
+            # Calcular información nutricional por porción si hay receta
+            if plato.receta and plato.receta.rendimiento > 0:
+                info_nutricional_porcion = self.calcular_info_nutricional_porcion(
+                    info_nutricional_total, plato.receta.rendimiento
+                )
+                context['info_nutricional_porcion'] = info_nutricional_porcion
         
         # Añadir datos del centro
         context.update(datos_centro(self.request))
         
         return context
 
-    def calcular_info_nutricional_total(self, ingredientes, ingredientes_salsa):
-        """
-        Calcula la información nutricional total sumando todos los ingredientes
-        tanto del plato como de la salsa (si existe), considerando que los valores
-        nutricionales en la BD están expresados por 100g/100ml
-        """
-        # Inicializar todos los valores en 0
-        totales = {
-            'energia': 0,
-            'carbohidratos': 0,
-            'proteinas': 0,
-            'grasas': 0,
-            'azucares': 0,
-            'sal_mg': 0,
-            'acido_folico': 0,
-            'vitamina_c': 0,
-            'vitamina_a': 0,
-            'zinc': 0,
-            'hierro': 0,
-            'calcio': 0,
-            'colesterol': 0,
-            'acidos_grasos_polinsaturados': 0,
-            'acidos_grasos_monoinsaturados': 0,
-            'acidos_grasos_saturados': 0,
-            'fibra': 0,
+    def obtener_info_nutricional_total(self, nutricion):
+        return {
+            'energia': float(nutricion.energia or 0),
+            'grasas_totales': float(nutricion.grasas_totales or 0),
+            'grasas_saturadas': float(nutricion.grasas_saturadas or 0),
+            'carbohidratos': float(nutricion.hidratosdecarbono or 0),
+            'azucares': float(nutricion.azucares or 0),
+            'proteinas': float(nutricion.proteinas or 0),
+            'sal': float(nutricion.sal or 0),
         }
-        
-        # Función para procesar cada ingrediente
-        def procesar_ingrediente(ingrediente):
-            if hasattr(ingrediente.alimento, 'nutricion') and ingrediente.alimento.nutricion:
-                nutricion = ingrediente.alimento.nutricion
-                # Calcular factor de conversión según la cantidad y unidad de medida
-                factor = self.calcular_factor_conversion(ingrediente)
-                
-                # Sumar cada valor nutricional multiplicado por el factor de conversión
-                totales['energia'] += float(nutricion.energia or 0) * factor
-                totales['carbohidratos'] += float(nutricion.carbohidratos or 0) * factor
-                totales['proteinas'] += float(nutricion.proteinas or 0) * factor
-                totales['grasas'] += float(nutricion.grasas or 0) * factor
-                totales['azucares'] += float(nutricion.azucares or 0) * factor
-                totales['sal_mg'] += float(nutricion.sal_mg or 0) * factor
-                totales['acido_folico'] += float(nutricion.acido_folico or 0) * factor
-                totales['vitamina_c'] += float(nutricion.vitamina_c or 0) * factor
-                totales['vitamina_a'] += float(nutricion.vitamina_a or 0) * factor
-                totales['zinc'] += float(nutricion.zinc or 0) * factor
-                totales['hierro'] += float(nutricion.hierro or 0) * factor
-                totales['calcio'] += float(nutricion.calcio or 0) * factor
-                totales['colesterol'] += float(nutricion.colesterol or 0) * factor
-                totales['acidos_grasos_polinsaturados'] += float(nutricion.acidos_grasos_polinsaturados or 0) * factor
-                totales['acidos_grasos_monoinsaturados'] += float(nutricion.acidos_grasos_monoinsaturados or 0) * factor
-                totales['acidos_grasos_saturados'] += float(nutricion.acidos_grasos_saturados or 0) * factor
-                totales['fibra'] += float(nutricion.fibra or 0) * factor
-        
-        # Procesar ingredientes del plato
-        for ingrediente in ingredientes:
-            procesar_ingrediente(ingrediente)
-        
-        # Procesar ingredientes de la salsa
-        for ingrediente in ingredientes_salsa:
-            procesar_ingrediente(ingrediente)
-        
-        # Redondear todos los valores a 2 decimales
-        for key in totales:
-            totales[key] = round(totales[key], 2)
-        
-        return totales
-
-    def calcular_factor_conversion(self, ingrediente):
-        """
-        Calcula el factor de conversión para ajustar los valores nutricionales
-        según la cantidad real utilizada del ingrediente.
-        
-        Los valores nutricionales en la BD están por 100g/100ml,
-        así que calculamos: (cantidad / 100) * factor_unidad
-        """
-        cantidad = float(ingrediente.cantidad or 0)
-        unidad = ingrediente.unidad_medida.abreviatura.lower()
-        
-        # Factores de conversión según el tipo de unidad
-        # Para unidades de peso (g, kg) y volumen (ml, l)
-        factores = {
-            'g': 1.0,          # gramos - mismo factor
-            'kg': 1000.0,      # kilogramos a gramos
-            'mg': 0.001,       # miligramos a gramos
-            'ml': 1.0,         # mililitros - mismo factor (asumiendo densidad ~1g/ml)
-            'l': 1000.0,       # litros a mililitros
-            'cl': 10.0,        # centilitros a mililitros
-            'dl': 100.0,       # decilitros a mililitros
-        }
-        
-        # Obtener factor de conversión o usar 1.0 por defecto
-        factor_unidad = factores.get(unidad, 1.0)
-        
-        # Calcular factor total: (cantidad * factor_unidad) / 100
-        # porque los valores nutricionales son por 100g/100ml
-        return (cantidad * factor_unidad) / 100.0
-
-    def calcular_info_nutricional_porcion(self, info_nutricional_total, rendimiento):
-        """
-        Calcula la información nutricional por porción
-        """
-        porcion = {}
-        for key, value in info_nutricional_total.items():
-            porcion[key] = round(value / rendimiento, 2)
-        return porcion
     
-
 
 def generar_etiqueta(request):
     if request.method == "POST":
@@ -833,26 +813,57 @@ def generar_etiqueta(request):
             plato = form.cleaned_data["plato"]
             peso = form.cleaned_data["peso"]
 
-            nutricion = plato.calcular_nutricion(peso)
+            # Obtener datos nutricionales directamente del modelo
+            if hasattr(plato, 'nutricion') and plato.nutricion:
+                nutricion = plato.nutricion
+                try:
+                    etiqueta = EtiquetaPlato.objects.create(
+                        plato=plato,
+                        peso=peso,
+                        energia=nutricion.energia,
+                        carbohidratos=nutricion.hidratosdecarbono,
+                        proteinas=nutricion.proteinas,
+                        grasas_totales=nutricion.grasas_totales,
+                        azucares=nutricion.azucares,
+                        sal=nutricion.sal,
+                        grasas_saturadas=nutricion.grasas_saturadas,
+                        centro=plato.centro
+                    )
 
-            etiqueta = EtiquetaPlato.objects.create(
-                plato=plato,
-                peso=peso,
-                energia=nutricion["energia"],
-                carbohidratos=nutricion["carbohidratos"],
-                proteinas=nutricion["proteinas"],
-                grasas=nutricion["grasas"],
-                azucares=nutricion["azucares"],
-                sal_mg=nutricion["sal_mg"],
-                fibra=nutricion["fibra"],
-                centro=plato.centro
-            )
+                    # Guardar en sesión
+                    if "etiquetas_ids" not in request.session:
+                        request.session["etiquetas_ids"] = []
+                    
+                    request.session["etiquetas_ids"].append(etiqueta.id)
+                    request.session.modified = True
 
-            # Guardar en sesión
-            if "etiquetas_ids" not in request.session:
-                request.session["etiquetas_ids"] = []
-            request.session["etiquetas_ids"].append(etiqueta.id)
-            request.session.modified = True
+                except Exception as e:
+                    print(f"Error al crear etiqueta: {e}")
+            else:
+                # Crear etiqueta con valores por defecto si no hay datos nutricionales
+                try:
+                    etiqueta = EtiquetaPlato.objects.create(
+                        plato=plato,
+                        peso=peso,
+                        energia=0,
+                        carbohidratos=0,
+                        proteinas=0,
+                        grasas_totales=0,
+                        azucares=0,
+                        sal=0,
+                        grasas_saturadas=0,
+                        centro=plato.centro
+                    )
+
+                    # Guardar en sesión
+                    if "etiquetas_ids" not in request.session:
+                        request.session["etiquetas_ids"] = []
+                    
+                    request.session["etiquetas_ids"].append(etiqueta.id)
+                    request.session.modified = True
+
+                except Exception as e:
+                    print(f"Error al crear etiqueta con valores por defecto: {e}")
 
             return redirect("platos:generar_etiqueta")
     else:
@@ -860,21 +871,26 @@ def generar_etiqueta(request):
 
     # Recuperar etiquetas en sesión
     etiquetas_ids = request.session.get("etiquetas_ids", [])
-    etiquetas = EtiquetaPlato.objects.filter(impresa=False, id__in=etiquetas_ids)
+    etiquetas = EtiquetaPlato.objects.filter(id__in=etiquetas_ids, impresa=False).select_related('plato')
+    
     
     # Obtener datos del centro para el contexto
     contexto_centro = datos_centro(request)
 
     return render(request, "platos/generar_etiqueta.html", {
         "form": form,
-        "etiquetas": etiquetas, 
+        "etiquetas": etiquetas,
         **contexto_centro
     })
     
-
+    
+    
 def preview_etiqueta(request, etiqueta_id):
     etiqueta = get_object_or_404(EtiquetaPlato, id=etiqueta_id)
     plato = etiqueta.plato
+    
+    # Marcar como impresas inmediatamente
+    etiqueta.update(impresa=True)
 
     ingredientes_info = plato.get_ingredientes_con_info()
 
@@ -900,12 +916,12 @@ def preview_etiqueta(request, etiqueta_id):
         "nutricion": {
             "energia": float(etiqueta.energia),
             "proteinas": float(etiqueta.proteinas),
-            "grasas": float(etiqueta.grasas),
+            "grasas_totales": float(etiqueta.grasas_totales),
             "carbohidratos": float(etiqueta.carbohidratos),
             "azucares": float(etiqueta.azucares),
-            "sal": float(etiqueta.sal_mg)
+            "sal": float(etiqueta.sal),  # CAMBIADO: sal_mg -> sal
+            "grasas_saturadas": float(etiqueta.grasas_saturadas)  # AÑADIDO
         },
-        #"caducidad": etiqueta.caducidad.isoformat() if etiqueta.caducidad else "",
         "lote": str(etiqueta.lote) if etiqueta.lote else ""
     }
 
@@ -934,6 +950,8 @@ def preview_etiqueta(request, etiqueta_id):
 
     # Generamos PDF
     weasyprint.HTML(string=html, base_url=request.build_absolute_uri()).write_pdf(response)
+    
+    
 
     return response
 
@@ -942,6 +960,9 @@ def imprimir_etiquetas(request):
     if request.method == "POST":
         ids = request.POST.getlist("etiquetas")
         etiquetas = EtiquetaPlato.objects.filter(id__in=ids)
+        
+        # Marcar como impresas inmediatamente
+        etiquetas.update(impresa=True)
 
         merger = PdfMerger()
 
@@ -964,10 +985,11 @@ def imprimir_etiquetas(request):
                 "nutricion": {
                     "energia": float(etiqueta.energia),
                     "proteinas": float(etiqueta.proteinas),
-                    "grasas": float(etiqueta.grasas),
+                    "grasas_totales": float(etiqueta.grasas_totales),
                     "carbohidratos": float(etiqueta.carbohidratos),
                     "azucares": float(etiqueta.azucares),
-                    "sal": float(etiqueta.sal_mg),
+                    "sal": float(etiqueta.sal),  # CAMBIADO: sal_mg -> sal
+                    "grasas_saturadas": float(etiqueta.grasas_saturadas)  # AÑADIDO
                 },
                 "lote": str(etiqueta.lote) if etiqueta.lote else ""
             }
@@ -987,12 +1009,23 @@ def imprimir_etiquetas(request):
             }
 
             html = render_to_string("platos/preview_etiqueta.html", context)
+            
             # ✅ marcar como impresa
             etiqueta.impresa = True
             etiqueta.save()
             
             pdf_buffer = BytesIO()
-            HTML(string=html, base_url=request.build_absolute_uri()).write_pdf(pdf_buffer)
+            
+            # Configuración específica para WeasyPrint con tamaño personalizado
+            html_obj = HTML(string=html, base_url=request.build_absolute_uri())
+            css = CSS(string='@page { size: 60mm auto; margin: 0; }')
+            
+            html_obj.write_pdf(
+                pdf_buffer,
+                stylesheets=[css],
+                presentational_hints=True
+            )
+            
             pdf_buffer.seek(0)
             merger.append(pdf_buffer)
 

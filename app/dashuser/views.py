@@ -22,14 +22,15 @@ def home(request):
     return render(request, 'dashuser/home.html', context)
 
 def datos_centro(request):
-    hora_actual = localtime().hour  # Obtiene la hora actual en la zona horaria configurada
+    hora_actual = localtime().hour
     if 5 <= hora_actual < 12:
         saludo = "Buenos días"
     elif 12 <= hora_actual < 18:
         saludo = "Buenas tardes"
     else:
         saludo = "Buenas noches"
-# obtenemos el perfil del usuario logueado
+    
+    # obtenemos el perfil del usuario logueado
     user_profile = UserProfile.objects.get(user=request.user)
     
     # obtenemos los datos asociados al perfil
@@ -38,15 +39,27 @@ def datos_centro(request):
     nombre = user_profile.nombre
     apellidos = user_profile.apellidos
     
-     # Comprobamos si el centrousuario tiene una imagen
+    # Comprobamos si el usuario tiene una imagen
     if imagen and user_profile.imagen:
-        imagen_user_url = user_profile.imagen.url  # obtenemos la URL de la imagen
+        imagen_user_url = user_profile.imagen.url
     else:
-        imagen_user_url = None  # Si no hay imagen
-
-
-    # Retornar el contexto con la URL del logo
-    return {'imagen_user_url': imagen_user_url,'cargo': cargo, 'nombre': nombre, 'apellidos': apellidos, 'saludo': saludo}
+        imagen_user_url = None
+    
+    # Obtenemos la imagen del centro (si existe)
+    if user_profile.centro and user_profile.centro.imagen:
+        imagen_centro_url = user_profile.centro.imagen.url
+    else:
+        imagen_centro_url = None
+    
+    # Retornar el contexto con ambas URLs de imágenes
+    return {
+        'imagen_user_url': imagen_user_url,
+        'imagen_centro_url': imagen_centro_url,
+        'cargo': cargo, 
+        'nombre': nombre, 
+        'apellidos': apellidos, 
+        'saludo': saludo
+    }
 
 ######################################################################################
 ###############################  ALERGENOS  ########################################

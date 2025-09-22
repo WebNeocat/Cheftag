@@ -2,74 +2,166 @@
     <div class="modal-content">
         <div class="modal-header bg-info">
             <h2 class="modal-title text-white">Editar Plato</h2>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-            </button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
             <div class="container">
                 <form method="post" action="{% url 'platos:PlatoUpdate' plato.pk %}" enctype="multipart/form-data">
                     {% csrf_token %}
-                    
-                    <div class="card mb-3">
-                        <div class="card-header bg-inverse-info">Datos del Plato</div>
-                        <div class="card-body">
-                            {{ form.as_p }}
-                        </div>
-                    </div>
-                    
-                    <div class="card mb-3">
-                        <div class="card-header bg-inverse-info">Ingredientes</div>
-                        <div class="card-body">
-                            {{ ingredientes_formset.management_form }}
-                            
-                            <div id="ingredientes-formset">
-                                {% for form in ingredientes_formset %}
-                                    <div class="ingrediente-form mb-3 p-2 border rounded" style="border-color: #808b96 !important;">
-                                    {{ form.as_p }}
-                                    {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+
+                    <!-- Nav tabs -->
+                    <ul class="nav nav-tabs mb-3" role="tablist">
+                        <li class="nav-item flex-fill text-center">
+                            <a class="nav-link active small" data-bs-toggle="tab" href="#tab-datos" role="tab">Datos del Plato</a>
+                        </li>
+                        <li class="nav-item flex-fill text-center">
+                            <a class="nav-link small" data-bs-toggle="tab" href="#tab-nutricion" role="tab">Datos Nutricionales</a>
+                        </li>
+                        <li class="nav-item flex-fill text-center">
+                            <a class="nav-link small" data-bs-toggle="tab" href="#tab-ingredientes" role="tab">Ingredientes</a>
+                        </li>
+                    </ul>
+
+                    <!-- Tab panes -->
+                    <div class="tab-content">
+                        <!-- Datos del Plato -->
+                        <div class="tab-pane fade show active" id="tab-datos" role="tabpanel">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Nombre</label>
+                                            {{ form.nombre }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Código</label>
+                                            {{ form.codigo }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Tipo de plato</label>
+                                            {{ form.tipoplato }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Días de caducidad</label>
+                                            {{ form.vida_util }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Salsa</label>
+                                            {{ form.salsa }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Imagen</label>
+                                            {{ form.imagen }}
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">Descripción</label>
+                                            {{ form.descripcion }}
+                                        </div>
                                     </div>
-                                {% endfor %}
+                                </div>
                             </div>
-                            
-                            <button type="button" id="add-more" class="btn btn-secondary mt-2">
-                                <i class="fa fa-plus"></i> &nbsp;Añadir Ingrediente
-                            </button>
                         </div>
-                        <div class="d-flex justify-content-end gap-2">
-                                <button type="submit" class="btn btn-success">
-                                    <i class="fa fa-save"></i>&nbsp;Guardar
-                                </button>
-                                <a href="{% url 'platos:PlatoList' %}" class="btn btn-danger">
-                                    <i class="fa fa-times"></i>&nbsp;Cancelar
-                                </a>
+
+                        <!-- Datos Nutricionales -->
+                        <div class="tab-pane fade" id="tab-nutricion" role="tabpanel">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    {% if nutricion_form %}
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Energía (kJ/100g)</label>
+                                            {{ nutricion_form.energia }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Hidratos de Carbono (g/100g)</label>
+                                            {{ nutricion_form.hidratosdecarbono }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Proteínas (g/100g)</label>
+                                            {{ nutricion_form.proteinas }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Grasas Totales (g/100g)</label>
+                                            {{ nutricion_form.grasas_totales }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Grasas Saturadas (g/100g)</label>
+                                            {{ nutricion_form.grasas_saturadas }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Azúcares (g/100g)</label>
+                                            {{ nutricion_form.azucares }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Sal (g/100g)</label>
+                                            {{ nutricion_form.sal }}
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <p class="text-muted">No hay datos nutricionales registrados.</p>
+                                    {% endif %}
+                                </div>
                             </div>
+                        </div>
+
+                        <!-- Ingredientes -->
+                        <div class="tab-pane fade" id="tab-ingredientes" role="tabpanel">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    {{ ingredientes_formset.management_form }}
+                                    <div id="ingredientes-formset">
+                                        {% for form in ingredientes_formset %}
+                                        <div class="ingrediente-form mb-3 p-2 border rounded" style="border-color: #808b96;">
+                                            {{ form.as_p }}
+                                            {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <button type="button" id="add-more" class="btn btn-secondary mt-2">
+                                        <i class="fa fa-plus"></i> &nbsp;Añadir Ingrediente
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Botones -->
+                    <div class="d-flex justify-content-end gap-2 mt-3">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa fa-save"></i>&nbsp;Guardar
+                        </button>
+                        <a href="{% url 'platos:PlatoList' %}" class="btn btn-danger">
+                            <i class="fa fa-times"></i>&nbsp;Cancelar
+                        </a>
+                    </div>
+
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Estilos para tabs compactas y uniformes -->
 <style>
-  #ingredientes-formset {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  .ingrediente-form {
-    flex: 0 0 calc(50% - 5px); /* 2 columnas con 10px gap */
-  }
+    .nav-tabs .nav-link.small {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+    }
+    .nav-tabs .nav-item.flex-fill {
+        flex: 1 1 auto;
+    }
 </style>
+
+<!-- JS para clonar ingredientes -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Clona el último formulario del formset al hacer clic en "Añadir otro"
     document.getElementById('add-more').addEventListener('click', function() {
         const formset = document.getElementById('ingredientes-formset');
         const forms = formset.querySelectorAll('.ingrediente-form');
         const lastForm = forms[forms.length - 1];
         const newForm = lastForm.cloneNode(true);
-        newForm.classList.add('col-md-6');
-        
-        // Limpia los valores del nuevo formulario
+
+        // Limpiar inputs
         const inputs = newForm.querySelectorAll('input, select');
         inputs.forEach(input => {
             if (input.name) {
@@ -79,25 +171,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 input.value = '';
             }
         });
-        
-        // Limpia los errores de validación
-        const errorList = newForm.querySelectorAll('.errorlist');
-        errorList.forEach(el => el.remove());
-        
+
+        // Limpiar errores
+        newForm.querySelectorAll('.errorlist').forEach(el => el.remove());
+
         formset.appendChild(newForm);
-        
-        // Actualiza el contador TOTAL_FORMS
+
+        // Actualizar TOTAL_FORMS
         const totalForms = document.getElementById('id_ingredientes-TOTAL_FORMS');
         totalForms.value = forms.length + 1;
     });
 });
 </script>
+
+<!-- JS para cerrar modal -->
 <script>
-    // Agrega un evento de clic a los botones de cerrar y cancelar
-    $('.modal .close, .modal .btn-danger').click(function() {
-        // Oculta el modal
-        $('.modal').modal('hide');
-        // Elimina el fondo oscuro
-        $('.modal-backdrop').remove();
-    });
+$('.modal .close, .modal .btn-danger').click(function() {
+    $('.modal').modal('hide');
+    $('.modal-backdrop').remove();
+});
 </script>
+

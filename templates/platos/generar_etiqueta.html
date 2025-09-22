@@ -43,6 +43,7 @@
                                 <th>Peso</th>
                                 <th>Lote</th>
                                 <th>Caducidad</th>
+                                <th>Estado</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -53,6 +54,13 @@
                                 <td>{{ e.peso }} g</td>
                                 <td>{{ e.lote }}</td>
                                 <td>{{ e.caducidad|date:"d/m/Y" }}</td>
+                                <td>
+                                    {% if e.impresa %}
+                                        <span class="badge bg-success">Impreso</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Pendiente</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -97,6 +105,5 @@ document.getElementById("form-imprimir").addEventListener("submit", function(e) 
 });
 </script>
 {% endblock extrajs %}
-
 
 
