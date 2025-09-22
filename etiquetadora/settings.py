@@ -5,16 +5,18 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECRET_KEY desde variable de entorno o fallback para pruebas
+# SECRET_KEY desde variable de entorno o fallback para desarrollo
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'fallback_temporal')
 
-# DEBUG en producción siempre False
-DEBUG = False
+# DEBUG se puede activar en local con variable de entorno
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 
-# Cambia esto al dominio que Render te asigna
-ALLOWED_HOSTS = ['cheftag.onrender.com']
+# ALLOWED_HOSTS: en local permite localhost/127.0.0.1, en producción el dominio de Render
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+if not DEBUG:
+    ALLOWED_HOSTS.append('cheftag.onrender.com')  # <- tu dominio en Render
 
-# Application definition
+# Aplicaciones
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -29,10 +31,10 @@ INSTALLED_APPS = [
     'app.super',
 ]
 
-# Middleware con WhiteNoise para servir staticfiles en producción
+# Middleware con WhiteNoise
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # <- agregado
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # para staticfiles en producción
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -61,7 +63,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'etiquetadora.wsgi.application'
 
-# Database: usa PostgreSQL si hay variables, sino SQLite
+# Base de datos: PostgreSQL si hay variables, sino SQLite
 if os.environ.get('POSTGRES_DB'):
     DATABASES = {
         'default': {
@@ -90,7 +92,7 @@ MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
 
-# Password validation
+# Validación de contraseñas
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},
@@ -98,37 +100,29 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
 ]
 
-# Login / Logout URLs
+# Login / Logout
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
 
-# Internationalization
+# Internacionalización
 LANGUAGE_CODE = 'es'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# Static files
 STATIC_URL = '/static/'
-
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
-
-# Carpeta donde collectstatic recopila todos los archivos
+STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
-# WhiteNoise Storage para servir archivos estáticos comprimidos y cacheados
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Default primary key field type
+# Default primary key
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Seguridad extra
 CSRF_TRUSTED_ORIGINS = ['https://cheftag.onrender.com']
-
