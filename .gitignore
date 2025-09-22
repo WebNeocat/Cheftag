@@ -13,3 +13,6 @@ __pycache__/
 # Configuración del editor
 .vscode/
 .idea/
+
+#Contraseña de Django en Render
+DJANGO_SECRET_KEY.txt
