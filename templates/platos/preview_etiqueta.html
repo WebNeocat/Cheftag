@@ -162,8 +162,8 @@
                 <th>Cantidad</th>
             </tr>
             <tr>
-                <td>Energía</td>
-                <td>{{ datos_nutricionales.energia|floatformat:2 }} Kj / {{ datos_nutricionales.energia_kcal|floatformat:2 }} Kcal</td>
+                <td>Energía Kcal / Kj</td>
+                <td>{{ etiqueta.energia|floatformat:0 }} / {% widthratio etiqueta.energia 1 4.184 %}</td>
             </tr>
             <tr><td>Grasas Totales</td><td>{{ etiqueta.grasas_totales|floatformat:2 }} g</td></tr>
             <tr><td>De las cuales saturadas</td><td>{{ etiqueta.grasas_saturadas|floatformat:2 }} g</td></tr>
