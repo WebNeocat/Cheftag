@@ -258,7 +258,7 @@ class TextoModoUpdate(LoginRequiredMixin, UpdateView):
     pk_url_kwarg = 'pk' 
 
     def get_success_url(self):
-        messages.success(self.request, 'Texto de modo de uso actualizado correctamente.')
+        messages.success(self.request, 'Texto de modo de uso actualizados correctamente.')
         return reverse_lazy('platos:TextoModoList')
 
     def get_queryset(self):
