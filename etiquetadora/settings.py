@@ -148,5 +148,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Ruta absoluta donde almacenamos archivos
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Y esta es la URL que usaremos en nuestra plantilla para referenciar las imagenes
-MEDIA_URL = '/media/'
+MEDIA_URL = '/media/' 
 
