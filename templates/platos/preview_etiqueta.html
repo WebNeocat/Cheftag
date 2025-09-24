@@ -1,4 +1,5 @@
 {% load static %}
+{% load form_tags %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -162,8 +163,8 @@
                 <th>Cantidad</th>
             </tr>
             <tr>
-                <td>Energía Kcal / Kj</td>
-                <td>{{ etiqueta.energia|floatformat:0 }} / {% widthratio etiqueta.energia 1 4.184 %}</td>
+                <td>Energía Kcal /Kj</td>
+                <td> {{ etiqueta.energia|floatformat:0 }} / {{ etiqueta.energia|kcal_to_kj }}</td>
             </tr>
             <tr><td>Grasas Totales</td><td>{{ etiqueta.grasas_totales|floatformat:2 }} g</td></tr>
             <tr><td>De las cuales saturadas</td><td>{{ etiqueta.grasas_saturadas|floatformat:2 }} g</td></tr>
