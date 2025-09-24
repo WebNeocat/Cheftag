@@ -10,6 +10,11 @@ urlpatterns = [
     path('tiposplatos/crear/', TipoPlatoCreate.as_view(), name='TipoPlatoCreate'),
     path('tiposplatos/<int:pk>/', TipoPlatoUpdate.as_view(), name='TipoPlatoUpdate'),
     path('tiposplatos/<int:pk>/eliminar/', TipoPlatoDelete.as_view(), name='TipoPlatoDelete'),
+    
+    path('textomodo/', TextoModoList.as_view(), name='TextoModoList'),
+    path('textomodo/crear/', TextoModoCreate.as_view(), name='TextoModoCreate'),
+    path('textomodo/<int:pk>/', TextoModoUpdate.as_view(), name='TextoModoUpdate'),
+    path('textomodo/<int:pk>/eliminar/', TextoModoDelete.as_view(), name='TextoModoDelete'),
 
     path('platos/', PlatoList.as_view(), name='PlatoList'),
     path('platos/crear/', PlatoCreate.as_view(), name='PlatoCreate'),

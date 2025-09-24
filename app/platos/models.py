@@ -6,6 +6,18 @@ from datetime import timedelta
 from app.dashuser.models import Alimento, UnidadDeMedida, Alergenos
 
 
+class TextoModo(ModeloBaseCentro):
+    nombre = models.CharField(max_length=100, unique=True)
+    texto = models.TextField(blank=True, null=True)
+    estado = models.BooleanField(default=True)  # Activo o inactivo
+
+    class Meta:
+        verbose_name = "Texto de Modo de Empleo"
+        verbose_name_plural = "Textos de Modo de Empleo"
+
+    def __str__(self):
+        return self.nombre
+    
 class Salsa(ModeloBaseCentro):
     nombre = models.CharField(max_length=100)
     imagen = models.ImageField(upload_to='salsas/', null=True, blank=True)
@@ -58,6 +70,7 @@ class TipoPlato(ModeloBaseCentro):
 class Plato(ModeloBaseCentro):
     nombre = models.CharField(max_length=100)
     codigo = models.CharField(max_length=10, unique=True, help_text="Código único para el plato")
+    texto = models.ForeignKey(TextoModo, on_delete=models.CASCADE, null=True, blank=True)
     vida_util = models.PositiveIntegerField(default=0, help_text="Número de días que se suman a la fecha de producción para calcular la caducidad", null=True, blank=True)
     tipoplato = models.ForeignKey(TipoPlato, on_delete=models.CASCADE, null=True, blank=True)
     imagen = models.ImageField(upload_to='platos/', null=True, blank=True)
@@ -232,5 +245,4 @@ class DatosNuticionales(ModeloBaseCentro):
 
     def __str__(self):
         return f"Datos Nutricionales de {self.alimento.nombre}"
-    
     

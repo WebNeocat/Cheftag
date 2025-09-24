@@ -16,8 +16,8 @@ from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.mixins import LoginRequiredMixin
 from app.core.mixins import PaginationMixin
-from .models import TipoPlato, Plato, Salsa, Receta, EtiquetaPlato
-from .forms import TipoPlatoForm, PlatoForm, AlimentoPlatoFormSet, SalsaForm, AlimentoSalsaFormSet, RecetaForm, GenerarEtiquetaForm, DatosNuticionalesForm
+from .models import TipoPlato, Plato, Salsa, Receta, EtiquetaPlato, TextoModo
+from .forms import TipoPlatoForm, PlatoForm, AlimentoPlatoFormSet, SalsaForm, AlimentoSalsaFormSet, RecetaForm, GenerarEtiquetaForm, DatosNuticionalesForm, TextoModoForm
 import qrcode
 import json
 import base64
@@ -184,7 +184,130 @@ class TipoPlatoDelete(LoginRequiredMixin, DeleteView):
         return context
     
     
+######################################################################################
+###########################     TEXTO MODO DE USO    #################################
+######################################################################################
+
+
+class TextoModoList(PaginationMixin, LoginRequiredMixin, ListView):
+    model = TextoModo
+    template_name = 'platos/listar_textomodo.html'
+    context_object_name = 'textomodos'
+    paginate_by = 10  # Número de registros por página
+
+    def get_queryset(self):
+        try:
+            user_profile = UserProfile.objects.filter(user=self.request.user).first()
+            if user_profile and user_profile.centro:
+                centro = user_profile.centro
+                queryset = TextoModo.objects.filter(centro=centro).order_by('id')
+
+                
+                search_query = self.request.GET.get('buscar')
+                if search_query:
+                    queryset = queryset.filter(
+                        Q(nombre__icontains=search_query)
+                    )
+                return queryset
+            else:
+                return TextoModo.objects.none()
+        except ObjectDoesNotExist:
+            return TextoModo.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(datos_centro(self.request))
+
+        # Añadir un mensaje si no hay textos de uso asociados
+        if not context['textomodos'].exists():
+            context['mensaje'] = "No tiene tipos de textos de uso asociados."
+
+        return context
     
+    
+class TextoModoCreate(LoginRequiredMixin, CreateView):
+    model = TextoModo
+    form_class = TextoModoForm
+    template_name = 'platos/crear_textomodo.html'
+    success_url = reverse_lazy('platos:TextoModoList')
+
+    def form_valid(self, form):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            textomodos = form.save(commit=False)
+            textomodos.centro = user_profile.centro
+            textomodos.save()
+            messages.success(self.request, 'Texto de modo de uso creado correctamente.')
+            return super().form_valid(form)
+        else:
+            messages.error(self.request, 'No está asociado a ningún centro.')
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f"Error en el campo '{field}': {error}")
+        return super().form_invalid(form)
+    
+    
+class TextoModoUpdate(LoginRequiredMixin, UpdateView):
+    model = TextoModo
+    template_name = 'platos/detalle_textomodo.html'
+    form_class = TextoModoForm
+    context_object_name = 'textomodo'  
+    pk_url_kwarg = 'pk' 
+
+    def get_success_url(self):
+        messages.success(self.request, 'Texto de modo de uso actualizado correctamente.')
+        return reverse_lazy('platos:TextoModoList')
+
+    def get_queryset(self):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if not user_profile.centro:
+            messages.error(self.request, 'No está asociado a ningún centro.')
+            return TextoModo.objects.none()
+        return TextoModo.objects.filter(centro=user_profile.centro)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['action_url'] = reverse('platos:TextoModoUpdate', kwargs={'pk': self.object.pk})
+        return context
+
+    def form_invalid(self, form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f"Error en el campo '{field}': {error}")
+        return super().form_invalid(form)
+    
+
+class TextoModoDelete(LoginRequiredMixin, DeleteView):
+    model = TextoModo
+    template_name = 'platos/textomodo_confirm_delete.html'
+    success_url = reverse_lazy('platos:TextoModoList')
+    context_object_name = 'textomodo' 
+    pk_url_kwarg = 'pk'
+
+    def get_queryset(self):
+        """Filtra los tipos de plato por centro del usuario"""
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if not user_profile.centro:
+            messages.error(self.request, 'No está asociado a ningún centro.')
+            return TextoModo.objects.none()
+        return TextoModo.objects.filter(centro=user_profile.centro)
+
+    def delete(self, request, *args, **kwargs):
+        """Maneja la eliminación y muestra mensaje de éxito"""
+        response = super().delete(request, *args, **kwargs)
+        messages.success(request, 'Texto de modo de uso eliminado correctamente.')
+        return response
+
+    def get_context_data(self, **kwargs):
+        """Añade datos adicionales al contexto"""
+        context = super().get_context_data(**kwargs)
+        context['action_url'] = reverse('platos:TextoModoDelete', kwargs={'pk': self.object.pk})
+        return context
+    
+        
 ######################################################################################
 ###############################       PLATOS      ####################################
 ######################################################################################    

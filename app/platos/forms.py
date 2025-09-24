@@ -1,5 +1,5 @@
 from django import forms
-from .models import Plato, AlimentoPlato, TipoPlato, Salsa, AlimentoSalsa, Receta, DatosNuticionales
+from .models import Plato, AlimentoPlato, TipoPlato, Salsa, AlimentoSalsa, Receta, DatosNuticionales, TextoModo
 
 class SalsaForm(forms.ModelForm):    
     class Meta:
@@ -57,6 +57,12 @@ class PlatoForm(forms.ModelForm):
         widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
         empty_label="Selecciona un tipo"
     )
+    texto = forms.ModelChoiceField(
+        queryset=TextoModo.objects.all(),
+        label="Texto de modo de uso",
+        widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
+        empty_label="Selecciona un tipo"
+    )
     salsa = forms.ModelChoiceField(
         queryset=Salsa.objects.all(),
         label="Salsa",
@@ -66,7 +72,7 @@ class PlatoForm(forms.ModelForm):
     )
     class Meta:
         model = Plato
-        fields = ['nombre', 'imagen', 'codigo','descripcion', 'vida_util', 'salsa', 'tipoplato']
+        fields = ['nombre', 'imagen', 'codigo','descripcion', 'vida_util', 'salsa', 'tipoplato', 'texto']
         widgets = {
             'nombre': forms.TextInput(attrs={"class":"form-control form-control-sm form-control-border"}),
             'codigo': forms.TextInput(attrs={"class":"form-control form-control-sm form-control-border"}),
@@ -98,7 +104,7 @@ AlimentoPlatoFormSet = forms.inlineformset_factory(
     Plato, 
     AlimentoPlato, 
     form=AlimentoPlatoForm,
-    extra=0,
+    extra=1,
     can_delete=True
 )        
 
@@ -150,3 +156,13 @@ class DatosNuticionalesForm(forms.ModelForm):
             'grasas_saturadas': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),                   
         }
         exclude = ['plato']                
+        
+class TextoModoForm(forms.ModelForm):
+    class Meta:
+        model = TextoModo
+        fields = ['nombre', 'texto', 'estado']
+        widgets = {
+            'nombre': forms.TextInput(attrs={"class":"form-control form-control-sm form-control-border"}),
+            'texto': forms.Textarea(attrs={"class":"form-control form-control-sm form-control-border", 'rows': 5}),
+            'estado': forms.CheckboxInput(attrs={"class":"form-check-input"}),                
+        }      
