@@ -15,4 +15,6 @@ __pycache__/
 .idea/
 
 #Contraseña de Django en Render
-DJANGO_SECRET_KEY.txt
+DJANGO_SECRET_KEY.
+
+cloudinary_keys.png
