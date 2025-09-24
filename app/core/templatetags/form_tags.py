@@ -16,3 +16,11 @@ def first_n_words(value, n=10):
             return ' '.join(words[:n]) + '...'
         return value
     return value
+
+@register.filter
+def kcal_to_kj(value):
+    try:
+        kj = float(value) * 4.184
+        return int(round(kj))  # redondea al entero más cercano
+    except (ValueError, TypeError):
+        return ''

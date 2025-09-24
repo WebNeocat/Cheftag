@@ -27,7 +27,10 @@ SECRET_KEY = 'django-insecure-qbtqu=7q6ebucgahpr4_&wtn4tbzc$%kc)7u+tpxgl#e_4g+b5
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS: en local permite localhost/127.0.0.1, en producción el dominio de Render
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+if not DEBUG:
+    ALLOWED_HOSTS.append('')  # <- Dominio en producción
 
 
 # Application definition
