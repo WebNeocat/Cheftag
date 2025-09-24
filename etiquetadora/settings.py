@@ -5,18 +5,20 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
 # SECRET_KEY desde variable de entorno o fallback para desarrollo
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'fallback_temporal')
-
-# DEBUG se puede activar en local con variable de entorno
-DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = True
 
 # ALLOWED_HOSTS: en local permite localhost/127.0.0.1, en producción el dominio de Render
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 if not DEBUG:
-    ALLOWED_HOSTS.append('cheftag.onrender.com')  # <- tu dominio en Render
+    ALLOWED_HOSTS.append('cheftag.onrender.com')  # <- dominio en Render
 
-# Aplicaciones
+
+# Application definition
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -31,7 +33,6 @@ INSTALLED_APPS = [
     'app.super',
 ]
 
-# Middleware con WhiteNoise
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # para staticfiles en producción
@@ -63,6 +64,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'etiquetadora.wsgi.application'
 
+
 # Base de datos: PostgreSQL si hay variables, sino SQLite
 if os.environ.get('POSTGRES_DB'):
     DATABASES = {
@@ -83,7 +85,7 @@ else:
         }
     }
 
-# Mensajes de Django
+
 MESSAGE_TAGS = {
     messages.DEBUG: 'secondary',
     messages.INFO: 'info',
@@ -92,24 +94,40 @@ MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
 
-# Validación de contraseñas
+# Password validation
+# https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
+
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
 ]
 
-# Login / Logout
 LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'  # Redirigir después de iniciar sesión
+LOGOUT_REDIRECT_URL = '/login/'  # Redirigir después de cerrar sesión
 
-# Internacionalización
+
+# Internationalization
+# https://docs.djangoproject.com/en/4.0/topics/i18n/
+
 LANGUAGE_CODE = 'es'
+
 TIME_ZONE = 'UTC'
+
 USE_I18N = True
+
 USE_TZ = True
+
 
 # Static files
 STATIC_URL = '/static/'
@@ -117,12 +135,16 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# Media files
-MEDIA_ROOT = BASE_DIR / "media"
-MEDIA_URL = "/media/"
+# Default primary key field type
+# https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
-# Default primary key
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Ruta absoluta donde almacenamos archivos
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Y esta es la URL que usaremos en nuestra plantilla para referenciar las imagenes
+MEDIA_URL = '/media/'
 
 # Seguridad extra
 CSRF_TRUSTED_ORIGINS = ['https://cheftag.onrender.com']

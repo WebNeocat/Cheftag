@@ -9,7 +9,4 @@ urlpatterns = [
     path('super/', include('app.super.urls', namespace='super')), 
     path('dashuser/', include('app.dashuser.urls', namespace='dashuser')),
     path('platos/', include('app.platos.urls', namespace='platos')),
-]
-# Esto sirve archivos media incluso con DEBUG=False
-if settings.DEBUG == False:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
