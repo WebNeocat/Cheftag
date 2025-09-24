@@ -900,6 +900,8 @@ class EtiquetaDetail(LoginRequiredMixin, DetailView):
         # Obtener alérgenos del plato
         context['alergenos'] = plato.get_alergenos()
         
+        context['texto'] = plato.texto.texto if plato.texto else ''
+        
         # Obtener datos nutricionales directamente del modelo
         if hasattr(plato, 'nutricion') and plato.nutricion:
             info_nutricional_total = self.obtener_info_nutricional_total(plato.nutricion)
@@ -932,14 +934,15 @@ class EtiquetaDetail(LoginRequiredMixin, DetailView):
 def generar_etiqueta(request):
     if request.method == "POST":
         form = GenerarEtiquetaForm(request.POST)
+        cantidad = int(request.POST.get("cantidad", 1))  # 👈 recogemos la cantidad
+
         if form.is_valid():
             plato = form.cleaned_data["plato"]
             peso = form.cleaned_data["peso"]
 
-            # Obtener datos nutricionales directamente del modelo
-            if hasattr(plato, 'nutricion') and plato.nutricion:
-                nutricion = plato.nutricion
-                try:
+            for i in range(cantidad):  # 👈 repetimos según la cantidad
+                if hasattr(plato, 'nutricion') and plato.nutricion:
+                    nutricion = plato.nutricion
                     etiqueta = EtiquetaPlato.objects.create(
                         plato=plato,
                         peso=peso,
@@ -952,19 +955,7 @@ def generar_etiqueta(request):
                         grasas_saturadas=nutricion.grasas_saturadas,
                         centro=plato.centro
                     )
-
-                    # Guardar en sesión
-                    if "etiquetas_ids" not in request.session:
-                        request.session["etiquetas_ids"] = []
-                    
-                    request.session["etiquetas_ids"].append(etiqueta.id)
-                    request.session.modified = True
-
-                except Exception as e:
-                    print(f"Error al crear etiqueta: {e}")
-            else:
-                # Crear etiqueta con valores por defecto si no hay datos nutricionales
-                try:
+                else:
                     etiqueta = EtiquetaPlato.objects.create(
                         plato=plato,
                         peso=peso,
@@ -978,33 +969,28 @@ def generar_etiqueta(request):
                         centro=plato.centro
                     )
 
-                    # Guardar en sesión
-                    if "etiquetas_ids" not in request.session:
-                        request.session["etiquetas_ids"] = []
-                    
-                    request.session["etiquetas_ids"].append(etiqueta.id)
-                    request.session.modified = True
+                # Guardar en sesión cada etiqueta
+                if "etiquetas_ids" not in request.session:
+                    request.session["etiquetas_ids"] = []
+                request.session["etiquetas_ids"].append(etiqueta.id)
 
-                except Exception as e:
-                    print(f"Error al crear etiqueta con valores por defecto: {e}")
-
+            request.session.modified = True
             return redirect("platos:generar_etiqueta")
     else:
         form = GenerarEtiquetaForm()
 
-    # Recuperar etiquetas en sesión
     etiquetas_ids = request.session.get("etiquetas_ids", [])
-    etiquetas = EtiquetaPlato.objects.filter(id__in=etiquetas_ids, impresa=False).select_related('plato')
-    
-    
-    # Obtener datos del centro para el contexto
-    contexto_centro = datos_centro(request)
+    etiquetas = EtiquetaPlato.objects.filter(
+        id__in=etiquetas_ids, impresa=False
+    ).select_related('plato')
 
+    contexto_centro = datos_centro(request)
     return render(request, "platos/generar_etiqueta.html", {
         "form": form,
         "etiquetas": etiquetas,
         **contexto_centro
     })
+
     
     
     
@@ -1055,15 +1041,20 @@ def preview_etiqueta(request, etiqueta_id):
     buffer = BytesIO()
     qr_img.save(buffer, format="PNG")
     qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+    
+    texto_modo_empleo = plato.texto.texto if plato.texto else ""
 
     context = {
         "etiqueta": etiqueta,
         "ingredientes_info": ingredientes_info,
         "todos_alergenos": list(todos_alergenos),
         "todas_trazas": list(todas_trazas),
-        "qr_base64": qr_base64
+        "qr_base64": qr_base64,
+        "texto_modo_empleo": texto_modo_empleo,
     }
 
+    print("Texto modo empleo:", plato.texto.texto if plato.texto else "Sin texto")
+    print("Contexto PDF:", context)
     # Renderizamos la plantilla como HTML
     html = render_to_string("platos/preview_etiqueta.html", context)
 
@@ -1122,12 +1113,15 @@ def imprimir_etiquetas(request):
             buffer = BytesIO()
             qr_img.save(buffer, format="PNG")
             qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+            
+            texto_modo_empleo = plato.texto.texto if plato.texto else ""
 
             context = {
                 "etiqueta": etiqueta,
                 "ingredientes_info": ingredientes_info,
                 "todos_alergenos": list(todos_alergenos),
                 "todas_trazas": list(todas_trazas),
+                "texto_modo_empleo": texto_modo_empleo,
                 "qr_base64": qr_base64
             }
 

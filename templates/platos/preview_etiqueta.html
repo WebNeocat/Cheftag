@@ -48,22 +48,26 @@
         }
 
         ul {
-            margin: 0 0 8px 12px; /* Reducir márgenes */
+            margin: 0 0 8px 12px;
             padding: 0;
             list-style-type: disc;
-            font-size: 0.8em; /* Reducir tamaño */
+            font-size: 0.8em;
+        }
+        .ingredientes {
+            font-size: 0.8em; 
+            margin: 0 0 8px 0;
         }
 
         .alergenos-ingrediente {
             font-weight: bold;
-            font-size: 0.8em; /* Reducir tamaño */
+            font-size: 0.8em; 
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.8em; /* Reducir tamaño */
-            margin-bottom: 8px; /* Reducir margen */
+            font-size: 0.8em;
+            margin-bottom: 8px;
         }
 
         table th, table td {
@@ -77,28 +81,27 @@
         }
 
         .informacion {
-            font-size: 0.7em; /* Reducir tamaño */
-            margin-top: 3px; /* Reducir margen */
+            font-size: 0.7em;
+            margin-top: 3px;
         }
 
         .resumen-alergenos {
             font-weight: bold;
             border: 1px solid #000;
-            padding: 2px; /* Reducir padding */
-            margin-bottom: 3px; /* Reducir margen */
-            font-size: 0.75em; /* Reducir tamaño */
+            padding: 2px; 
+            margin-bottom: 3px;
+            font-size: 0.8em;
         }
-
         .resumen-trazas {
             font-weight: bold;
             border: 1px solid #000;
-            padding: 2px; /* Reducir padding */
-            font-size: 0.75em; /* Reducir tamaño */
+            padding: 2px;
+            font-size: 0.8em; 
         }
 
         .fechas-lote {
-            margin-top: 3px; /* Reducir margen */
-            font-size: 0.75em; /* Reducir tamaño */
+            margin-top: 3px; 
+            font-size: 0.8em; 
         }
 
         /* ESTILOS PARA LOGOS - MÁS PEQUEÑOS */
@@ -133,21 +136,17 @@
         <div class="peso">{{ etiqueta.peso }} g</div>
 
         <h2>Ingredientes</h2>
-        <ul>
+        <p class="ingredientes">
         {% for ing in ingredientes_info %}
-            <li>
-                {{ ing.nombre }}
-                {% if ing.origen %}
-                    <small>({{ ing.origen }})</small>
-                {% endif %}
-                {% if ing.alergenos %}
-                    <span class="alergenos-ingrediente">{{ ing.alergenos|join:", " }}</span>
-                {% endif %}
-            </li>
+            {{ ing.nombre }}
+            {% if ing.alergenos %}
+            <strong>({{ ing.alergenos|join:", " }})</strong>
+            {% endif %}
+            {% if not forloop.last %}, {% endif %}
         {% endfor %}
-        </ul>
+        </p>
 
-        <div class="informacion">
+        <div class="ingredientes">
             {% if todos_alergenos %}
                 <div class="resumen-alergenos">ALERGENOS: {{ todos_alergenos|join:", " }}</div>
             {% endif %}
@@ -174,10 +173,13 @@
             <tr><td>Sal</td><td>{{ etiqueta.sal|floatformat:2 }} g</td></tr>
         </table>
 
+        {% if texto_modo_empleo %}
         <h2>Modo de empleo</h2>
-        <p class="informacion">
-            Conservar entre 0ºC y 5ºC. Producto listo para el consumo. Retirar la tapa y calentar durante dos minutos a máxima potencia (800W) en el microondas. Una vez abierto, consumir en 24 horas.
-        </p>
+            <p class="informacion">
+                {{ texto_modo_empleo }}
+            </p>
+        {% endif %}    
+
         <h2>Elaborado y envasado:</h2>
         <p class="informacion">
             <strong>Mi Favorita</strong> <br><strong>CIF</strong> B-12345678<br>
