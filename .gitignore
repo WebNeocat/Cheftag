@@ -19,3 +19,6 @@ DJANGO_SECRET_KEY.txt
 
 # Ignorar settings con datos sensibles
 etiquetadora/settings.py
+
+
+comandos.txt
