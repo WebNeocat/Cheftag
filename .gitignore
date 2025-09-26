@@ -15,7 +15,7 @@ __pycache__/
 .idea/
 
 #Contraseña de Django en Render
-DJANGO_SECRET_KEY.
+DJANGO_SECRET_KEY.txt
 
 # Ignorar settings con datos sensibles
 etiquetadora/settings.py

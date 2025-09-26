@@ -1,0 +1,70 @@
+<div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+            <h2 class="modal-title">Editar centro</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="container">
+                <form method="POST" action="{% url 'super:UsuarioUpdate' pk=usuario.id %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" name="username" value="{{ form.username.value }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Contraseña</label>
+                        <input type="password" class="form-control" name="password" value="{{ form.password.value }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" class="form-control" name="nombre" value="{{ form.nombre.value }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Apellidos</label>
+                        <input type="text" class="form-control" name="apellidos" value="{{ form.apellidos.value }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Cargo</label>
+                        <input type="text" class="form-control" name="cargo" value="{{ form.cargo.value }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Centro</label>
+                        {{ form.centro }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Imagen</label>
+                        <input type="file" name="imagen" class="form-control">
+                        {% if usuario.imagen %}
+                            <img src="{{ usuario.imagen.url }}" class="img-thumbnail mt-2" style="max-height:80px;">
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 d-flex align-items-center">
+                        <label class="form-check-label me-2">Estado</label>
+                        <input type="checkbox" class="form-check-input" name="estado" {% if form.estado.value %}checked{% endif %}>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-info">
+                        <i class="fa fa-save"></i>&nbsp;&nbsp;Actualizar
+                    </button>
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">
+                        <i class="fa fa-times"></i>&nbsp;&nbsp;Cancelar</button>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Agrega un evento de clic a los botones de cerrar y cancelar
+    $('.modal .close, .modal .btn-danger').click(function() {
+        // Oculta el modal
+        $('.modal').modal('hide');
+        // Elimina el fondo oscuro
+        $('.modal-backdrop').remove();
+    });
+</script>    

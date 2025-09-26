@@ -1,0 +1,46 @@
+<div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+            <h2 class="modal-title">Confirmar eliminación de usuario</h2>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <div class="container">
+                <form method="POST" action="{% url 'super:UsuarioDelete' pk=usuario.id %}">
+                    {% csrf_token %}
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <p>¿Estás seguro de que deseas eliminar el usuario?</p>
+                                <ul>
+                                    <li><strong>Nombre:</strong> {{ usuario.nombre }}</li>
+                                    <li><strong>Estado:</strong> {% if usuario.estado %}Activo{% else %}Inactivo{% endif %}</li>
+                                </ul>
+                                <p class="text-danger"><i class="fa fa-exclamation-triangle"></i> Esta acción no se puede deshacer.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fa fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fa fa-trash"></i> Confirmar Eliminación
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Manejar el cierre del modal
+    $('.modal .btn-close, .modal .btn-secondary').click(function() {
+        $('.modal').modal('hide');
+        $('body').removeClass('modal-open');
+        $('.modal-backdrop').remove();
+    });
+});
+</script>

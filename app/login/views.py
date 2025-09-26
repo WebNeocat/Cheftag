@@ -10,7 +10,7 @@ def login_view(request):
         if user is not None:
             login(request, user)
             if user.is_superuser:
-                return redirect('super:home')  # Redirige a superadmin si es superusuario
+                return redirect('super:dashboard')  # Redirige a superadmin si es superusuario
             return redirect('dashuser:home')  # Redirige a la página normal si no es superusuario
         else:
             messages.error(request, 'Usuario o contraseña incorrectos.')

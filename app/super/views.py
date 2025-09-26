@@ -1,17 +1,20 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from django.contrib import messages
+from django.http import HttpResponseRedirect
 from django.db import transaction
 from django.contrib.auth.models import User
 from django.utils.timezone import localtime
 from django.db.models import Q
 from django.core.paginator import Paginator
 from django.views.generic.list import ListView
-from django.views.generic.edit import CreateView
-from .forms import UserProfileForm, CentroForm
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.views.generic import DetailView
+from .forms import UserProfileForm, CentroForm, CentroUpdateForm
 from .models import UserProfile, Centros
 from app.core.mixins import PaginationMixin
+import logging
 
 
 @login_required
@@ -44,6 +47,32 @@ def datos_super(request):
 
     # Retornar el contexto con la URL del logo
     return {'imagen_user_url': imagen_user_url,'cargo': cargo, 'nombre': nombre, 'apellidos': apellidos, 'saludo': saludo}
+
+
+def dashboard(request):
+    total_centros = Centros.objects.count()
+    centros_activos = Centros.objects.filter(estado=True).count()
+    total_usuarios = UserProfile.objects.count()
+    usuarios_activos = UserProfile.objects.filter(estado=True).count()
+
+    # Últimos registros para mostrarlos debajo
+    ultimos_centros = Centros.objects.order_by('-id')[:5]
+    ultimos_usuarios = UserProfile.objects.order_by('-id')[:5]
+
+    context = {
+        'total_centros': total_centros,
+        'centros_activos': centros_activos,
+        'total_usuarios': total_usuarios,
+        'usuarios_activos': usuarios_activos,
+        'ultimos_centros': ultimos_centros,
+        'ultimos_usuarios': ultimos_usuarios,
+    }
+    return render(request, 'super/dashboard.html', context)
+
+
+######################################################################################
+###############################    USUARISOS   #######################################
+######################################################################################
 
 
 class UsuariosList (PaginationMixin, ListView):
@@ -101,7 +130,7 @@ class CrearUsuarioView(CreateView):
         # Asignar user al perfil antes de guardar
         profile = form.save(commit=False)
         profile.user = user
-        profile.password = password  # ⚠ Guarda el password plano si quieres mostrarlo, pero no es seguro
+        profile.password = password 
         profile.save()
 
         messages.success(self.request, "Usuario y perfil creados correctamente.")
@@ -112,11 +141,77 @@ class CrearUsuarioView(CreateView):
         return super().form_invalid(form)
 
 
+class ActualizarUsuarioView(UpdateView):
+    model = UserProfile
+    form_class = UserProfileForm
+    template_name = 'super/editar_usuario.html'
+    success_url = reverse_lazy('super:UsuariosList')
+    context_object_name = 'usuario'
+    pk_url_kwarg = 'pk'
+
+    @transaction.atomic
+    def form_valid(self, form):
+        """
+        Actualiza tanto el UserProfile como el User relacionado.
+        """
+        profile = form.save(commit=False)
+        # Actualizamos también el user de Django asociado
+        user = profile.user
+        user.username = form.cleaned_data['username']
+        user.first_name = form.cleaned_data['nombre']
+        user.last_name = form.cleaned_data['apellidos']
+
+        # Si se ha modificado la contraseña
+        if form.cleaned_data['password']:
+            user.set_password(form.cleaned_data['password'])
+            profile.password = form.cleaned_data['password']  
+
+        user.save()
+        profile.save()
+
+        messages.success(self.request, "Usuario y perfil actualizados correctamente.")
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, "Error al actualizar el usuario. Revisa los datos.")
+        return super().form_invalid(form)
+    
+    
+class EliminarUsuarioView(DeleteView):
+    model = UserProfile
+    template_name = 'super/confirmar_delete_usuario.html'
+    context_object_name = 'usuario'
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('super:UsuariosList')
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        # Borra también el User de Django asociado si existe
+        user = self.object.user
+        nombre = self.object.username
+
+        # Primero elimina el perfil
+        self.object.delete()
+
+        # Elimina el User de Django
+        if user:
+            user.delete()
+
+        messages.success(request, f'Usuario "{nombre}" eliminado correctamente.')
+        return super().delete(request, *args, **kwargs)
+    
+    
+######################################################################################
+###############################     CENTROS    #######################################
+######################################################################################
+
+
+
 class CentrosList(PaginationMixin, ListView):
     model = Centros
     template_name = 'super/listar_centros.html'
     context_object_name = 'centros'
-    paginate_by = 8  # Número de registros por página
+    paginate_by = 10  # Número de registros por página
     
     def get_queryset(self):
         queryset = Centros.objects.all().order_by('id')
@@ -161,3 +256,79 @@ class CentroCreate(CreateView):
     def form_invalid(self, form):
         messages.error(self.request, 'Error al crear el centro. Por favor, revisa los datos.')
         return super().form_invalid(form)# Create your views here.
+
+
+logger = logging.getLogger(__name__)
+
+class CentroUpdate(UpdateView):
+    model = Centros
+    form_class = CentroUpdateForm
+    template_name = 'super/editar_centro.html'
+    context_object_name = 'centro'
+    pk_url_kwarg = 'pk'
+
+    def get_success_url(self):
+        return reverse_lazy('super:CentrosList')
+
+    def form_valid(self, form):
+        # guarda explícitamente y loggea
+        self.object = form.save()
+        logger.debug("form_valid called. cleaned_data: %s", form.cleaned_data)
+        messages.success(self.request, 'Centro actualizado correctamente.')
+        return HttpResponseRedirect(self.get_success_url())
+
+    def form_invalid(self, form):
+        # ver errores en log
+        logger.debug("form_invalid called. errors: %s", form.errors.as_json())
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f"Error en el campo '{field}': {error}")
+        return super().form_invalid(form)
+
+    def post(self, request, *args, **kwargs):
+        # Forzamos self.object para que esté disponible en get_context_data
+        self.object = self.get_object()
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+        
+        
+class CentroDetail(DetailView):
+    model = Centros
+    template_name = 'super/detalle_centro.html'
+    context_object_name = 'centro'
+    pk_url_kwarg = 'pk'  # se usa <int:pk> en la URL        
+    
+    
+class CentroDelete(DeleteView):
+    model = Centros
+    template_name = 'super/confirmar_delete_centro.html'
+    context_object_name = 'centro'
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('super:CentrosList')
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        messages.success(request, f'Centro "{self.object.nombre}" eliminado correctamente.')
+        return super().delete(request, *args, **kwargs)    
+    
+    
+    
+class UsuariosCentroListView(PaginationMixin,ListView):
+    model = UserProfile
+    template_name = 'super/usuarios_centro.html'
+    context_object_name = 'usuarios'
+    paginate_by = 10  # Número de registros por página
+
+    def get_queryset(self):
+        # obtener pk del centro desde la URL
+        centro_id = self.kwargs.get('pk')
+        return UserProfile.objects.filter(centro_id=centro_id)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        centro_id = self.kwargs.get('pk')
+        context['centro'] = Centros.objects.get(pk=centro_id)
+        return context    

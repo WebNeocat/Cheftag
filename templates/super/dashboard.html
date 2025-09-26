@@ -1,0 +1,130 @@
+{% extends 'base_super.html' %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="container-fluid">
+
+    <h2 class="mb-4">Panel de Control</h2>
+
+    <!-- KPIs -->
+    <div class="row">
+      <div class="col-md-3 mb-3">
+        <div class="card text-white bg-primary shadow">
+          <div class="card-body text-center">
+            <h5 class="card-title text-white">Total Centros</h5>
+            <p class="display-6">{{ total_centros }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="card text-white bg-info shadow">
+          <div class="card-body text-center">
+            <h5 class="card-title text-white">Centros Activos</h5>
+            <p class="display-6">{{ centros_activos }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="card text-white bg-success shadow">
+          <div class="card-body text-center">
+            <h5 class="card-title">Total Usuarios</h5>
+            <p class="display-6">{{ total_usuarios }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="card text-white bg-warning shadow">
+          <div class="card-body text-center">
+            <h5 class="card-title">Usuarios Activos</h5>
+            <p class="display-6">{{ usuarios_activos }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Accesos rápidos -->
+    <div class="row mt-4">
+      <div class="col-md-3 mb-2">
+        <a href="{% url 'super:CentrosList' %}" class="btn btn-outline-primary w-100">
+          <i class="fa fa-building"></i> Ver Centros
+        </a>
+      </div>
+      <div class="col-md-3 mb-2">
+        <a href="{% url 'super:UsuariosList' %}" class="btn btn-outline-success w-100">
+          <i class="fa fa-users"></i> Ver Usuarios
+        </a>
+      </div>
+      <div class="col-md-3 mb-2">
+        <a onclick="abrir_modal_edicion('{% url 'super:CentroCreate' %}')" class="btn btn-outline-info w-100">
+          <i class="fa fa-plus"></i> Nuevo Centro
+        </a>
+      </div>
+      <div class="col-md-3 mb-2">
+        <a onclick="abrir_modal_edicion('{% url 'super:crear_usuario' %}')" class="btn btn-outline-warning w-100">
+          <i class="fa fa-plus"></i> Nuevo Usuario
+        </a>
+      </div>
+    </div>
+
+    <!-- Últimos registros -->
+    <div class="row mt-5">
+      <div class="col-md-6">
+        <div class="card shadow">
+          <div class="card-header bg-primary text-white">
+            Últimos Centros
+          </div>
+          <ul class="list-group list-group-flush">
+            {% for c in ultimos_centros %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ c.nombre }}
+                {% if c.estado %}
+                  <span class="badge bg-success">Activo</span>
+                {% else %}
+                  <span class="badge bg-danger">Inactivo</span>
+                {% endif %}
+              </li>
+            {% empty %}
+              <li class="list-group-item">No hay centros registrados</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card shadow">
+          <div class="card-header bg-success text-white">
+            Últimos Usuarios
+          </div>
+          <ul class="list-group list-group-flush">
+            {% for u in ultimos_usuarios %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ u.nombre }} {{ u.apellidos }}
+                {% if u.estado %}
+                  <span class="badge bg-success">Activo</span>
+                {% else %}
+                  <span class="badge bg-danger">Inactivo</span>
+                {% endif %}
+              </li>
+            {% empty %}
+              <li class="list-group-item">No hay usuarios registrados</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="consulta" role="dialog">
+  </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript">
+    var $ = jQuery.noConflict();
+    function abrir_modal_edicion(url){
+        $('#consulta').load(url, function(){
+            $(this).modal('show');
+        });
+    }
+</script>
+
+{% endblock extrajs %}

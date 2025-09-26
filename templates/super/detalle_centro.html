@@ -1,0 +1,86 @@
+<div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+        <!-- Cabecera -->
+        <div class="modal-header bg-inverse-primary">
+            <h2 class="modal-title"><i class="fa fa-building"></i> Detalle del Centro</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+
+        <!-- Cuerpo -->
+        <div class="modal-body">
+            <div class="container-fluid">
+                <div class="row d-flex align-items-stretch">
+                    <!-- Columna izquierda: imagen y estado -->
+                    <div class="col-lg-4 mb-3 d-flex">
+                        <div class="card shadow-sm w-100">
+                            <div class="card-header bg-inverse-success">
+                                <strong>Imagen & Estado</strong>
+                            </div>
+                            <div class="card-body text-center d-flex flex-column justify-content-center h-100">
+                                {% if centro.imagen %}
+                                    <img src="{{ centro.imagen.url }}" class="img-fluid rounded mb-3" alt="Imagen del centro">
+                                {% else %}
+                                    <img src="https://via.placeholder.com/200x150?text=No+Imagen" class="img-fluid rounded mb-3">
+                                {% endif %}
+
+                                <div>
+                                    <strong>Estado:</strong>
+                                    {% if centro.estado %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactivo</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Columna derecha: información general -->
+                    <div class="col-lg-8 mb-3 d-flex">
+                        <div class="card shadow-sm w-100">
+                            <div class="card-header bg-inverse-success">
+                                <strong>Información General</strong>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Nombre:</strong> {{ centro.nombre }}</p>
+                                <p><strong>Dirección:</strong> {{ centro.direccion }}</p>
+                                <p><strong>Ciudad:</strong> {{ centro.ciudad }}</p>
+                                <p><strong>Código postal:</strong> {{ centro.codigo_postal }}</p>
+                                <p><strong>País:</strong> {{ centro.pais }}</p>
+                                <p><strong>Teléfono:</strong> {{ centro.telefono }}</p>
+                                <p><strong>Email:</strong> {{ centro.email }}</p>
+                                <p><strong>Sitio Web:</strong> 
+                                    {% if centro.sitio_web %}
+                                        <a href="{{ centro.sitio_web }}" target="_blank">{{ centro.sitio_web }}</a>
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!-- row -->
+            </div> <!-- container -->
+        </div> <!-- modal-body -->
+
+        <!-- Pie del modal -->
+        <div class="modal-footer">
+            <button type="button" class="btn btn-inverse-primary" data-bs-dismiss="modal">
+                <i class="fa fa-times"></i> Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Cierra correctamente el modal
+    document.querySelectorAll('.modal .btn-secondary, .modal .btn-close').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const modalEl = btn.closest('.modal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+        });
+    });
+</script>
+
+
+

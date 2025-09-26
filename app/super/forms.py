@@ -36,3 +36,7 @@ class UserProfileForm(forms.ModelForm):
             'estado': forms.CheckboxInput(attrs={"class": "form-check-input"}),
             'centro': forms.Select(attrs={"class": "form-control"}),
         }
+        
+class CentroUpdateForm(CentroForm):
+    class Meta(CentroForm.Meta):
+        exclude = ['fecha_creacion']  # o fields sin incluirla        
