@@ -1,9 +1,6 @@
 
 class PaginationMixin:
-    """
-    Mixin para paginación inteligente con ventana deslizante.
-    Uso: class MiVista(PaginationMixin, ListView)
-    """
+
     pagination_window_size = 3  # 3 páginas a cada lado (7 en total)
 
     def get_context_data(self, **kwargs):

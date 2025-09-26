@@ -36,7 +36,9 @@ urlpatterns = [
     path("etiquetas/<int:etiqueta_id>/preview/", views.preview_etiqueta, name="preview_etiqueta"),
     path("etiquetas/imprimir/", views.imprimir_etiquetas, name="imprimir_etiquetas"),
     
-    path('lotes/', LotesPorDiaTurnoListView.as_view(), name='LotesPorDiaTurnoListView'),
     path('lotes/historicos/', LotesResumenListView.as_view(), name='LotesResumenListView'),
+    path('lote/<str:lote>/', LoteDetalleListView.as_view(), name='lote_detalle'),
+    path('reimprimir/<int:pk>/', views.reimprimir_etiqueta, name='reimprimir_etiqueta'),
+    path('reimprimir-etiquetas/', views.reimprimir_etiquetas, name='reimprimir_etiquetas'),
 ]   
  

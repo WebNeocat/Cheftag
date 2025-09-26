@@ -227,6 +227,22 @@ class EtiquetaPlato(ModeloBaseCentro):
             self.caducidad = (self.fecha + timedelta(days=dias)).date()  # solo fecha
 
         super().save(*args, **kwargs)
+        
+    @property
+    def turno(self):
+        """Extrae el turno del lote"""
+        if self.lote and "-" in self.lote:
+            partes = self.lote.split("-")
+            if len(partes) >= 3:
+                return partes[-2]
+        return "A"  # valor por defecto
+    
+    @property
+    def lote_agrupado(self):
+        """Devuelve el lote sin los últimos 4 caracteres"""
+        if self.lote and len(self.lote) > 4:
+            return self.lote[:-4]
+        return self.lote
 
 
 class DatosNuticionales(ModeloBaseCentro):

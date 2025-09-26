@@ -4,6 +4,7 @@ from django.utils.timezone import localtime
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib import messages
 from collections import defaultdict
+from datetime import datetime
 from django.db.models import Q
 from io import BytesIO
 from django.http import HttpResponse
@@ -1157,72 +1158,228 @@ def imprimir_etiquetas(request):
 ##################################     LOTES   #######################################
 ######################################################################################
 
-
-    
-class LotesPorDiaTurnoListView(ListView):
-    model = EtiquetaPlato
-    template_name = "platos/lotes_por_dia_turno.html"
-    context_object_name = "lotes"
-
-    def get_queryset(self):
-        # Obtener todas las etiquetas ordenadas por fecha
-        return EtiquetaPlato.objects.all().order_by("-fecha", "lote")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        etiquetas = context["lotes"]
-
-        # Agrupar por fecha y turno
-        lotes_agrupados = defaultdict(lambda: {"A": [], "B": []})
-
-        for e in etiquetas:
-            fecha_str = e.fecha.strftime("%Y-%m-%d")
-            turno = "A" if e.fecha.hour < 12 else "B"
-            lotes_agrupados[fecha_str][turno].append(e)
-
-        context["lotes_agrupados"] = dict(lotes_agrupados)
-        return context    
-    
-class LotesResumenListView(ListView):
-    model = EtiquetaPlato
+class LotesResumenListView(PaginationMixin, LoginRequiredMixin, ListView):
     template_name = "platos/lotes_resumen.html"
-    context_object_name = "etiquetas"
+    context_object_name = "lotes_agrupados"
+    paginate_by = 10
 
     def get_queryset(self):
-        # Recuperamos TODAS las etiquetas impresas, no solo de hoy
-        return EtiquetaPlato.objects.filter(impresa=True).order_by("fecha", "lote")
+        # Parámetros GET
+        sort_field = self.request.GET.get("sort", "fecha")
+        sort_order = self.request.GET.get("order", "desc")
+        buscar = self.request.GET.get("buscar", "").strip().lower()
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        etiquetas = EtiquetaPlato.objects.all().order_by("-fecha")
+        # Recuperar etiquetas impresas
+        etiquetas = EtiquetaPlato.objects.filter(impresa=True).order_by("-fecha")
 
-        from collections import defaultdict
+        # Agrupar en lista plana
         lotes_agrupados = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {"cantidad_total": 0, "num_platos": 0})))
-
         for e in etiquetas:
-            # usamos la fecha de creación o la fecha guardada en etiqueta
             fecha_str = e.fecha.strftime("%d/%m/%Y") if e.fecha else "Sin fecha"
-
-            # extraemos turno correctamente del lote
             turno = "A"
             if e.lote and "-" in e.lote:
                 partes = e.lote.split("-")
                 if len(partes) >= 3:
-                    turno = partes[-2]  # el turno siempre está antes del número
-
+                    turno = partes[-2]
             plato_nombre = e.plato.nombre
+            lote_agrupado = e.lote[:-4] if e.lote and len(e.lote) > 4 else e.lote
 
-            lotes_agrupados[fecha_str][turno][plato_nombre]["cantidad_total"] += float(e.peso)
-            lotes_agrupados[fecha_str][turno][plato_nombre]["num_platos"] += 1
+            lotes_agrupados[fecha_str][plato_nombre][turno]["cantidad_total"] += float(e.peso)
+            lotes_agrupados[fecha_str][plato_nombre][turno]["num_platos"] += 1
+            lotes_agrupados[fecha_str][plato_nombre][turno]["lote"] = lote_agrupado
 
-        # Convertimos defaultdict a dict
-        def recursive_dict(d):
-            if isinstance(d, defaultdict):
-                return {k: recursive_dict(v) for k, v in d.items()}
-            return d
+        # Convertir a lista plana
+        lotes_list = []
+        for fecha, platos in lotes_agrupados.items():
+            for plato_nombre, turnos in platos.items():
+                for turno, datos in turnos.items():
+                    lotes_list.append({
+                        "fecha": fecha,
+                        "plato": plato_nombre,
+                        "turno": turno,
+                        "lote": datos.get("lote", ""),
+                        "cantidad_total": datos["cantidad_total"],
+                        "num_platos": datos["num_platos"]
+                    })
 
-        context["lotes_agrupados"] = recursive_dict(lotes_agrupados)
+        # Filtrar por búsqueda
+        if buscar:
+            lotes_list = [
+                lote for lote in lotes_list
+                if buscar in lote["plato"].lower() 
+                   or buscar in lote["lote"].lower()
+                   or buscar in lote["turno"].lower()
+            ]
 
+        # Ordenar según GET
+        reverse = sort_order == "desc"
+        if sort_field == "fecha":
+            lotes_list.sort(key=lambda x: datetime.strptime(x["fecha"], "%d/%m/%Y") if x["fecha"] != "Sin fecha" else datetime.min, reverse=reverse)
+        elif sort_field == "plato":
+            lotes_list.sort(key=lambda x: x["plato"], reverse=reverse)
+
+        return lotes_list
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         context.update(datos_centro(self.request))
 
+        # Parámetros para la plantilla
+        context["current_sort"] = self.request.GET.get("sort", "fecha")
+        context["current_order"] = self.request.GET.get("order", "desc")
+        context["buscar"] = self.request.GET.get("buscar", "")
         return context
+
+ 
+    
+class LoteDetalleListView(LoginRequiredMixin, ListView):
+    model = EtiquetaPlato
+    template_name = "platos/lote_detalle.html"
+    context_object_name = "raciones"
+
+    def get_queryset(self):
+        lote = self.kwargs.get("lote")
+        return EtiquetaPlato.objects.filter(
+            lote__startswith=lote,
+            impresa=True
+        ).order_by("plato__nombre", "fecha")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Pasamos el lote agrupado para mostrar en el título del modal
+        lote = self.kwargs.get("lote")
+        context['lote'] = lote
+        return context
+
+
+
+def reimprimir_etiqueta(request, pk):
+    etiqueta = get_object_or_404(EtiquetaPlato, pk=pk)
+
+
+    merger = PdfMerger()
+    plato = etiqueta.plato
+    ingredientes_info = plato.get_ingredientes_con_info()
+
+    todos_alergenos = set()
+    todas_trazas = set()
+    for ing in ingredientes_info:
+        if ing.get("alergenos"):
+            todos_alergenos.update(ing["alergenos"])
+        if ing.get("trazas"):
+            todas_trazas.update(ing["trazas"])
+
+    qr_data = {
+        "nombre": plato.nombre,
+        "peso": float(etiqueta.peso),
+        "nutricion": {
+            "energia": float(etiqueta.energia),
+            "proteinas": float(etiqueta.proteinas),
+            "grasas_totales": float(etiqueta.grasas_totales),
+            "carbohidratos": float(etiqueta.carbohidratos),
+            "azucares": float(etiqueta.azucares),
+            "sal": float(etiqueta.sal),
+            "grasas_saturadas": float(etiqueta.grasas_saturadas)
+        },
+        "lote": str(etiqueta.lote) if etiqueta.lote else ""
+    }
+
+    qr_json = json.dumps(qr_data, ensure_ascii=False)
+    qr_img = qrcode.make(qr_json)
+    buffer = BytesIO()
+    qr_img.save(buffer, format="PNG")
+    qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+    texto_modo_empleo = plato.texto.texto if plato.texto else ""
+
+    context = {
+        "etiqueta": etiqueta,
+        "ingredientes_info": ingredientes_info,
+        "todos_alergenos": list(todos_alergenos),
+        "todas_trazas": list(todas_trazas),
+        "texto_modo_empleo": texto_modo_empleo,
+        "qr_base64": qr_base64
+    }
+
+    html = render_to_string("platos/preview_etiqueta.html", context)
+    pdf_buffer = BytesIO()
+    html_obj = HTML(string=html, base_url=request.build_absolute_uri())
+    css = CSS(string='@page { size: 60mm auto; margin: 0; }')
+    html_obj.write_pdf(pdf_buffer, stylesheets=[css], presentational_hints=True)
+    pdf_buffer.seek(0)
+
+    response = HttpResponse(pdf_buffer.read(), content_type="application/pdf")
+    response["Content-Disposition"] = f'inline; filename="etiqueta_{etiqueta.id}.pdf"'
+    return response
+
+
+def reimprimir_etiquetas(request):
+    if request.method == "POST":
+        ids = request.POST.getlist("etiquetas")  # IDs de las raciones seleccionadas
+        etiquetas = EtiquetaPlato.objects.filter(id__in=ids)
+
+        if not etiquetas.exists():
+            return HttpResponse("No se seleccionaron raciones.", status=400)
+
+        merger = PdfMerger()
+
+        for etiqueta in etiquetas:
+            # Reutilizamos la misma lógica que ya tienes
+            plato = etiqueta.plato
+            ingredientes_info = plato.get_ingredientes_con_info()
+
+            todos_alergenos = set()
+            todas_trazas = set()
+            for ing in ingredientes_info:
+                if ing.get("alergenos"):
+                    todos_alergenos.update(ing["alergenos"])
+                if ing.get("trazas"):
+                    todas_trazas.update(ing["trazas"])
+
+            qr_data = {
+                "nombre": plato.nombre,
+                "peso": float(etiqueta.peso),
+                "nutricion": {
+                    "energia": float(etiqueta.energia),
+                    "proteinas": float(etiqueta.proteinas),
+                    "grasas_totales": float(etiqueta.grasas_totales),
+                    "carbohidratos": float(etiqueta.carbohidratos),
+                    "azucares": float(etiqueta.azucares),
+                    "sal": float(etiqueta.sal),
+                    "grasas_saturadas": float(etiqueta.grasas_saturadas)
+                },
+                "lote": str(etiqueta.lote) if etiqueta.lote else ""
+            }
+
+            qr_json = json.dumps(qr_data, ensure_ascii=False)
+            qr_img = qrcode.make(qr_json)
+            buffer = BytesIO()
+            qr_img.save(buffer, format="PNG")
+            qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+            texto_modo_empleo = plato.texto.texto if plato.texto else ""
+
+            context = {
+                "etiqueta": etiqueta,
+                "ingredientes_info": ingredientes_info,
+                "todos_alergenos": list(todos_alergenos),
+                "todas_trazas": list(todas_trazas),
+                "texto_modo_empleo": texto_modo_empleo,
+                "qr_base64": qr_base64
+            }
+
+            html = render_to_string("platos/preview_etiqueta.html", context)
+            pdf_buffer = BytesIO()
+            html_obj = HTML(string=html, base_url=request.build_absolute_uri())
+            css = CSS(string='@page { size: 60mm auto; margin: 0; }')
+            html_obj.write_pdf(pdf_buffer, stylesheets=[css], presentational_hints=True)
+            pdf_buffer.seek(0)
+            merger.append(pdf_buffer)
+
+        response = HttpResponse(content_type="application/pdf")
+        response["Content-Disposition"] = 'inline; filename="etiquetas.pdf"'
+        merger.write(response)
+        merger.close()
+        return response
+
+

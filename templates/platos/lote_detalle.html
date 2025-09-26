@@ -1,0 +1,84 @@
+<div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-primary">
+            <h2 class="modal-title text-white">Detalle del Lote: {{ raciones.0.lote_agrupado }}</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <form id="form-reimprimir" method="post" action="{% url 'platos:reimprimir_etiquetas' %}" target="_blank">
+                {% csrf_token %}
+                <div class="table-wrapper">
+                    <table class="table table-hover tabla-responsive align-middle" style="table-layout: auto; width: 100%;">
+                        <thead class="table-dark">
+                            <tr>
+                                <th style="width: 5%;">
+                                    <input type="checkbox" id="seleccionar-todo">
+                                </th>
+                                <th style="width: 15%;">Fecha</th>
+                                <th style="width: 20%;">Lote</th>
+                                <th style="width: 30%;">Plato</th>
+                                <th style="width: 10%;">Turno</th>
+                                <th style="width: 15%;">Cantidad (Kg)</th>
+                                <th style="width: 10%;">Opciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for racion in raciones %}
+                            <tr>
+                                <td>
+                                    <input type="checkbox" name="etiquetas" value="{{ racion.id }}">
+                                </td>
+                                <td>{{ racion.fecha|date:"d/m/Y H:i" }}</td>
+                                <td>{{ racion.lote }}</td>
+                                <td title="{{ racion.plato.nombre }}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    {{ racion.plato.nombre|truncatewords:5 }}
+                                </td>
+                                <td>{{ racion.turno }}</td>
+                                <td>{{ racion.peso|floatformat:2 }} Kg</td>
+                                <td>
+                                    <a class="btn btn-inverse-danger" data-toggle="tooltip" title="Imprimir" href="{% url 'platos:reimprimir_etiqueta' racion.id %}" target="_blank">
+                                        <i class="fa fa-print"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">⚠️ No hay raciones para este lote.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-2 text-end">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa fa-print"></i> Reimprimir
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    // Seleccionar / deseleccionar todas las checkboxes
+    $('#seleccionar-todo').on('change', function(){
+        var checked = $(this).is(':checked');
+        $('input[name="etiquetas"]').prop('checked', checked);
+    });
+
+    // Cerrar modal y eliminar backdrop
+    $('.modal .close, .modal .btn-danger').click(function() {
+        $('.modal').modal('hide');
+        $('.modal-backdrop').remove();
+    });
+
+    // Agrega un evento de clic a los botones de cerrar y cancelar
+    $('.modal .close, .modal .btn-danger').click(function() {
+        // Oculta el modal
+        $('.modal').modal('hide');
+        // Elimina el fondo oscuro
+        $('.modal-backdrop').remove();
+    });
+</script>

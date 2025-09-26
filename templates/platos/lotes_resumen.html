@@ -1,116 +1,119 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4 text-center text-primary fw-bold">
-        📦 Histórico de Lotes
-    </h2>
 
-    <div class="row">
-        {% for fecha, turnos in lotes_agrupados.items %}
-            <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 mb-4">
-                <div class="card shadow-sm h-100 border-0" style="min-height: 300px;">
-                    <div class="card-header bg-primary text-white text-center">
-                        <span class="fw-bold d-block">
-                            📅 {{ fecha }}
-                        </span>
-                    </div>
-                    <div class="card-body p-2">
-                        {% for turno, platos in turnos.items %}
-                            <div class="mb-2">
-                                <h6 class="text-secondary fw-bold mb-1">
-                                    🔄 Turno {{ turno }}
-                                </h6>
-                                <div class="scrollable-platos" style="max-height: 200px; overflow-y: auto;">
-                                    {% for plato_nombre, datos in platos.items %}
-                                        <div class="card mb-2 border-0 bg-light">
-                                            <div class="card-body py-2 px-3">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <div class="flex-grow-1">
-                                                        <strong class="d-block text-truncate" style="max-width: 240px;" title="{{ plato_nombre }}">
-                                                             {{ plato_nombre }}
-                                                        </strong>
-                                                    </div>
-                                                    <div class="text-end">
-                                                        <span class="badge bg-success d-block mb-1">
-                                                            {{ datos.cantidad_total|floatformat:2 }} Kg
-                                                        </span>
-                                                        <span class="badge bg-info text-dark">
-                                                            {{ datos.num_platos }} Raciones
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
+<div class="content-wrapper">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="m-0">Historico de lotes</h3>
+        </div>
+
+        <div class="card-body mt-3">
+            <form method="get" class="row g-2 align-items-center mb-3">
+
+                <!-- Selector de orden -->
+                <div class="col-md-4">
+                    <select class="form-select form-select-sm" name="sort" id="ordenar" onchange="this.form.submit()">
+                        <option value="" disabled selected>Ordenar por...</option>
+                        <option value="fecha" {% if current_sort == 'fecha' %}selected{% endif %}>Fecha</option>
+                        <option value="plato" {% if current_sort == 'plato' %}selected{% endif %}>Plato</option>
+                    </select>
                 </div>
-            </div>
-            
-            {# Crear nuevas filas cada 4 tarjetas en XL, 3 en LG, 2 en MD #}
-            {% if forloop.counter|divisibleby:3 %}
-                <div class="w-100 d-none d-xl-block"></div>
-            {% endif %}
-            {% if forloop.counter|divisibleby:2 %}
-                <div class="w-100 d-none d-lg-block d-xl-none"></div>
-            {% endif %}
-            {% if forloop.counter|divisibleby:2 %}
-                <div class="w-100 d-none d-md-block d-lg-none"></div>
-            {% endif %}
-            
-        {% empty %}
-            <div class="col-12">
-                <div class="alert alert-warning text-center">
-                    ⚠️ No hay lotes históricos registrados.
+
+                <!-- Selector de orden ascendente/descendente -->
+                <div class="col-md-2">
+                    <select class="form-select form-select-sm" name="order" onchange="this.form.submit()">
+                        <option value="asc" {% if current_order == 'asc' %}selected{% endif %}>Ascendente</option>
+                        <option value="desc" {% if current_order == 'desc' %}selected{% endif %}>Descendente</option>
+                    </select>
                 </div>
+
+                <!-- Campo de búsqueda -->
+                <div class="col-md-5">
+                    <input type="text" class="form-control form-control-sm" placeholder="Buscar..." name="buscar" value="{{ request.GET.buscar }}">
+                </div>
+
+                <!-- Botón buscar -->
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-inverse-secondary" style="padding-top: 12px; padding-bottom:12px;">
+                        <i class="fa fa-search"></i>
+                    </button>
+                </div>
+            </form>
+            <div class="table-wrapper">
+                <table class="table table-hover tabla-responsive align-middle" style="table-layout: auto; width: 100%;">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width: 10%;">Fecha</th>
+                            <th style="width: 20%;">Lote</th>
+                            <th style="width: 25%;">Plato</th>
+                            <th style="width: 10%;">Turno</th>
+                            <th style="width: 15%;">Cantidad Total (Kg)</th>
+                            <th style="width: 15%;">Raciones</th>
+                            <th style="width: 15%;">Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if lotes_agrupados %}
+                            {% for lote in lotes_agrupados %}
+                                <tr>
+                                    <td>{{ lote.fecha }}</td>
+                                    <td><strong>{{ lote.lote }}</strong></td>
+                                    <td title="{{ lote.plato }}">
+                                        {{ lote.plato|truncatewords:5 }}
+                                    </td>
+
+                                    <td>{{ lote.turno }}</td>
+                                    <td>
+                                        <span class="badge bg-success">{{ lote.cantidad_total|floatformat:2 }} Kg</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info text-dark">{{ lote.num_platos }} Raciones</span>
+                                    </td>
+                                    <td>
+                                        <a class="btn btn-inverse-success" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'platos:lote_detalle' lote=lote.lote %}')" data-toggle="tooltip" title="Ver">
+                                            <i class="fa fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6" >
+                                    ⚠️ No hay lotes históricos registrados.
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+
+                <!-- Paginación -->
+                {% include "core/pagination.html" %}
             </div>
-        {% endfor %}
+        </div>
+        <div class="modal fade" id="consulta" role="dialog">
     </div>
 </div>
 
 <style>
-    .card {
-        border-radius: 12px;
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    /* Ajustes de tabla */
+    .table th, .table td {
+        vertical-align: middle;
     }
-    
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
-    }
-    
-    .card-header {
-        border-top-left-radius: 12px !important;
-        border-top-right-radius: 12px !important;
-        padding: 12px 15px;
-    }
-    
-    .scrollable-platos::-webkit-scrollbar {
-        width: 5px;
-    }
-    
-    .scrollable-platos::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 10px;
-    }
-    
-    .scrollable-platos::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
-        border-radius: 10px;
-    }
-    
-    .scrollable-platos::-webkit-scrollbar-thumb:hover {
-        background: #a8a8a8;
-    }
-    
-    .badge {
-        font-size: 0.75em;
-        padding: 0.35em 0.65em;
+
+    .table-wrapper {
+        overflow-x: auto;
     }
 </style>
 {% endblock %}
 
+{% block extrajs %}
+<script type="text/javascript">
+    var $ = jQuery.noConflict();
+    function abrir_modal_edicion(url){
+        $('#consulta').load(url, function(){
+            $(this).modal('show');
+        });
+    }
+</script>
+{% endblock extrajs %}
 
