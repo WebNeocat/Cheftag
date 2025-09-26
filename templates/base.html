@@ -111,10 +111,19 @@
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="{% url 'platos:generar_etiqueta' %}">
+              <a class="nav-link" data-bs-toggle="collapse" href="#etiq" aria-expanded="false" aria-controls="etiq">
                 <i class="menu-icon mdi mdi-tag"></i>
                 <span class="menu-title">Etiquetado</span>
+                <i class="menu-arrow"></i>
               </a>
+              <div class="collapse" id="etiq">
+                <ul class="nav flex-column sub-menu">
+                  <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:AlergenosList' %}">Alimentos</a></li>
+                </ul>
+                <ul class="nav flex-column sub-menu">
+                  <li class="nav-item"> <a class="nav-link" href="{% url 'platos:generar_etiqueta' %}">Platos</a></li>
+                </ul>
+              </div>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="{% url 'platos:LotesResumenListView' %}">
