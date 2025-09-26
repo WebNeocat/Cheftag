@@ -14,11 +14,11 @@ __pycache__/
 .vscode/
 .idea/
 
-#Contraseña de Django en Render
-DJANGO_SECRET_KEY.txt
-
 # Ignorar settings con datos sensibles
 etiquetadora/settings.py
 
-
+# Archivos de texto con
 comandos.txt
+
+# Base de datos SQLite
+db.sqlite3
