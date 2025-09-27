@@ -1,6 +1,7 @@
 from django.db import models
 from app.super.models import ModeloBaseCentro  
-from decimal import Decimal 
+import random
+import string
 from django.utils import timezone
 from datetime import timedelta
 from app.dashuser.models import Alimento, UnidadDeMedida, Alergenos
@@ -69,7 +70,7 @@ class TipoPlato(ModeloBaseCentro):
     
 class Plato(ModeloBaseCentro):
     nombre = models.CharField(max_length=100)
-    codigo = models.CharField(max_length=10, unique=True, help_text="Código único para el plato")
+    codigo = models.CharField(blank=True, max_length=10, unique=True, help_text="Código único para el plato")
     texto = models.ForeignKey(TextoModo, on_delete=models.CASCADE, null=True, blank=True)
     vida_util = models.PositiveIntegerField(default=0, help_text="Número de días que se suman a la fecha de producción para calcular la caducidad", null=True, blank=True)
     tipoplato = models.ForeignKey(TipoPlato, on_delete=models.CASCADE, null=True, blank=True)
@@ -84,6 +85,22 @@ class Plato(ModeloBaseCentro):
 
     def __str__(self):
         return f"{self.nombre}"  
+    
+    def save(self, *args, **kwargs):
+        # Si no viene codigo, generarlo automáticamente
+        if not self.codigo:
+            self.codigo = self._generate_unique_code()
+        super().save(*args, **kwargs)
+
+    def _generate_unique_code(self):
+        """Genera un código aleatorio de 3 letras único."""
+        length = 3  # Longitud del código
+        letters = string.ascii_uppercase  # De momento solo letras mayúsculas (17.576 combinaciones)
+        code = ''.join(random.choice(letters) for _ in range(length))
+        # Comprobar unicidad
+        while Plato.objects.filter(codigo=code).exists():
+            code = ''.join(random.choice(letters) for _ in range(length))
+        return code
     
     @property
     def receta(self):
