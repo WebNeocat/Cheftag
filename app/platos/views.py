@@ -4,7 +4,7 @@ from django.utils.timezone import localtime
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib import messages
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.db.models import Q
 from io import BytesIO
 from django.http import HttpResponse
@@ -1075,14 +1075,13 @@ def imprimir_etiquetas(request):
     if request.method == "POST":
         ids = request.POST.getlist("etiquetas")
         etiquetas = EtiquetaPlato.objects.filter(id__in=ids)
-        
+
         # Marcar como impresas inmediatamente
         etiquetas.update(impresa=True)
 
         merger = PdfMerger()
 
         for etiqueta in etiquetas:
-            # Reutilizamos preview_etiqueta pero generando string
             plato = etiqueta.plato
             ingredientes_info = plato.get_ingredientes_con_info()
 
@@ -1094,27 +1093,16 @@ def imprimir_etiquetas(request):
                 if ing.get("trazas"):
                     todas_trazas.update(ing["trazas"])
 
-            qr_data = {
-                "nombre": plato.nombre,
-                "peso": float(etiqueta.peso),
-                "nutricion": {
-                    "energia": float(etiqueta.energia),
-                    "proteinas": float(etiqueta.proteinas),
-                    "grasas_totales": float(etiqueta.grasas_totales),
-                    "carbohidratos": float(etiqueta.carbohidratos),
-                    "azucares": float(etiqueta.azucares),
-                    "sal": float(etiqueta.sal),  # CAMBIADO: sal_mg -> sal
-                    "grasas_saturadas": float(etiqueta.grasas_saturadas)  # AÑADIDO
-                },
-                "lote": str(etiqueta.lote) if etiqueta.lote else ""
-            }
+            # 🔹 Aquí generamos SOLO la URL en el QR:
+            url = request.build_absolute_uri(
+                reverse('platos:etiqueta_qr', args=[etiqueta.pk])
+            )
 
-            qr_json = json.dumps(qr_data, ensure_ascii=False)
-            qr_img = qrcode.make(qr_json)
+            qr_img = qrcode.make(url)
             buffer = BytesIO()
             qr_img.save(buffer, format="PNG")
             qr_base64 = base64.b64encode(buffer.getvalue()).decode()
-            
+
             texto_modo_empleo = plato.texto.texto if plato.texto else ""
 
             context = {
@@ -1123,27 +1111,27 @@ def imprimir_etiquetas(request):
                 "todos_alergenos": list(todos_alergenos),
                 "todas_trazas": list(todas_trazas),
                 "texto_modo_empleo": texto_modo_empleo,
-                "qr_base64": qr_base64
+                "qr_base64": qr_base64  # en tu plantilla haces <img src="data:image/png;base64,{{qr_base64}}">
             }
 
             html = render_to_string("platos/preview_etiqueta.html", context)
-            
+
             # ✅ marcar como impresa
             etiqueta.impresa = True
             etiqueta.save()
-            
+
             pdf_buffer = BytesIO()
-            
+
             # Configuración específica para WeasyPrint con tamaño personalizado
             html_obj = HTML(string=html, base_url=request.build_absolute_uri())
             css = CSS(string='@page { size: 60mm auto; margin: 0; }')
-            
+
             html_obj.write_pdf(
                 pdf_buffer,
                 stylesheets=[css],
                 presentational_hints=True
             )
-            
+
             pdf_buffer.seek(0)
             merger.append(pdf_buffer)
 
@@ -1255,37 +1243,21 @@ class LoteDetalleListView(LoginRequiredMixin, ListView):
 
 def reimprimir_etiqueta(request, pk):
     etiqueta = get_object_or_404(EtiquetaPlato, pk=pk)
-
-
-    merger = PdfMerger()
     plato = etiqueta.plato
     ingredientes_info = plato.get_ingredientes_con_info()
 
     todos_alergenos = set()
     todas_trazas = set()
     for ing in ingredientes_info:
-        if ing.get("alergenos"):
-            todos_alergenos.update(ing["alergenos"])
-        if ing.get("trazas"):
-            todas_trazas.update(ing["trazas"])
+        todos_alergenos.update(ing["alergenos"])
+        todas_trazas.update(ing["trazas"])
 
-    qr_data = {
-        "nombre": plato.nombre,
-        "peso": float(etiqueta.peso),
-        "nutricion": {
-            "energia": float(etiqueta.energia),
-            "proteinas": float(etiqueta.proteinas),
-            "grasas_totales": float(etiqueta.grasas_totales),
-            "carbohidratos": float(etiqueta.carbohidratos),
-            "azucares": float(etiqueta.azucares),
-            "sal": float(etiqueta.sal),
-            "grasas_saturadas": float(etiqueta.grasas_saturadas)
-        },
-        "lote": str(etiqueta.lote) if etiqueta.lote else ""
-    }
+    # URL pública de la vista de la ración (nuevo QR)
+    url = request.build_absolute_uri(
+        reverse('platos:etiqueta_qr', args=[etiqueta.pk])
+    )
 
-    qr_json = json.dumps(qr_data, ensure_ascii=False)
-    qr_img = qrcode.make(qr_json)
+    qr_img = qrcode.make(url)
     buffer = BytesIO()
     qr_img.save(buffer, format="PNG")
     qr_base64 = base64.b64encode(buffer.getvalue()).decode()
@@ -1294,6 +1266,7 @@ def reimprimir_etiqueta(request, pk):
 
     context = {
         "etiqueta": etiqueta,
+        "plato": plato,
         "ingredientes_info": ingredientes_info,
         "todos_alergenos": list(todos_alergenos),
         "todas_trazas": list(todas_trazas),
@@ -1313,6 +1286,7 @@ def reimprimir_etiqueta(request, pk):
     return response
 
 
+
 def reimprimir_etiquetas(request):
     if request.method == "POST":
         ids = request.POST.getlist("etiquetas")  # IDs de las raciones seleccionadas
@@ -1324,7 +1298,6 @@ def reimprimir_etiquetas(request):
         merger = PdfMerger()
 
         for etiqueta in etiquetas:
-            # Reutilizamos la misma lógica que ya tienes
             plato = etiqueta.plato
             ingredientes_info = plato.get_ingredientes_con_info()
 
@@ -1336,23 +1309,12 @@ def reimprimir_etiquetas(request):
                 if ing.get("trazas"):
                     todas_trazas.update(ing["trazas"])
 
-            qr_data = {
-                "nombre": plato.nombre,
-                "peso": float(etiqueta.peso),
-                "nutricion": {
-                    "energia": float(etiqueta.energia),
-                    "proteinas": float(etiqueta.proteinas),
-                    "grasas_totales": float(etiqueta.grasas_totales),
-                    "carbohidratos": float(etiqueta.carbohidratos),
-                    "azucares": float(etiqueta.azucares),
-                    "sal": float(etiqueta.sal),
-                    "grasas_saturadas": float(etiqueta.grasas_saturadas)
-                },
-                "lote": str(etiqueta.lote) if etiqueta.lote else ""
-            }
+            # URL pública de la vista de la ración (nuevo QR)
+            url = request.build_absolute_uri(
+                reverse('platos:etiqueta_qr', args=[etiqueta.pk])
+            )
 
-            qr_json = json.dumps(qr_data, ensure_ascii=False)
-            qr_img = qrcode.make(qr_json)
+            qr_img = qrcode.make(url)
             buffer = BytesIO()
             qr_img.save(buffer, format="PNG")
             qr_base64 = base64.b64encode(buffer.getvalue()).decode()
@@ -1361,6 +1323,7 @@ def reimprimir_etiquetas(request):
 
             context = {
                 "etiqueta": etiqueta,
+                "plato": plato,
                 "ingredientes_info": ingredientes_info,
                 "todos_alergenos": list(todos_alergenos),
                 "todas_trazas": list(todas_trazas),
@@ -1383,3 +1346,33 @@ def reimprimir_etiquetas(request):
         return response
 
 
+
+
+def etiqueta_qr_view(request, pk):
+    etiqueta = get_object_or_404(EtiquetaPlato, pk=pk)
+    plato = etiqueta.plato
+    ingredientes_info = plato.get_ingredientes_con_info()
+
+    # Cálculo caducidad
+    fecha_caducidad = None
+    if plato.vida_util and etiqueta.fecha:
+        fecha_caducidad = etiqueta.fecha + timedelta(days=plato.vida_util)
+
+    # Receta asociada (si existe)
+    receta = plato.receta
+
+    todos_alergenos = set()
+    todas_trazas = set()
+    for ing in ingredientes_info:
+        todos_alergenos.update(ing["alergenos"])
+        todas_trazas.update(ing["trazas"])
+
+    return render(request, "platos/etiqueta_qr.html", {
+        "etiqueta": etiqueta,
+        "plato": plato,
+        "ingredientes_info": ingredientes_info,
+        "todos_alergenos": list(todos_alergenos),
+        "todas_trazas": list(todas_trazas),
+        "fecha_caducidad": fecha_caducidad,
+        "receta": receta,
+    })

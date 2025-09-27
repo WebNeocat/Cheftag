@@ -35,6 +35,8 @@ urlpatterns = [
     path("etiquetas/generar/", views.generar_etiqueta, name="generar_etiqueta"),
     path("etiquetas/<int:etiqueta_id>/preview/", views.preview_etiqueta, name="preview_etiqueta"),
     path("etiquetas/imprimir/", views.imprimir_etiquetas, name="imprimir_etiquetas"),
+    path("etiqueta/<int:pk>/", views.etiqueta_qr_view, name="etiqueta_qr"),
+
     
     path('lotes/historicos/', LotesResumenListView.as_view(), name='LotesResumenListView'),
     path('lote/<str:lote>/', LoteDetalleListView.as_view(), name='lote_detalle'),

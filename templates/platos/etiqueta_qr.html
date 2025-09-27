@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ plato.nombre }} – Información del producto</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .nutricional-table th, .nutricional-table td {
+      border: 1px solid #ddd;
+      padding: 6px;
+    }
+    .nutricional-table th {
+      background-color: #f8f9fa;
+    }
+    .imagen-plato {
+      max-width: 100%;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+<div class="container my-4">
+  <div class="text-center mb-3">
+    {% if plato.imagen %}
+      <img src="{{ plato.imagen.url }}" alt="{{ plato.nombre }}" class="imagen-plato">
+    {% endif %}
+    <h1 class="mt-2">{{ plato.nombre }}</h1>
+    <p class="text-muted">{{ plato.descripcion }}</p>
+  </div>
+
+  <!-- Datos básicos arriba -->
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <p><strong>Código:</strong> {{ plato.codigo }}</p>
+      <p><strong>Lote:</strong> {{ etiqueta.lote }}</p>
+      <p><strong>Peso:</strong> {{ etiqueta.peso|floatformat:2 }} Kg</p>
+      <p><strong>Fecha de envasado:</strong> {{ etiqueta.fecha|date:"d/m/Y H:i" }}</p>
+      {% if fecha_caducidad %}
+        <p><strong>Consumir preferentemente antes de:</strong> {{ fecha_caducidad|date:"d/m/Y" }}</p>
+      {% endif %}
+      {% if plato.tipoplato %}
+        <p><strong>Tipo de plato:</strong> {{ plato.tipoplato }}</p>
+      {% endif %}
+      {% if plato.salsa %}
+        <p><strong>Salsa:</strong> {{ plato.salsa.nombre }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Pestañas -->
+  <ul class="nav nav-tabs" id="platoTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="ingredientes-tab" data-bs-toggle="tab" data-bs-target="#ingredientes" type="button" role="tab">Ingredientes</button>
+    </li>
+    {% if todos_alergenos %}
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="alergenos-tab" data-bs-toggle="tab" data-bs-target="#alergenos" type="button" role="tab">Alérgenos</button>
+    </li>
+    {% endif %}
+    {% if todas_trazas %}
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="trazas-tab" data-bs-toggle="tab" data-bs-target="#trazas" type="button" role="tab">Trazas</button>
+    </li>
+    {% endif %}
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="nutricional-tab" data-bs-toggle="tab" data-bs-target="#nutricional" type="button" role="tab">Información nutricional</button>
+    </li>
+    {% if plato.texto %}
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="modo-tab" data-bs-toggle="tab" data-bs-target="#modo" type="button" role="tab">Modo de empleo</button>
+    </li>
+    {% endif %}
+    {% if receta %}
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="receta-tab" data-bs-toggle="tab" data-bs-target="#receta" type="button" role="tab">Receta</button>
+    </li>
+    {% endif %}
+  </ul>
+
+  <div class="tab-content border p-3" id="platoTabsContent">
+    <!-- Ingredientes -->
+    <div class="tab-pane fade show active" id="ingredientes" role="tabpanel">
+      <ul class="mb-0">
+        {% for ing in ingredientes_info %}
+          <li>{{ ing.nombre }} <small class="text-muted">({{ ing.origen }})</small></li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- Alérgenos -->
+    {% if todos_alergenos %}
+    <div class="tab-pane fade" id="alergenos" role="tabpanel">
+      <p>{{ todos_alergenos|join:", " }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Trazas -->
+    {% if todas_trazas %}
+    <div class="tab-pane fade" id="trazas" role="tabpanel">
+      <p>{{ todas_trazas|join:", " }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Nutricional -->
+    <div class="tab-pane fade" id="nutricional" role="tabpanel">
+      <table class="nutricional-table table table-sm w-100">
+        <tbody>
+          <tr><th>Energía</th><td>{{ etiqueta.energia }} kcal</td></tr>
+          <tr><th>Proteínas</th><td>{{ etiqueta.proteinas }} g</td></tr>
+          <tr><th>Grasas totales</th><td>{{ etiqueta.grasas_totales }} g</td></tr>
+          <tr><th>Grasas saturadas</th><td>{{ etiqueta.grasas_saturadas }} g</td></tr>
+          <tr><th>Carbohidratos</th><td>{{ etiqueta.carbohidratos }} g</td></tr>
+          <tr><th>Azúcares</th><td>{{ etiqueta.azucares }} g</td></tr>
+          <tr><th>Sal</th><td>{{ etiqueta.sal }} g</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Modo de empleo -->
+    {% if plato.texto %}
+    <div class="tab-pane fade" id="modo" role="tabpanel">
+      <p>{{ plato.texto.texto }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Receta -->
+    {% if receta %}
+    <div class="tab-pane fade" id="receta" role="tabpanel">
+      <p><strong>Tiempo preparación:</strong> {{ receta.tiempo_preparacion }} min</p>
+      <p><strong>Tiempo cocción:</strong> {{ receta.tiempo_coccion }} min</p>
+      <p><strong>Rendimiento:</strong> {{ receta.rendimiento }} porciones</p>
+      <h5>Instrucciones</h5>
+      <p>{{ receta.instrucciones|linebreaks }}</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="text-center text-muted mt-3">
+    <small>Información generada automáticamente desde nuestra base de datos</small>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
