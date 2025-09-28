@@ -1,0 +1,94 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            /* sin límite de altura, ancho fijo 6 cm */
+            size: 6cm;
+            height: 12.5cm;
+            margin: 0; /* deja la impresora manejar márgenes */
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .etiqueta {
+            width: 6cm;
+            padding: 8px 10px;
+            border: 1px solid #666;
+            border-radius: 4px;
+        }
+
+        .titulo {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #000;
+            text-align: center;
+        }
+
+        .campo {
+            font-size: 9pt;
+            margin-bottom: 3px;
+        }
+
+        .campo span {
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 8pt;
+            margin-top: 3px;
+            color: #555;
+        }
+
+        .imagen-alimento {
+            width: 90%;
+            max-height: 120px;
+            object-fit: cover;
+            margin-bottom: 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="etiqueta">
+        <div>
+            <!-- Logo de tu empresa -->
+            <div class="titulo">{{ etiqueta.alimento.nombre }}</div>
+        </div>
+
+        {% if etiqueta.alimento.imagen %}
+            <img src="{{ etiqueta.alimento.imagen.url }}" class="imagen-alimento" alt="Imagen alimento">
+        {% endif %}
+
+        {% if etiqueta.alimento.nombre_alternativo %}
+            <div class="campo"><span>Alt:</span> {{ etiqueta.alimento.nombre_alternativo }}</div>
+        {% endif %}
+        <div class="campo"><span>Lote:</span> {{ etiqueta.lote }}</div>
+        <div class="campo"><span>Caducidad:</span> {{ etiqueta.fecha_caducidad|date:"d/m/Y" }}</div>
+        <div class="campo"><span>Apertura:</span> {{ etiqueta.fecha_apertura|date:"d/m/Y H:i" }}</div>
+        {% if etiqueta.cantidad %}
+            <div class="campo"><span>Cantidad:</span> {{ etiqueta.cantidad }}</div>
+        {% endif %}
+        <div class="campo"><span>Conservación:</span> {{ etiqueta.alimento.conservacion }}</div>
+        {% if qr_base64 %}
+            <div style="text-align:center; margin-top:5px;">
+                <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR" style="width: 150px; height: 150px;">
+            </div>
+        {% endif %}
+        <div class="footer">
+            <!-- Pie opcional -->
+            {{ etiqueta.alimento.nombre }}
+        </div>
+    </div>
+</body>
+</html>
+

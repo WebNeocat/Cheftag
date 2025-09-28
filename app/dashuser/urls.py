@@ -43,5 +43,7 @@ urlpatterns = [
     path('actualizar_alimentos/<int:pk>/', AlimentoUpdate.as_view(), name='AlimentoUpdate'),
     path('eliminar_alimentos/<int:pk>/', AlimentoDelete.as_view(), name='AlimentoDelete'),
     
+    path('crear_etiqueta/', views.crear_etiqueta, name='crear_etiqueta'),
+    path('etiqueta/<int:pk>/pdf/', views.etiqueta_pdf, name='etiqueta_pdf'),
     
 ]

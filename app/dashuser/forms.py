@@ -1,5 +1,5 @@
 from django import forms
-from .models import Alergenos, Trazas, UnidadDeMedida, TipoAlimento, localizacion, Conservacion, Alimento, InformacionNutricional
+from .models import Alergenos, Trazas, UnidadDeMedida, TipoAlimento, localizacion, Conservacion, Alimento, InformacionNutricional, EtiquetaAlimento
 
 class AlergenosForm(forms.ModelForm):
     
@@ -132,4 +132,21 @@ class InformacionNutricionalForm(forms.ModelForm):
             'sal': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
             'grasas_saturadas': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),                   
         }
-        exclude = ['alimento']        
+        exclude = ['alimento']   
+        
+
+class EtiquetaAlimentoForm(forms.ModelForm):
+    alimento = forms.ModelChoiceField(
+        queryset=Alimento.objects.all(),
+        label="Alimento",
+        widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
+        empty_label="Selecciona un alimento"
+    )
+    class Meta:
+        model = EtiquetaAlimento
+        fields = ['alimento', 'lote', 'fecha_caducidad', 'cantidad']
+        widgets = {
+            'fecha_caducidad': forms.DateInput(attrs={'type': 'date', "class": "form-control form-control-sm form-control-border"}),
+            'lote': forms.TextInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'cantidad': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+        }             

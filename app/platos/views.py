@@ -1124,7 +1124,7 @@ def imprimir_etiquetas(request):
 
             # Configuración específica para WeasyPrint con tamaño personalizado
             html_obj = HTML(string=html, base_url=request.build_absolute_uri())
-            css = CSS(string='@page { size: 60mm auto; margin: 0; }')
+            css = CSS(string='@page { size: 100mm auto; margin: 5mm; }')
 
             html_obj.write_pdf(
                 pdf_buffer,

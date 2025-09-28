@@ -1,8 +1,11 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 from django.views.generic.list import ListView
 from django.views import View
+from weasyprint import HTML, CSS
+from django.template.loader import render_to_string
 from django.views.generic import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.contrib import messages
@@ -12,8 +15,11 @@ from django.core.exceptions import ObjectDoesNotExist
 from app.core.mixins import PaginationMixin
 from app.super.models import UserProfile
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Alergenos, TipoAlimento, Alimento, localizacion, Conservacion, InformacionNutricional, UnidadDeMedida, Trazas
-from .forms import AlergenosForm, TipoAlimento, LocalizacionForm, TipoAlimentosForm, ConservacionForm, InformacionNutricionalForm, AlimentoForm, UnidadDeMedidaForm, TrazasForm
+from .models import Alergenos, TipoAlimento, Alimento, localizacion, Conservacion, InformacionNutricional, UnidadDeMedida, Trazas, EtiquetaAlimento
+from .forms import AlergenosForm, TipoAlimento, LocalizacionForm, TipoAlimentosForm, ConservacionForm, InformacionNutricionalForm, AlimentoForm, UnidadDeMedidaForm, TrazasForm, EtiquetaAlimentoForm
+import qrcode
+import io
+import base64
 
 
 @login_required
@@ -907,3 +913,45 @@ class AlimentoDelete(LoginRequiredMixin, DeleteView):
         context = super().get_context_data(**kwargs)
         context.update(datos_centro(self.request))
         return context    
+    
+    
+def crear_etiqueta(request):
+    if request.method == 'POST':
+        form = EtiquetaAlimentoForm(request.POST)
+        if form.is_valid():
+            etiqueta = form.save()  # fecha_apertura se autocompleta
+            return redirect('dashuser:etiqueta_pdf', pk=etiqueta.pk)
+    else:
+        form = EtiquetaAlimentoForm()
+    return render(request, 'dashuser/crear_etiqueta.html', {'form': form})   
+
+
+
+def etiqueta_pdf(request, pk):
+    etiqueta = get_object_or_404(EtiquetaAlimento, pk=pk)
+
+    # Generar QR con información clave
+    qr_data = f"Alimento: {etiqueta.alimento.nombre}\nLote: {etiqueta.lote}\nCaducidad: {etiqueta.fecha_caducidad}"
+    qr_img = qrcode.make(qr_data)
+    # Guardar QR en buffer en memoria
+    buffer = io.BytesIO()
+    qr_img.save(buffer, format='PNG')
+    qr_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+    buffer.close()
+
+    # Renderizar template con QR
+    html_string = render_to_string('dashuser/etiqueta_pdf.html', {
+        'etiqueta': etiqueta,
+        'qr_base64': qr_base64
+    })
+    html = HTML(string=html_string, base_url=request.build_absolute_uri())
+
+    # CSS personalizado para tamaño de página y márgenes
+    css = CSS(string='@page { size: 60mm auto; margin: 5mm; }')
+
+    # Generar PDF con CSS
+    pdf = html.write_pdf(stylesheets=[css])
+
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename=etiqueta_{etiqueta.id}.pdf'
+    return response
