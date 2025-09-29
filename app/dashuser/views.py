@@ -923,7 +923,11 @@ def crear_etiqueta(request):
             return redirect('dashuser:etiqueta_pdf', pk=etiqueta.pk)
     else:
         form = EtiquetaAlimentoForm()
-    return render(request, 'dashuser/crear_etiqueta.html', {'form': form})   
+        
+        
+    contexto = {'form': form}
+    contexto.update(datos_centro(request))  # añade saludo, imagenes, etc.
+    return render(request, 'dashuser/crear_etiqueta.html', contexto) 
 
 
 

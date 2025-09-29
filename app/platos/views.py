@@ -6,6 +6,7 @@ from django.contrib import messages
 from collections import defaultdict
 from datetime import datetime, timedelta
 from django.db.models import Q
+from decimal import Decimal
 from io import BytesIO
 from django.http import HttpResponse
 from django.template.loader import render_to_string
@@ -17,7 +18,7 @@ from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.mixins import LoginRequiredMixin
 from app.core.mixins import PaginationMixin
-from .models import TipoPlato, Plato, Salsa, Receta, EtiquetaPlato, TextoModo
+from .models import TipoPlato, Plato, Salsa, Receta, EtiquetaPlato, TextoModo, NuticionalesSalsa, DatosNuticionales
 from .forms import TipoPlatoForm, PlatoForm, AlimentoPlatoFormSet, SalsaForm, AlimentoSalsaFormSet, RecetaForm, GenerarEtiquetaForm, DatosNuticionalesForm, TextoModoForm
 import qrcode
 import json
@@ -362,10 +363,8 @@ class PlatoCreate(LoginRequiredMixin, CreateView):
             context['ingredientes_formset'] = AlimentoPlatoFormSet(
                 self.request.POST, self.request.FILES, prefix='ingredientes'
             )
-            context['nutricion_form'] = DatosNuticionalesForm(self.request.POST, prefix='nutricion')
         else:
             context['ingredientes_formset'] = AlimentoPlatoFormSet(prefix='ingredientes')
-            context['nutricion_form'] = DatosNuticionalesForm(prefix='nutricion')
 
         return context
 
@@ -377,7 +376,6 @@ class PlatoCreate(LoginRequiredMixin, CreateView):
 
         context = self.get_context_data()
         ingredientes_formset = context['ingredientes_formset']
-        nutricion_form = context['nutricion_form']
 
         # Guardamos plato primero sin commit
         self.object = form.save(commit=False)
@@ -385,21 +383,59 @@ class PlatoCreate(LoginRequiredMixin, CreateView):
         self.object.save()
 
         # Ingredientes
-        if ingredientes_formset.is_valid() and nutricion_form.is_valid():
+        if ingredientes_formset.is_valid():
             ingredientes = ingredientes_formset.save(commit=False)
+            total_cantidad = 0
             for ingrediente in ingredientes:
                 ingrediente.plato = self.object
                 ingrediente.centro = user_profile.centro
                 ingrediente.save()
+                total_cantidad += float(ingrediente.cantidad)
 
             for obj in ingredientes_formset.deleted_objects:
                 obj.delete()
 
-            # Guardar datos nutricionales
-            nutricion = nutricion_form.save(commit=False)
-            nutricion.plato = self.object
-            nutricion.centro = user_profile.centro
-            nutricion.save()
+            # Recalcular datos nutricionales
+            nutricion_data = {
+                'energia': 0,
+                'grasas_totales': 0,
+                'grasas_saturadas': 0,
+                'hidratosdecarbono': 0,
+                'azucares': 0,
+                'proteinas': 0,
+                'sal': 0
+            }
+
+            # Ingredientes del plato
+            if total_cantidad > 0:
+                for ingrediente in self.object.ingredientes.all():
+                    if hasattr(ingrediente.alimento, 'nutricion'):
+                        factor = float(ingrediente.cantidad) / total_cantidad
+                        n = ingrediente.alimento.nutricion
+                        nutricion_data['energia'] += float(n.energia) * factor
+                        nutricion_data['grasas_totales'] += float(n.grasas_totales) * factor
+                        nutricion_data['grasas_saturadas'] += float(n.grasas_saturadas) * factor
+                        nutricion_data['hidratosdecarbono'] += float(n.hidratosdecarbono) * factor
+                        nutricion_data['azucares'] += float(n.azucares) * factor
+                        nutricion_data['proteinas'] += float(n.proteinas) * factor
+                        nutricion_data['sal'] += float(n.sal) * factor
+
+            # Ingredientes de la salsa si existe
+            if self.object.salsa and hasattr(self.object.salsa, 'nutricion'):
+                s = self.object.salsa.nutricion
+                # Suponemos que la salsa entra como 100% de su aporte (podrías ajustar si quieres %)
+                for key in nutricion_data.keys():
+                    nutricion_data[key] += float(getattr(s, key))
+
+            # Guardar datos nutricionales del plato
+            datos_nutricionales, created = DatosNuticionales.objects.get_or_create(
+                plato=self.object,
+                defaults={'centro': user_profile.centro, **nutricion_data}
+            )
+            if not created:
+                for key, value in nutricion_data.items():
+                    setattr(datos_nutricionales, key, value)
+                datos_nutricionales.save()
 
             messages.success(self.request, 'Plato creado correctamente.')
             return super().form_valid(form)
@@ -410,10 +446,6 @@ class PlatoCreate(LoginRequiredMixin, CreateView):
                     for field, errors in form_ing.errors.items():
                         for error in errors:
                             messages.error(self.request, f"Ingrediente: {field} - {error}")
-            # errores nutricion
-            for field, errors in nutricion_form.errors.items():
-                for error in errors:
-                    messages.error(self.request, f"Nutrición: {field} - {error}")
 
             return self.form_invalid(form)
 
@@ -435,7 +467,7 @@ class PlatoUpdate(LoginRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Formset de ingredientes
+        # Formset de ingredientes (sin form de nutrición)
         if self.request.POST:
             context['ingredientes_formset'] = AlimentoPlatoFormSet(
                 self.request.POST,
@@ -449,62 +481,83 @@ class PlatoUpdate(LoginRequiredMixin, UpdateView):
                 prefix='ingredientes'
             )
 
-        # Form de datos nutricionales
-        if self.request.POST:
-            if hasattr(self.object, 'nutricion'):
-                context['nutricion_form'] = DatosNuticionalesForm(
-                    self.request.POST,
-                    instance=self.object.nutricion
-                )
-            else:
-                context['nutricion_form'] = DatosNuticionalesForm(self.request.POST)
-        else:
-            if hasattr(self.object, 'nutricion'):
-                context['nutricion_form'] = DatosNuticionalesForm(instance=self.object.nutricion)
-            else:
-                context['nutricion_form'] = DatosNuticionalesForm()
-
         return context
 
     def form_valid(self, form):
         context = self.get_context_data()
         ingredientes_formset = context['ingredientes_formset']
-        nutricion_form = context['nutricion_form']
 
-        if ingredientes_formset.is_valid() and nutricion_form.is_valid():
-            self.object = form.save(commit=False)
+        if ingredientes_formset.is_valid():
             user_profile = get_object_or_404(UserProfile, user=self.request.user)
+
+            # Guardar plato
+            self.object = form.save(commit=False)
             self.object.centro = user_profile.centro
             self.object.save()
 
             # Guardar ingredientes
             ingredientes = ingredientes_formset.save(commit=False)
+            total_cantidad = 0
             for ingrediente in ingredientes:
                 ingrediente.plato = self.object
                 ingrediente.centro = user_profile.centro
                 ingrediente.save()
+                total_cantidad += float(ingrediente.cantidad)
             for obj in ingredientes_formset.deleted_objects:
                 obj.delete()
 
-            # Guardar datos nutricionales
-            nutricion = nutricion_form.save(commit=False)
-            nutricion.plato = self.object
-            # Asignar centro siempre
-            if not nutricion.centro_id:
-                nutricion.centro = self.object.centro
-            nutricion.save()
+            # Recalcular datos nutricionales
+            nutricion_data = {
+                'energia': 0,
+                'grasas_totales': 0,
+                'grasas_saturadas': 0,
+                'hidratosdecarbono': 0,
+                'azucares': 0,
+                'proteinas': 0,
+                'sal': 0
+            }
+
+            # Ingredientes del plato
+            if total_cantidad > 0:
+                for ingrediente in self.object.ingredientes.all():
+                    if hasattr(ingrediente.alimento, 'nutricion'):
+                        factor = float(ingrediente.cantidad) / total_cantidad
+                        n = ingrediente.alimento.nutricion
+                        nutricion_data['energia'] += float(n.energia) * factor
+                        nutricion_data['grasas_totales'] += float(n.grasas_totales) * factor
+                        nutricion_data['grasas_saturadas'] += float(n.grasas_saturadas) * factor
+                        nutricion_data['hidratosdecarbono'] += float(n.hidratosdecarbono) * factor
+                        nutricion_data['azucares'] += float(n.azucares) * factor
+                        nutricion_data['proteinas'] += float(n.proteinas) * factor
+                        nutricion_data['sal'] += float(n.sal) * factor
+
+            # Ingredientes de la salsa si existe
+            if self.object.salsa and hasattr(self.object.salsa, 'nutricion'):
+                s = self.object.salsa.nutricion
+                for key in nutricion_data.keys():
+                    nutricion_data[key] += float(getattr(s, key))
+
+            # Guardar o actualizar datos nutricionales del plato
+            datos_nutricionales, created = DatosNuticionales.objects.get_or_create(
+                plato=self.object,
+                defaults={'centro': user_profile.centro, **nutricion_data}
+            )
+            if not created:
+                for key, value in nutricion_data.items():
+                    setattr(datos_nutricionales, key, value)
+                datos_nutricionales.save()
 
             messages.success(self.request, 'Plato actualizado correctamente.')
             return super().form_valid(form)
         else:
             # Mostrar errores si los hay
-            for formset in [ingredientes_formset, nutricion_form]:
-                for f in getattr(formset, 'forms', [formset]):
-                    if f.errors:
-                        for field, errors in f.errors.items():
-                            for error in errors:
-                                messages.error(self.request, f"{field}: {error}")
+            for form_ing in ingredientes_formset:
+                if form_ing.errors:
+                    for field, errors in form_ing.errors.items():
+                        for error in errors:
+                            messages.error(self.request, f"Ingrediente: {field} - {error}")
             return self.form_invalid(form)
+
 
         
 
@@ -627,13 +680,20 @@ class SalsaCreate(LoginRequiredMixin, CreateView):
         
         if ingredientes_formset.is_valid():
             ingredientes = ingredientes_formset.save(commit=False)
+            total_cantidad = Decimal(0)
+            
+            # Guardamos ingredientes y calculamos cantidad total de salsa
             for ingrediente in ingredientes:
                 ingrediente.salsa = self.object
                 ingrediente.centro = user_profile.centro
                 ingrediente.save()
+                total_cantidad += ingrediente.cantidad
             
             for obj in ingredientes_formset.deleted_objects:
                 obj.delete()
+            
+            # 🔹 Calcular y guardar nutrición proporcional
+            self._calcular_nutricion(total_cantidad)
             
             messages.success(self.request, 'Salsa creada correctamente.')
             return super().form_valid(form)
@@ -645,6 +705,45 @@ class SalsaCreate(LoginRequiredMixin, CreateView):
                         for error in errors:
                             messages.error(self.request, f"Ingrediente: {field} - {error}")
             return self.form_invalid(form)
+    
+    def _calcular_nutricion(self, total_cantidad):
+        """Calcula los datos nutricionales de la salsa por 100g"""
+        from decimal import Decimal
+        
+        # Inicializamos acumuladores
+        nutrientes = {
+            'energia': Decimal(0),
+            'grasas_totales': Decimal(0),
+            'grasas_saturadas': Decimal(0),
+            'hidratosdecarbono': Decimal(0),
+            'azucares': Decimal(0),
+            'proteinas': Decimal(0),
+            'sal': Decimal(0),
+        }
+        
+        if total_cantidad == 0:
+            return  # Evitamos división por cero
+
+        for ingrediente in self.object.ingredientes.all():
+            factor = ingrediente.cantidad / total_cantidad  # Proporción de 100g
+            nut = ingrediente.alimento.nutricion  # InformacionNutricional del alimento
+
+            nutrientes['energia'] += nut.energia * factor
+            nutrientes['grasas_totales'] += nut.grasas_totales * factor
+            nutrientes['grasas_saturadas'] += nut.grasas_saturadas * factor
+            nutrientes['hidratosdecarbono'] += nut.hidratosdecarbono * factor
+            nutrientes['azucares'] += nut.azucares * factor
+            nutrientes['proteinas'] += nut.proteinas * factor
+            nutrientes['sal'] += nut.sal * factor
+        
+        # Guardamos o actualizamos en NuticionalesSalsa
+        NuticionalesSalsa.objects.update_or_create(
+            salsa=self.object,
+            defaults={
+                'centro': self.object.centro,
+                **nutrientes
+            }
+        )
 
 
 class SalsaUpdate(LoginRequiredMixin, UpdateView):
@@ -666,31 +765,85 @@ class SalsaUpdate(LoginRequiredMixin, UpdateView):
             context['ingredientes_formset'] = AlimentoSalsaFormSet(
                 self.request.POST, 
                 self.request.FILES, 
-                instance=self.object
+                instance=self.object,
+                prefix='ingredientes'
             )
         else:
-            context['ingredientes_formset'] = AlimentoSalsaFormSet(instance=self.object)
+            context['ingredientes_formset'] = AlimentoSalsaFormSet(
+                instance=self.object,
+                prefix='ingredientes'
+            )
         return context
 
     def form_valid(self, form):
         context = self.get_context_data()
         ingredientes_formset = context['ingredientes_formset']
-        
+
         if ingredientes_formset.is_valid():
-            self.object = form.save()
-            ingredientes = ingredientes_formset.save(commit=False)
+            user_profile = get_object_or_404(UserProfile, user=self.request.user)
             
+            # Guardamos salsa
+            self.object = form.save(commit=False)
+            self.object.centro = user_profile.centro
+            self.object.save()
+
+            # Guardamos ingredientes
+            ingredientes = ingredientes_formset.save(commit=False)
+            total_cantidad = 0  # para calcular proporción
             for ingrediente in ingredientes:
-                ingrediente.centro = self.object.centro
+                ingrediente.salsa = self.object
+                ingrediente.centro = user_profile.centro
                 ingrediente.save()
+                total_cantidad += float(ingrediente.cantidad)
             
             for obj in ingredientes_formset.deleted_objects:
                 obj.delete()
             
+            # Recalcular datos nutricionales
+            if total_cantidad > 0:
+                nutricion_data = {
+                    'energia': 0,
+                    'grasas_totales': 0,
+                    'grasas_saturadas': 0,
+                    'hidratosdecarbono': 0,
+                    'azucares': 0,
+                    'proteinas': 0,
+                    'sal': 0
+                }
+                
+                for ingrediente in self.object.ingredientes.all():
+                    if hasattr(ingrediente.alimento, 'nutricion'):
+                        factor = float(ingrediente.cantidad) / total_cantidad
+                        n = ingrediente.alimento.nutricion
+                        nutricion_data['energia'] += float(n.energia) * factor
+                        nutricion_data['grasas_totales'] += float(n.grasas_totales) * factor
+                        nutricion_data['grasas_saturadas'] += float(n.grasas_saturadas) * factor
+                        nutricion_data['hidratosdecarbono'] += float(n.hidratosdecarbono) * factor
+                        nutricion_data['azucares'] += float(n.azucares) * factor
+                        nutricion_data['proteinas'] += float(n.proteinas) * factor
+                        nutricion_data['sal'] += float(n.sal) * factor
+
+                # Guardar o actualizar objeto NuticionalesSalsa
+                nutricion_obj, created = NuticionalesSalsa.objects.get_or_create(
+                    salsa=self.object,
+                    defaults={'centro': user_profile.centro, **nutricion_data}
+                )
+                if not created:
+                    for key, value in nutricion_data.items():
+                        setattr(nutricion_obj, key, value)
+                    nutricion_obj.save()
+
             messages.success(self.request, 'Salsa actualizada correctamente.')
             return super().form_valid(form)
         else:
+            # Mostrar errores específicos del formset
+            for form_ing in ingredientes_formset:
+                if form_ing.errors:
+                    for field, errors in form_ing.errors.items():
+                        for error in errors:
+                            messages.error(self.request, f"Ingrediente: {field} - {error}")
             return self.form_invalid(form)
+
         
 
 class SalsaDetail(LoginRequiredMixin, DetailView):

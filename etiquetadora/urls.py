@@ -9,4 +9,5 @@ urlpatterns = [
     path('super/', include('app.super.urls', namespace='super')), 
     path('dashuser/', include('app.dashuser.urls', namespace='dashuser')),
     path('platos/', include('app.platos.urls', namespace='platos')),
+    path('recepcion/', include('app.recepcion.urls', namespace='recepcion')),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

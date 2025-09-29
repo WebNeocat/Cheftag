@@ -264,18 +264,35 @@ class EtiquetaPlato(ModeloBaseCentro):
 
 class DatosNuticionales(ModeloBaseCentro):
     plato = models.OneToOneField(Plato, on_delete=models.CASCADE, related_name='nutricion')
-    energia = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Energía en Kj por 100g")
-    grasas_totales = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Grasas totales en g por 100g")
-    grasas_saturadas = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Grasas saturadas en g por 100g")
-    hidratosdecarbono = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Hidratos de carbono en g por 100g")
-    azucares = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Azúcares en g por 100g")
-    proteinas = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Proteinas en g por 100g")
-    sal = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Sal en g por 100g")
+    energia = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
+    grasas_totales = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
+    grasas_saturadas = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
+    hidratosdecarbono = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
+    azucares = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
+    proteinas = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
+    sal = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
 
     class Meta:
         verbose_name = "Datos Nutricionales"
         verbose_name_plural = "Datos Nutricionales"
 
     def __str__(self):
-        return f"Datos Nutricionales de {self.alimento.nombre}"
+        return f"Datos Nutricionales de {self.plato.nombre}"
+    
+class NuticionalesSalsa(ModeloBaseCentro):
+    salsa = models.OneToOneField(Salsa, on_delete=models.CASCADE, related_name='nutricion')
+    energia = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
+    grasas_totales = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
+    grasas_saturadas = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
+    hidratosdecarbono = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
+    azucares = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
+    proteinas = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
+    sal = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True)
+
+    class Meta:
+        verbose_name = "Datos Nutricionales"
+        verbose_name_plural = "Datos Nutricionales"
+
+    def __str__(self):
+        return f"Datos Nutricionales de {self.salsa.nombre}"    
     

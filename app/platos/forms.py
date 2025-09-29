@@ -145,15 +145,15 @@ class GenerarEtiquetaForm(forms.Form):
 class DatosNuticionalesForm(forms.ModelForm):
     class Meta:
         model = DatosNuticionales
-        fields = ['energia', 'hidratosdecarbono', 'proteinas', 'grasas_totales', 'azucares', 'sal', 'grasas_saturadas']
+        fields = ['energia', 'hidratosdecarbono', 'azucares', 'proteinas', 'grasas_totales', 'grasas_saturadas', 'sal']
         widgets = {
             'energia': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
             'hidratosdecarbono': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'azucares': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
             'proteinas': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
             'grasas_totales': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'azucares': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'sal': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'grasas_saturadas': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),                   
+            'grasas_saturadas': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),  
+            'sal': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),                 
         }
         exclude = ['plato']                
         

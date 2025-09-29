@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
-  <title>SuperAdmin Cheftag</title>
+  <title>Cheftag</title>
 
   <!-- Favicons -->
   <link href={% static "img/favicon.png" %} rel="icon">
@@ -98,6 +98,12 @@
             </a>
           </li>
           <li class="nav-item nav-category">Sistema</li>
+          <li class="nav-item">
+              <a class="nav-link" href="{% url 'recepcion:ProveedorList' %}">
+                <i class="menu-icon mdi mdi-bank"></i>
+                <span class="menu-title">Proveedores</span>
+              </a>
+            </li>
             <li class="nav-item">
               <a class="nav-link" href="{% url 'dashuser:AlimentoList' %}">
                 <i class="menu-icon mdi mdi-food-variant"></i>
@@ -128,7 +134,13 @@
             <li class="nav-item">
               <a class="nav-link" href="{% url 'platos:LotesResumenListView' %}">
                 <i class="menu-icon mdi mdi-package-variant"></i>
-                <span class="menu-title">Lotes</span>
+                <span class="menu-title">Lotes Etiquetas</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'recepcion:RecepcionManualList' %}">
+                <i class="menu-icon mdi mdi-barcode-scan"></i>
+                <span class="menu-title">Recepción</span>
               </a>
             </li>
           </li>

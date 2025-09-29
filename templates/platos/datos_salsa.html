@@ -2,17 +2,36 @@
     <div class="modal-content">
         <div class="modal-header bg-success">
             <h2 class="modal-title">Detalles de la Salsa</h2>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-            </button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
             <div class="container">
+
                 <h2>{{ salsa.nombre }}</h2>
-                
-                <div class="row">
-                    <div class="col-md-6">
+
+                <!-- Pestañas -->
+                <ul class="nav nav-tabs nav-tabs-nowrap mb-3" id="salsaTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab">Información General</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="ingredientes-tab" data-bs-toggle="tab" data-bs-target="#ingredientes" type="button" role="tab">Ingredientes</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="nutricion-tab" data-bs-toggle="tab" data-bs-target="#nutricion" type="button" role="tab">Datos Nutricionales</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="alergenos-tab" data-bs-toggle="tab" data-bs-target="#alergenos" type="button" role="tab">Alérgenos</button>
+                    </li>
+                </ul>
+
+
+                <!-- Contenido de las pestañas -->
+                <div class="tab-content" id="salsaTabContent">
+
+                    <!-- Información General -->
+                    <div class="tab-pane fade show active" id="info" role="tabpanel">
                         <div class="card mb-3">
-                            <div class="card-header">Información General</div>
                             <div class="card-body">
                                 {% if salsa.imagen %}
                                 <img src="{{ salsa.imagen.url }}" class="img-fluid mb-3" alt="{{ salsa.nombre }}">
@@ -21,12 +40,12 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">Ingredientes</div>
+
+                    <!-- Ingredientes -->
+                    <div class="tab-pane fade" id="ingredientes" role="tabpanel">
+                        <div class="card mb-3">
                             <div class="card-body">
-                                <table class="table">
+                                <table class="table table-sm">
                                     <thead>
                                         <tr>
                                             <th>Alimento</th>
@@ -51,45 +70,110 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="col-md-12">
-                            <div class="card mb-3">
-                                <div class="card-header">Alérgenos del plato</div>
-                                <div class="card-body">
-                                    {% if alergenos %}
-                                    <div class="d-flex flex-wrap gap-2">
-                                        {% for alergeno in alergenos %}
-                                            <div class="alergeno-item text-center p-2 border rounded shadow" style="width: 90px;">
-                                                <img src="{{ alergeno.imagen.url }}" 
-                                                    alt="{{ alergeno.nombre }}" 
-                                                    class="img-fluid rounded mb-1"
-                                                    style="max-height:40px; object-fit:contain;">
-                                                <small>{{ alergeno.nombre }}</small>
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                    {% else %}
-                                        <p class="text-muted">No contiene alérgenos declarados.</p>
-                                    {% endif %}
-                                </div>
-                            </div>  
-                        </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
+
+                    <!-- Datos Nutricionales -->
+                    <div class="tab-pane fade" id="nutricion" role="tabpanel">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                {% if salsa.nutricion %}
+                                <table class="table table-sm">
+                                    <tbody>
+                                        <tr>
+                                            <th>Energia (kJ)</th>
+                                            <td>{{ salsa.nutricion.energia }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Grasas Totales (g)</th>
+                                            <td>{{ salsa.nutricion.grasas_totales }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Grasas Saturadas (g)</th>
+                                            <td>{{ salsa.nutricion.grasas_saturadas }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Hidratos de Carbono (g)</th>
+                                            <td>{{ salsa.nutricion.hidratosdecarbono }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Azúcares (g)</th>
+                                            <td>{{ salsa.nutricion.azucares }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Proteínas (g)</th>
+                                            <td>{{ salsa.nutricion.proteinas }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Sal (g)</th>
+                                            <td>{{ salsa.nutricion.sal }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                {% else %}
+                                    <p class="text-muted">No se han calculado los datos nutricionales.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alérgenos -->
+                    <div class="tab-pane fade" id="alergenos" role="tabpanel">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                {% if alergenos %}
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for alergeno in alergenos %}
+                                        <div class="alergeno-item text-center p-2 border rounded shadow" style="width: 90px;">
+                                            <img src="{{ alergeno.imagen.url }}" 
+                                                alt="{{ alergeno.nombre }}" 
+                                                class="img-fluid rounded mb-1"
+                                                style="max-height:40px; object-fit:contain;">
+                                            <small>{{ alergeno.nombre }}</small>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                    <p class="text-muted">No contiene alérgenos declarados.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                </div> <!-- fin tab-content -->
+
+            </div> <!-- fin container -->
+        </div> <!-- fin modal-body -->
         <div class="modal-footer">
             <button type="button" class="btn btn-success" data-bs-dismiss="modal">Cerrar</button>
         </div>
     </div>
 </div>
+<style>
+    /* Forzar pestañas en una sola fila, pegadas */
+    .nav-tabs-nowrap {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto; /* scroll solo si la pantalla es muy pequeña */
+        -webkit-overflow-scrolling: touch;
+    }
 
+    .nav-tabs-nowrap .nav-item {
+        flex: 0 0 auto; /* solo el ancho necesario según el contenido */
+    }
+
+    .nav-tabs-nowrap .nav-link {
+        text-align: center;
+        white-space: nowrap;
+        padding: 1rem 1.5rem; 
+        font-size: 0.9rem;
+    }
+</style>
 <script>
-    // Agrega un evento de clic a los botones de cerrar y cancelar
+    // Cierra modal y elimina backdrop
     $('.modal .close, .modal .btn-danger').click(function() {
-        // Oculta el modal
         $('.modal').modal('hide');
-        // Elimina el fondo oscuro
         $('.modal-backdrop').remove();
     });
 </script>
+

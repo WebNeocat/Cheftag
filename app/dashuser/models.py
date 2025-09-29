@@ -116,7 +116,7 @@ class InformacionNutricional(models.Model):
     energia = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Energía en Kj por 100g")
     grasas_totales = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Grasas totales en g por 100g")
     grasas_saturadas = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Grasas saturadas en g por 100g")
-    hidratosdecarbono = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Hidratos de carbono en g por 100g")
+    hidratosdecarbono = models.DecimalField('Hidratos de carbono',default=0, max_digits=6, decimal_places=2, blank=True, help_text="Hidratos de carbono en g por 100g")
     azucares = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Azúcares en g por 100g")
     proteinas = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Proteinas en g por 100g")
     sal = models.DecimalField(default=0, max_digits=6, decimal_places=2, blank=True, help_text="Sal en g por 100g")
