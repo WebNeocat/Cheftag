@@ -72,7 +72,7 @@
                             <tr>
                                 <th>Nombre</th>
                                 <th>Tipo de alimento</th>
-                                <th>Ubicación</th>
+                                <th>GTIN</th>
                                 <th>Stock actual</th>
                                 <th>Imagen</th>
                                 <th>Opciones</th>
@@ -83,7 +83,7 @@
                             <tr>
                                 <td data-label="Nombre" class="fw-bold">{{ alimento.nombre }}</td>
                                 <td data-label="Tipo de alimento">{{ alimento.tipo_alimento }}</td>
-                                <td data-label="Ubicación">{{ alimento.localizacion }}</td>
+                                <td data-label="Ubicación">{{ alimento.gtin }}</td>
                                 <td data-label="Stock actual">{{ alimento.stock_actual }}</td>
                                 <td data-label="Imagen"><img src="{{ alimento.imagen.url }}"></td>
                                 <td data-label="Opciones">

@@ -1,0 +1,56 @@
+<div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-warning text-white">
+            <h2 class="modal-title">Editar Merma</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+         </div>
+        <div class="modal-body">
+                <div class="container">
+                    <!-- Cambia la URL a la de tu vista de actualización -->
+                    <form method="POST" action="{% url 'recepcion:MermasUpdate' merma.id %}">
+                        {% csrf_token %}
+                        <div class="card-body">
+                            <form method="post">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                <label for="id_alimento" class="form-label">Alimento</label>
+                                {{ form.alimento }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                <label for="id_tipo_merma" class="form-label">Tipo de merma</label>
+                                {{ form.tipo_merma }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                <label for="id_cantidad" class="form-label">Cantidad</label>
+                                {{ form.cantidad }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                <label for="id_unidad_medida" class="form-label">Unidad de medida</label>
+                                {{ form.unidad_medida }}
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                <label for="id_observaciones" class="form-label">Observaciones</label>
+                                {{ form.observaciones }}
+                                </div>
+                            </div>
+                            <div class="mt-3 text-end">
+                                <button type="submit" class="btn btn-success">Guardar cambios</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+  // cerrar modal al hacer clic en cancelar
+  $('.modal .btn-secondary').click(function() {
+    $('.modal').modal('hide');
+    $('.modal-backdrop').remove();
+  });
+</script>

@@ -110,10 +110,11 @@ class AlimentoForm(forms.ModelForm):
     )
     class Meta:
         model = Alimento
-        fields = ['nombre', 'alergenos', 'trazas', 'nombre_alternativo', 'descripcion', 'conservacion', 'localizacion', 'tipo_alimento', 'stock_minimo', 'imagen']
+        fields = ['nombre', 'nombre_alternativo', 'gtin',  'alergenos', 'trazas','descripcion', 'conservacion', 'localizacion', 'tipo_alimento', 'stock_minimo', 'imagen']
         widgets = {
             'nombre': forms.TextInput(attrs={"class": "form-control form-control-sm form-control-border"}),
             'nombre_alternativo': forms.TextInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'gtin': forms.TextInput(attrs={"class": "form-control form-control-sm form-control-border", "placeholder":"Ej: 01234567890123"}),
             'descripcion': forms.Textarea(attrs={"class": "form-control form-control-sm form-control-border", "style": "height: auto; font-size:16px", "rows": 4}),
             'stock_minimo': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
             'imagen': forms.FileInput(attrs={"class":"form-control form-control-sm form-control-border"}),

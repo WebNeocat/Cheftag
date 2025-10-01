@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="content-wrapper">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="m-0">Listado de Tipos de mermas</h3>
+            <a class="btn btn-light btn-sm rounded text-primary" onclick="abrir_modal_edicion('{% url 'recepcion:TipoDeMermaCreate' %}')">
+                <i class="fa fa-plus-circle"></i>&nbsp; Crear Nuevo
+            </a>
+        </div>
+
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-md-11">
+                    <input type="text" class="form-control form-control-sm" placeholder="Buscar..." name="buscar">
+                </div>
+                <div class="col-md-1 d-flex justify-content">
+                    <button type="submit" class="btn btn-secondary btn-sm rounded" >
+                        <i class="fa fa-search"></i>&nbsp; Buscar
+                    </button>
+                </div>
+            </form>
+
+            {% if tipodemermas %}
+            <div class="table-wrapper">
+                <table class="table table-hover tabla-responsive align-middle" style="table-layout: fixed;">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Estado</th>
+                            <th>Nombre</th>
+                            <th>Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tipodemerma in tipodemermas %}
+                        <tr>
+                            <td data-label="Estado">
+                                {% if tipodemerma.activo %}
+                                    <span class="badge bg-success">Activo</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactivo</span>
+                                {% endif %}
+                            </td>
+                            <td data-label="Nombre" class="fw-bold">{{ tipodemerma.nombre }}</td>
+                            <td data-label="Opciones">
+                                <a class="btn btn-info" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'recepcion:TipoDeMermaUpdate' tipodemerma.id %}')" data-toggle="tooltip" title="Editar Tipo de Alimento">
+                                    <i class="fa fa-pencil"></i>
+                                </a>
+                                <a class="btn btn-danger" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'recepcion:TipoDeMermaDelete' tipodemerma.id %}')" data-toggle="tooltip" title="Eliminar Tipo de Alimento">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            {% include "core/pagination.html" %}
+
+            {% else %}
+            <div class="alert alert-warning text-center mt-3">
+                <i class="fa fa-exclamation-circle"></i> No se encontraron tipos de merma.
+            </div>
+            {% endif %}
+        </div>
+        <div class="modal fade" id="consulta" role="dialog">
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extrajs %}
+<script type="text/javascript">
+    var $ = jQuery.noConflict();
+    function abrir_modal_edicion(url){
+        $('#consulta').load(url, function(){
+            $(this).modal('show');
+        });
+    }
+</script>
+{% endblock extrajs %}

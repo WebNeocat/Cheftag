@@ -1,6 +1,6 @@
 from django import forms
-from .models import Proveedor, Recepcion
-from app.dashuser.models import Alimento
+from .models import Proveedor, Recepcion, TipoDeMerma, Merma
+from app.dashuser.models import Alimento, UnidadDeMedida
 
 class ProveedorForm(forms.ModelForm):    
     class Meta:
@@ -46,3 +46,56 @@ class RecepcionForm(forms.ModelForm):
             'fecha_caducidad': forms.DateInput(attrs={'type': 'date', "class": "form-control form-control-sm form-control-border"}),
             'cantidad': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
         }        
+ 
+        
+class RecepcionGS1Form(forms.ModelForm):
+    class Meta:
+        model = Recepcion
+        fields = ['proveedor', 'alimento', 'lote', 'fecha_caducidad', 'cantidad']
+        widgets = {
+            'proveedor': forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
+            'alimento': forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
+            'lote': forms.TextInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'fecha_caducidad': forms.DateInput(attrs={'type': 'date', "class": "form-control form-control-sm form-control-border"}),
+            'cantidad': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+        }        
+        
+
+class TipoDeMermaForm(forms.ModelForm):
+    class Meta:
+        model = TipoDeMerma
+        fields = ['nombre', 'descripcion', 'activo']
+        widgets = {
+            'nombre': forms.TextInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'descripcion': forms.Textarea(attrs={"class":"form-control form-control-sm form-control-border", "rows":3}),  
+            'activo': forms.CheckboxInput(attrs={"class":"form-check-input"}),
+        }  
+        
+
+class MermaForm(forms.ModelForm):
+    alimento = forms.ModelChoiceField(
+        queryset=Alimento.objects.all(),
+        label="Alimento",
+        widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
+        empty_label="Selecciona un alimento"
+    )
+    tipo_merma = forms.ModelChoiceField(
+        queryset=TipoDeMerma.objects.all(),
+        label="Tipo de merma",
+        widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
+        empty_label="Selecciona un tipo de merma"
+    )
+    unidad_medida = forms.ModelChoiceField(
+        queryset=UnidadDeMedida.objects.all(),
+        label="Unidad de medida",
+        widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
+        empty_label="Selecciona una medida"
+    )
+    
+    class Meta:
+        model = Merma
+        fields = ['alimento', 'tipo_merma', 'cantidad', 'unidad_medida', 'observaciones']
+        widgets = {
+            'observaciones': forms.Textarea(attrs={"class":"form-control form-control-sm form-control-border", "rows":3}),  
+            'cantidad': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+        }               

@@ -1,7 +1,10 @@
 from django.db import models
 from django.utils import timezone
-from app.dashuser.models import Alimento
-from app.super.models import ModeloBaseCentro
+from django.db import transaction
+from django.db.models import F
+from app.dashuser.models import Alimento, UnidadDeMedida
+from app.super.models import ModeloBaseCentro, UserProfile
+
 
 class Proveedor(ModeloBaseCentro):
     nombre = models.CharField(max_length=200, unique=True, verbose_name="Nombre comercial")
@@ -45,3 +48,68 @@ class Recepcion(ModeloBaseCentro):
 
     def __str__(self):
         return f"{self.alimento.nombre} - {self.lote} ({self.proveedor.nombre})"
+    
+    
+class TipoDeMerma(ModeloBaseCentro):
+    nombre = models.CharField(max_length=100, unique=True, verbose_name="Tipo de merma")
+    descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción")
+    activo = models.BooleanField(default=True, verbose_name="Activo")  # Para activar/desactivar tipos de merma
+
+
+    class Meta:
+        verbose_name = "Tipo de merma"
+        verbose_name_plural = "Tipos de mermas"
+        ordering = ["nombre"]
+
+    def __str__(self):
+        return self.nombre    
+    
+    
+class Merma(ModeloBaseCentro):
+    alimento = models.ForeignKey(Alimento, on_delete=models.CASCADE, related_name="mermas")
+    tipo_merma = models.ForeignKey(TipoDeMerma, on_delete=models.PROTECT, verbose_name="Tipo de merma")
+    cantidad = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Cantidad perdida")
+    unidad_medida = models.ForeignKey(UnidadDeMedida, on_delete=models.CASCADE, verbose_name="Unidad de medida")  # o gr, lt, unidades...
+    fecha = models.DateTimeField(auto_now_add=True)
+    registrado_por = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="mermas_registradas")
+    observaciones = models.TextField(blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Merma"
+        verbose_name_plural = "Mermas"
+        ordering = ["-fecha"]
+
+    def __str__(self):
+        return f"{self.producto.nombre} - {self.cantidad} {self.unidad_medida} ({self.tipo_merma})"
+
+    def save(self, *args, **kwargs):
+        # Si la merma ya existía, calculamos diferencia
+        if self.pk:  
+            old_merma = Merma.objects.get(pk=self.pk)
+            diferencia = self.cantidad - old_merma.cantidad
+        else:
+            diferencia = self.cantidad  # Nueva merma → resta la cantidad entera
+
+        super().save(*args, **kwargs)
+
+        # Actualizar stock en base a diferencia
+        if diferencia > 0:  # se perdió más cantidad
+            self.alimento.stock_actual = max(self.alimento.stock_actual - diferencia, 0)
+        elif diferencia < 0:  # se corrigió a menos pérdida → devolvemos stock
+            self.alimento.stock_actual += abs(diferencia)
+
+        self.alimento.save()   
+        
+        
+    def eliminar_y_devolver_stock(self):
+        """
+        Devuelve la cantidad de la merma al stock del alimento
+        y elimina la merma de la base de datos.
+        """
+        with transaction.atomic():
+            # actualizar stock atómicamente
+            self.alimento.__class__.objects.filter(pk=self.alimento.pk).update(
+                stock_actual=F('stock_actual') + self.cantidad
+            )
+            # borrar la merma
+            self.delete()    

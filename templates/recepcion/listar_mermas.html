@@ -4,12 +4,9 @@
 <div class="content-wrapper">
     <div class="card shadow-lg">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h3 class="m-0">Listado de recepciones</h3>
-            <a class="btn btn-light text-primary" href="{% url 'recepcion:recepcion_gs1' %}">
-                <i class="fa fa-plus-circle"></i>&nbsp; Leer código de barras
-            </a>
-            <a class="btn btn-light text-primary" onclick="abrir_modal_edicion('{% url 'recepcion:RecepcionManualCreate' %}')">
-                <i class="fa fa-plus-circle"></i>&nbsp; Recepción Manual
+            <h3 class="m-0">Listado de movimientos de reducción</h3>
+            <a class="btn btn-light text-primary" onclick="abrir_modal_edicion('{% url 'recepcion:MermasCreate' %}')">
+                <i class="fa fa-plus-circle"></i>&nbsp; Crear Nuevo
             </a>
         </div>
         <div class="card-body">
@@ -18,9 +15,8 @@
                     <select class="form-select" name="ordenar" id="ordenar" onchange="this.form.submit()">
                         <option value="" disabled selected>Ordenar por...</option>
                         <option value="alimento" {% if ordenar == 'alimento' %}selected{% endif %}>Alimento</option>
-                        <option value="proveedor" {% if ordenar == 'proveedor' %}selected{% endif %}>Proveedor</option>
-                        <option value="lote" {% if ordenar == 'lote' %}selected{% endif %}>Lote</option>
-                        <option value="fecha_recepcion" {% if ordenar == 'fecha_recepcion' %}selected{% endif %}>Fecha de recepción</option>
+                        <option value="tipo_merma" {% if ordenar == 'tipo_merma' %}selected{% endif %}>Tipo de merma</option>
+                        <option value="fecha" {% if ordenar == 'fecha' %}selected{% endif %}>Fecha</option>
                     </select>
                 </div>
                 <div class="col-md-5">
@@ -32,35 +28,33 @@
                     </button>
                 </div>
             </form>
-                {% if recepciones %}
+                {% if mermas %}
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead class="table-dark text-center">
                             <tr>
-                                <th>Fecha Recepción</th>
+                                <th>Fecha</th>
                                 <th>Alimento</th>
-                                <th>Proveedor</th>
-                                <td>Lote</td>
+                                <th>Tipo</th>
+                                <td>Cantidad</td>
                                 <th>Opciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                        {% for recepcion in recepciones %}
+                        {% for merma in mermas %}
                         <tr class="text-center" style="font-size: 14px;">
+                            <td>{{ merma.fecha|date:"d/m/Y H:i" }}</td>
+                            <td>{{ merma.alimento.nombre }}</td>
+                            <td>{{ merma.tipo_merma.nombre }}</td>
+                            <td>{{ merma.cantidad }} {{ merma.unidad_medida.abreviatura }}</td>
                             <td>
-                                {{ recepcion.fecha_recepcion|date:"d/m/Y H:i" }}
-                            </td>
-                            <td>{{ recepcion.alimento }}</td>
-                            <td>{{ recepcion.proveedor }}</td>
-                            <td>{{ recepcion.lote }}</td>
-                            <td>
-                                <a class="btn btn-inverse-success" style="--bs-btn-padding-y: 10px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'recepcion:RecepcionManualDetail' pk=recepcion.id %}')" data-toggle="tooltip" title="Detalles del proveedor">
+                                <a class="btn btn-inverse-success" style="--bs-btn-padding-y: 10px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'recepcion:MermasDetailView' pk=merma.id %}')" data-toggle="tooltip" title="Detalles de merma">
                                     <i class="fa fa-eye"></i>
                                 </a>
-                                <a class="btn btn-inverse-info" style="--bs-btn-padding-y: 10px; --bs-btn-padding-x: 14px;" onclick="" data-toggle="tooltip" title="Editar el proveedor">
+                                <a class="btn btn-inverse-info" style="--bs-btn-padding-y: 10px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'recepcion:MermasUpdate' pk=merma.id %}')" data-toggle="tooltip" title="Editar la merma">
                                     <i class="fa fa-pencil"></i>
                                 </a>
-                                <a class="btn btn-inverse-danger" style="--bs-btn-padding-y: 10px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'recepcion:RecepcionManualDelete' pk=recepcion.id %}')" data-toggle="tooltip" title="Editar el proveedor">
+                                <a class="btn btn-inverse-danger" style="--bs-btn-padding-y: 10px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'recepcion:MermasDelete' pk=merma.id %}')" data-toggle="tooltip" title="Eliminar la merma">
                                     <i class="fa fa-trash"></i>
                                 </a>
                             </td>
@@ -75,7 +69,7 @@
 
             {% else %}
             <div class="alert alert-warning text-center mt-3">
-                <i class="fa fa-exclamation-circle"></i> No se encontraron alimentos.
+                <i class="fa fa-exclamation-circle"></i> No se encontraron mermas.
             </div>
             {% endif %}
         </div>

@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.core.validators import RegexValidator
 from app.super.models import ModeloBaseCentro
 
 
@@ -82,10 +83,13 @@ class localizacion  (ModeloBaseCentro):
     def __str__(self):
         return f"{self.localizacion}"    
     
+
+gtin_validator = RegexValidator(r'^\d{8,14}$', 'El GTIN debe tener entre 8 y 14 dígitos.')
     
 class Alimento(ModeloBaseCentro):
     nombre = models.CharField(max_length=100, unique=True)
     nombre_alternativo = models.CharField(max_length=100, blank=True, null=True)
+    gtin = models.CharField(max_length=14, blank=True, null=True, help_text="Código GTIN del producto")
     imagen = models.ImageField(default='alimentos/default.jpg', upload_to='alimentos/', blank=True, null=True)
     descripcion = models.TextField(blank=True, null=True)
     tipo_alimento = models.ForeignKey(TipoAlimento, on_delete=models.CASCADE, blank=True, null=True)

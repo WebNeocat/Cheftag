@@ -1,0 +1,51 @@
+<div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-primary">
+            <h2 class="modal-title text-white">Crear merma</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <div class="container">
+                <form method="POST" action="{% url 'recepcion:MermasCreate' %}">
+                    {% csrf_token %}
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Alimento</label>
+                                {{ form.alimento }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Tipo de merma</label>
+                                {{ form.tipo_merma }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Cantidad</label>
+                                {{ form.cantidad }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Unidad de medida</label>
+                                {{ form.unidad_medida }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Observaciones</label>
+                                {{ form.observaciones }}
+                            </div>                            
+                        </div>
+                        <div class="form-group mt-3">
+                            <button type="submit" class="btn btn-info">Crear</button>
+                            <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Cierra modal al hacer click en cancelar
+    $('.modal .btn-danger').click(function() {
+        $('.modal').modal('hide');
+        $('.modal-backdrop').remove();
+    });
+</script>

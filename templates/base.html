@@ -93,14 +93,14 @@
         <ul class="nav">
           <li class="nav-item">
             <a class="nav-link" href="{% url 'dashuser:home' %}">
-              <i class="mdi mdi-grid-large menu-icon"></i>
+              <i class="mdi mdi-monitor-dashboardEV  menu-icon"></i>
               <span class="menu-title">Dashboard</span>
             </a>
           </li>
           <li class="nav-item nav-category">Sistema</li>
           <li class="nav-item">
               <a class="nav-link" href="{% url 'recepcion:ProveedorList' %}">
-                <i class="menu-icon mdi mdi-bank"></i>
+                <i class="menu-icon mdi mdi-factory"></i>
                 <span class="menu-title">Proveedores</span>
               </a>
             </li>
@@ -112,13 +112,13 @@
             </li>
             <li class="nav-item">
               <a class="nav-link" href="{% url 'platos:PlatoList' %}">
-                <i class="menu-icon mdi mdi-food-turkey"></i>
+                <i class="menu-icon mdi mdi-food-takeout-box"></i>
                 <span class="menu-title">Platos</span>
               </a>
             </li>
             <li class="nav-item">
               <a class="nav-link" data-bs-toggle="collapse" href="#etiq" aria-expanded="false" aria-controls="etiq">
-                <i class="menu-icon mdi mdi-tag"></i>
+                <i class="menu-icon mdi mdi-tag-text-outline"></i>
                 <span class="menu-title">Etiquetado</span>
                 <i class="menu-arrow"></i>
               </a>
@@ -137,17 +137,31 @@
                 <span class="menu-title">Lotes Etiquetas</span>
               </a>
             </li>
+            <li class="nav-item nav-category">Stock</li>
+            
             <li class="nav-item">
               <a class="nav-link" href="{% url 'recepcion:RecepcionManualList' %}">
-                <i class="menu-icon mdi mdi-barcode-scan"></i>
+                <i class="menu-icon mdi mdi-dolly"></i>
                 <span class="menu-title">Recepción</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'recepcion:MermasList' %}">
+                <i class="menu-icon mdi mdi-format-indent-decrease"></i>
+                <span class="menu-title">Mermas</span>
+              </a>
+            </li>            
+            <li class="nav-item">
+              <a class="nav-link" href="">
+                <i class="menu-icon mdi mdi-format-list-checks"></i>
+                <span class="menu-title">Auditoria</span>
               </a>
             </li>
           </li>
           <li class="nav-item nav-category">Opciones</li>
             <li class="nav-item">
               <a class="nav-link" data-bs-toggle="collapse" href="#confi" aria-expanded="false" aria-controls="confi">
-                <i class="menu-icon mdi mdi-filter"></i>
+                <i class="menu-icon mdi mdi-tools"></i>
                 <span class="menu-title">configuración</span>
                 <i class="menu-arrow"></i>
               </a>
@@ -175,6 +189,9 @@
                 </ul>
                 <ul class="nav flex-column sub-menu">
                   <li class="nav-item"> <a class="nav-link" href="{% url 'platos:TextoModoList' %}">Modos de uso</a></li>
+                </ul>
+                <ul class="nav flex-column sub-menu">
+                  <li class="nav-item"> <a class="nav-link" href="{% url 'recepcion:TipoDeMermaList' %}">Tipos de mermas</a></li>
                 </ul>
               </div>
             </li>

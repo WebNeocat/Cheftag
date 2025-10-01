@@ -1,0 +1,43 @@
+<div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-danger">
+            <h2 class="modal-title text-white">Eliminar merma</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="container">
+                <form method="POST" action="{% url 'recepcion:MermasDelete' merma.id %}">
+                    {% csrf_token %}
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <p>¿Estás seguro de que deseas eliminar esta merma?</p>
+                                <p class="fw-bold text-danger">{{ merma.alimento }}</p>
+                                <p class="fw-bold text-danger">{{ merma.tipo_merma }}</p>
+                                <p class="text-danger" atyle="margin-top:20px;"><i class="fa fa-exclamation-triangle"></i> Esta acción no se puede deshacer.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fa fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fa fa-trash"></i> Sí, eliminar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+   // Solo cerrar el modal con el botón de cerrar o cancelar
+    $('.modal .btn-secondary, .modal .btn-close').click(function() {
+        $('.modal').modal('hide');
+        $('.modal-backdrop').remove();
+    });
+</script>
