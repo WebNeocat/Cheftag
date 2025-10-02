@@ -14,6 +14,3 @@ class RegistroAccion(ModeloBaseCentro):
 
     def __str__(self):
         return f"{self.usuario} {self.accion} {self.modelo} ({self.objeto_repr})"
-
-
-# Create your models here.

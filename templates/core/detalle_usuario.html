@@ -1,0 +1,72 @@
+
+<div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0">
+
+        <!-- Header -->
+        <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="usuarioDetailLabel">
+            <i class="fa fa-user me-2"></i> Detalle del Usuario
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body">
+        <div class="container">
+
+            <div class="row mb-4 align-items-center">
+            <div class="col-md-3 text-center">
+                <img src="{{ usuario.imagen.url }}" alt="{{ usuario.nombre }}" class="rounded-circle img-fluid border" style="width:120px; height:120px; object-fit:cover;">
+            </div>
+            <div class="col-md-9">
+                <h4 class="mb-1">{{ usuario.nombre }} {{ usuario.apellidos }}</h4>
+                <p class="mb-0"><i class="fa fa-id-badge me-1"></i> <strong>Username:</strong> {{ usuario.username }}</p>
+                <p class="mb-0"><i class="fa fa-briefcase me-1"></i> <strong>Cargo:</strong> {{ usuario.cargo|default:"No asignado" }}</p>
+                <p class="mb-0">
+                <i class="fa fa-building me-1"></i> <strong>Centro:</strong> 
+                {% if usuario.centro %}{{ usuario.centro.nombre }}{% else %}<span class="text-muted">No asignado</span>{% endif %}
+                </p>
+            </div>
+            </div>
+
+            <hr>
+
+            <div class="row g-3">
+            <div class="col-md-6">
+                <p class="mb-0"><i class="fa fa-envelope me-2 text-info"></i> <strong>Email:</strong> {{ usuario.user.email|default:"No asignado" }}</p>
+            </div>
+            <div class="col-md-6">
+                <p class="mb-0"><i class="fa fa-toggle-on me-2 text-success"></i> <strong>Estado:</strong>
+                {% if usuario.estado %}<span class="badge bg-success">Activo</span>{% else %}<span class="badge bg-danger">Inactivo</span>{% endif %}
+                </p>
+            </div>
+            </div>
+
+            <div class="row g-3 mt-3">
+            <div class="col-md-12">
+                <p class="mb-0"><i class="fa fa-calendar-alt me-2 text-warning"></i> <strong>Fecha de creación:</strong> {{ usuario.user.date_joined|date:"d/m/Y H:i" }}</p>
+            </div>
+            </div>
+
+        </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fa fa-times me-1"></i> Cerrar
+        </button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Agrega un evento de clic a los botones de cerrar y cancelar
+    $('.modal .close, .modal .btn-danger').click(function() {
+        // Oculta el modal
+        $('.modal').modal('hide');
+        // Elimina el fondo oscuro
+        $('.modal-backdrop').remove();
+    });
+</script>    

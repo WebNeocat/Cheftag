@@ -43,4 +43,4 @@ class UserProfile(models.Model):
     estado =models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.username})"
+        return f"{self.nombre} {self.apellidos}"

@@ -157,13 +157,6 @@
               </a>
             </li>
           </li>
-          <li class="nav-item nav-category">CONTROL</li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'core:registro_accion_list' %}">
-                <i class="menu-icon mdi mdi-math-log"></i>
-                <span class="menu-title"> Registros</span>
-              </a>
-            </li>
           <li class="nav-item nav-category">CONFIGURACIÓN</li>
             <li class="nav-item">
               <a class="nav-link" data-bs-toggle="collapse" href="#confi" aria-expanded="false" aria-controls="confi">
@@ -201,6 +194,20 @@
                 </ul>
               </div>
             </li>
+            <li class="nav-item nav-category">CONTROL</li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'core:UsersListView' %}">
+                  <i class="menu-icon mdi mdi-account-multiple"></i>
+                  <span class="menu-title"> Usuarios</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'core:registro_accion_list' %}">
+                  <i class="menu-icon mdi mdi-math-log"></i>
+                  <span class="menu-title"> Registros</span>
+                </a>
+              </li>
+          </li>
         </ul>
       </nav>
       <div class="main-panel">

@@ -583,5 +583,32 @@ def merma_post_save(sender, instance, created, **kwargs):
 
 @receiver(post_delete, sender=AlimentoSalsa)
 def merma_post_delete(sender, instance, **kwargs):
-    registrar_accion(instance, 'eliminar')                      
+    registrar_accion(instance, 'eliminar')   
+    
+    
+# ---USUARIOS ---
+
+@receiver(pre_save, sender=UserProfile)
+def merma_pre_save(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            instance._old_instance = sender.objects.get(pk=instance.pk)
+        except sender.DoesNotExist:
+            instance._old_instance = None
+    else:
+        instance._old_instance = None
+
+
+@receiver(post_save, sender=UserProfile)
+def merma_post_save(sender, instance, created, **kwargs):
+    old_instance = getattr(instance, '_old_instance', None)
+    if created:
+        registrar_accion(instance, 'crear')
+    else:
+        registrar_accion(instance, 'modificar', old_instance=old_instance)
+
+
+@receiver(post_delete, sender=UserProfile)
+def merma_post_delete(sender, instance, **kwargs):
+    registrar_accion(instance, 'eliminar')                         
     

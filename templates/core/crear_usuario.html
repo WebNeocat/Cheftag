@@ -1,0 +1,29 @@
+<div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-primary">
+            <h2 class="modal-title">Crear Usuario</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="container">
+                <form method="POST" action="{% url 'super:crear_usuario' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary">Crear Usuario</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // Agrega un evento de clic a los botones de cerrar y cancelar
+    $('.modal .close, .modal .btn-danger').click(function() {
+        // Oculta el modal
+        $('.modal').modal('hide');
+        // Elimina el fondo oscuro
+        $('.modal-backdrop').remove();
+    });
+</script>

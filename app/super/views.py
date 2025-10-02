@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.http import HttpResponseRedirect
+from django import forms
+from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.contrib.auth.models import User
 from django.utils.timezone import localtime
@@ -108,37 +110,42 @@ class UsuariosList (PaginationMixin, ListView):
 class CrearUsuarioView(CreateView):
     model = UserProfile
     form_class = UserProfileForm
-    template_name = 'super/crear_usuario.html'
-    success_url = reverse_lazy('super:UsuariosList')
+    template_name = 'core/crear_usuario.html'
+    success_url = reverse_lazy('core:UsersList')
 
-    @transaction.atomic
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        creator_profile = get_object_or_404(UserProfile, user=self.request.user)
+
+        if creator_profile.centro:
+            # Ocultar el campo centro y dejarlo solo de lectura
+            form.fields['centro'].widget = forms.HiddenInput()
+            form.initial['centro'] = creator_profile.centro
+        # Si no tiene centro → dejamos el campo visible para que lo seleccione
+        return form
+
     def form_valid(self, form):
-        # Extraer datos
-        username = form.cleaned_data['username']
-        password = form.cleaned_data['password']
-        nombre = form.cleaned_data['nombre']
-        apellidos = form.cleaned_data['apellidos']
-
-        # Crear el User de Django
-        user = User.objects.create_user(
-            username=username,
-            password=password,
-            first_name=nombre,
-            last_name=apellidos
-        )
-
-        # Asignar user al perfil antes de guardar
         profile = form.save(commit=False)
+
+        # Asignar centro automáticamente si el creador tiene uno
+        creator_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if creator_profile.centro:
+            profile.centro = creator_profile.centro
+
+        # Crear usuario Django asociado
+        user = User.objects.create_user(
+            username=form.cleaned_data['username'],
+            password=form.cleaned_data['password'],
+            first_name=form.cleaned_data['nombre'],
+            last_name=form.cleaned_data['apellidos'],
+            is_active=profile.estado
+        )
         profile.user = user
-        profile.password = password 
         profile.save()
 
-        messages.success(self.request, "Usuario y perfil creados correctamente.")
+        messages.success(self.request, "Usuario creado correctamente.")
         return super().form_valid(form)
 
-    def form_invalid(self, form):
-        messages.error(self.request, "Error al crear el usuario. Revisa los datos.")
-        return super().form_invalid(form)
 
 
 class ActualizarUsuarioView(UpdateView):
