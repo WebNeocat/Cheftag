@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="content-wrapper">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="m-0">Listado de movimientos</h3>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-center mb-3">
+                <div class="col-md-4">
+                    <select class="form-select" name="ordenar" id="ordenar" onchange="this.form.submit()">
+                        <option value="" disabled selected>Ordenar por...</option>
+                        <option value="alimento" {% if ordenar == 'alimento' %}selected{% endif %}>Alimento</option>
+                        <option value="tipo" {% if ordenar == 'tipo' %}selected{% endif %}>Tipo</option>
+                        <option value="fecha" {% if ordenar == 'fecha' %}selected{% endif %}>Fecha</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <input type="text" class="form-control" placeholder="Buscar..." name="buscar">
+                </div>
+                <div class="col-md-3 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-inverse-secondary">
+                        <i class="fa fa-search"></i>&nbsp; Buscar
+                    </button>
+                </div>
+            </form>
+
+            {% if movimientos %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark text-center">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Alimento</th>
+                            <th>Tipo</th>
+                            <th>Cantidad</th>
+                            <th>Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mov in movimientos %}
+                        <tr class="text-center" style="font-size: 14px;">
+                           <td>{{ mov.fecha_movimiento|date:"d/m/Y H:i" }}</td>
+                            <td>{{ mov.alimento.nombre }}</td>
+                            <td>{{ mov.tipo_movimiento }}</td>
+                            <td class="{% if mov.tipo_movimiento == 'Recepción' %}text-success{% else %}text-danger{% endif %}">
+                                {{ mov.cantidad }} {{ mov.unidad_medida.abreviatura }}
+                                {% if mov.tipo_movimiento == "Recepción" %}
+                                    <i class="fa fa-arrow-up ms-1"></i>
+                                {% else %}
+                                    <i class="fa fa-arrow-down ms-1"></i>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if mov.proveedor %}
+                                <!-- Opciones Recepción -->
+                                <a class="btn btn-inverse-success" onclick="abrir_modal_edicion('{% url 'recepcion:RecepcionManualDetail' pk=mov.id %}')"><i class="fa fa-eye"></i></a>
+                                <a class="btn btn-inverse-info" onclick="abrir_modal_edicion('{% url 'recepcion:RecepcionManualDetail' pk=mov.id %}')"><i class="fa fa-pencil"></i></a>
+                                <a class="btn btn-inverse-danger" onclick="abrir_modal_edicion('{% url 'recepcion:RecepcionManualDeleteFormView' pk=mov.id %}')"><i class="fa fa-trash"></i></a>
+                                {% else %}
+                                <!-- Opciones Merma -->
+                                <a class="btn btn-inverse-success" onclick="abrir_modal_edicion('{% url 'recepcion:MermasDetailView' pk=mov.id %}')"><i class="fa fa-eye"></i></a>
+                                <a class="btn btn-inverse-info" onclick="abrir_modal_edicion('{% url 'recepcion:MermasUpdate' pk=mov.id %}')"><i class="fa fa-pencil"></i></a>
+                                <a class="btn btn-inverse-danger" onclick="abrir_modal_edicion('{% url 'recepcion:MermasDelete' pk=mov.id %}')"><i class="fa fa-trash"></i></a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación (si aplicas paginación manual) -->
+            {% include "core/pagination.html" %}
+            {% else %}
+            <div class="alert alert-warning text-center mt-3">
+                <i class="fa fa-exclamation-circle"></i> No se encontraron movimientos.
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="modal fade" id="consulta" role="dialog"></div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extrajs %}
+<script type="text/javascript">
+    var $ = jQuery.noConflict();
+    function abrir_modal_edicion(url){
+        $('#consulta').load(url, function(){
+            $(this).modal('show');
+        });
+    }
+</script>
+{% endblock extrajs %}

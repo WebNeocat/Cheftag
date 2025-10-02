@@ -1,4 +1,5 @@
 from django import forms
+from django.forms import modelformset_factory
 from .models import Proveedor, Recepcion, TipoDeMerma, Merma
 from app.dashuser.models import Alimento, UnidadDeMedida
 
@@ -38,16 +39,39 @@ class RecepcionForm(forms.ModelForm):
         widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
         empty_label="Selecciona un alimento"
     )
+    unidad_medida = forms.ModelChoiceField(
+        queryset=UnidadDeMedida.objects.all(),
+        label="Unidad de medida",
+        widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
+        empty_label="Selecciona una unidad"
+    )
     class Meta:
         model = Recepcion
-        fields = ['proveedor', 'alimento', 'lote', 'fecha_caducidad', 'cantidad']
+        fields = ['proveedor', 'alimento', 'lote', 'unidad_medida', 'fecha_caducidad', 'cantidad', 'observaciones']
         widgets = {
             'lote': forms.TextInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'fecha_caducidad': forms.DateInput(attrs={'type': 'date', "class": "form-control form-control-sm form-control-border"}),
+            'fecha_caducidad': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', "class": "form-control form-control-sm form-control-border"}),
             'cantidad': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-        }        
- 
+            'observaciones': forms.Textarea(attrs={"class":"form-control form-control-sm form-control-border", "rows":3}),
+        }  
         
+              
+    def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.fields['fecha_caducidad'].input_formats = ['%Y-%m-%d']
+  
+         
+RecepcionFormSet = modelformset_factory(
+    Recepcion,
+    form=RecepcionForm,
+    extra=1,  # cuántos formularios aparecen por defecto
+    can_delete=True  # permite eliminar formularios antes de enviar
+)
+
+class RecepcionEliminarForm(forms.Form):
+    recepcion_id = forms.IntegerField(widget=forms.HiddenInput)
+    
+            
 class RecepcionGS1Form(forms.ModelForm):
     class Meta:
         model = Recepcion

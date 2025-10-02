@@ -118,11 +118,9 @@ class AlergenosCreate(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         user_profile = get_object_or_404(UserProfile, user=self.request.user)
         if user_profile.centro:
-            alergenos = form.save(commit=False)
-            alergenos.centro = user_profile.centro
-            alergenos.save()
+            form.instance.centro = user_profile.centro
             messages.success(self.request, 'Alérgeno creado correctamente.')
-            return super().form_valid(form)
+            return super().form_valid(form)  # solo guarda 1 vez
         else:
             messages.error(self.request, 'No está asociado a ningún centro.')
             return self.form_invalid(form)
@@ -149,7 +147,6 @@ class AlergenosUpdate(LoginRequiredMixin, UpdateView):
             return Alergenos.objects.none()
 
     def form_valid(self, form):
-        self.object = form.save()
         messages.success(self.request, 'Alérgeno actualizado correctamente.')
         return super().form_valid(form)
 
@@ -175,7 +172,6 @@ class AlergenosDelete(LoginRequiredMixin, DeleteView):
 
     def post(self, request, *args, **kwargs):
         obj = self.get_object()
-        obj.last_modified_by = request.user
         obj.save
         messages.success(self.request, 'Alérgeno eliminado correctamente.')
         return super().delete(request, *args, **kwargs) 
@@ -231,14 +227,13 @@ class TrazasCreate(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         user_profile = get_object_or_404(UserProfile, user=self.request.user)
         if user_profile.centro:
-            trazas = form.save(commit=False)
-            trazas.centro = user_profile.centro
-            trazas.save()
-            messages.success(self.request, 'Traza de alérgeno creado correctamente.')
-            return super().form_valid(form)
+            form.instance.centro = user_profile.centro
+            messages.success(self.request, 'Traza creada correctamente.')
+            return super().form_valid(form)  # solo guarda 1 vez
         else:
             messages.error(self.request, 'No está asociado a ningún centro.')
             return self.form_invalid(form)
+
 
     def form_invalid(self, form):
         for field, errors in form.errors.items():
@@ -263,7 +258,6 @@ class TrazasUpdate(LoginRequiredMixin, UpdateView):
             return Trazas.objects.none()
 
     def form_valid(self, form):
-        self.object = form.save()
         messages.success(self.request, 'Trazas de alérgeno actualizado correctamente.')
         return super().form_valid(form)
 
@@ -346,11 +340,9 @@ class UnidadDeMedidaCreate(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         user_profile = get_object_or_404(UserProfile, user=self.request.user)
         if user_profile.centro:
-            unidaddemedidas = form.save(commit=False)
-            unidaddemedidas.centro = user_profile.centro
-            unidaddemedidas.save()
+            form.instance.centro = user_profile.centro
             messages.success(self.request, 'Unidad de medida creada correctamente.')
-            return super().form_valid(form)
+            return super().form_valid(form) 
         else:
             messages.error(self.request, 'No está asociado a ningún centro.')
             return self.form_invalid(form)
@@ -378,7 +370,6 @@ class UnidadDeMedidaUpdate(LoginRequiredMixin, UpdateView):
             return UnidadDeMedida.objects.none()
 
     def form_valid(self, form):
-        self.object = form.save()
         messages.success(self.request, 'Unidad de medida actualizado correctamente.')
         return super().form_valid(form)
 
@@ -460,14 +451,13 @@ class TipoAlimentoCreate(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         user_profile = get_object_or_404(UserProfile, user=self.request.user)
         if user_profile.centro:
-            tipoalimentos = form.save(commit=False)
-            tipoalimentos.centro = user_profile.centro
-            tipoalimentos.save()
+            form.instance.centro = user_profile.centro
             messages.success(self.request, 'Tipo de alimento creado correctamente.')
             return super().form_valid(form)
         else:
             messages.error(self.request, 'No está asociado a ningún centro.')
             return self.form_invalid(form)
+
 
     def form_invalid(self, form):
         for field, errors in form.errors.items():
@@ -492,7 +482,6 @@ class TipoAlimentoUpdate(LoginRequiredMixin, UpdateView):
             return TipoAlimento.objects.none()
 
     def form_valid(self, form):
-        self.object = form.save()
         messages.success(self.request, 'Tipo de alimento actualizado correctamente.')
         return super().form_valid(form)
 
@@ -572,14 +561,13 @@ class LocalizacionCreate(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         user_profile = get_object_or_404(UserProfile, user=self.request.user)
         if user_profile.centro:
-            localizacion = form.save(commit=False)
-            localizacion.centro = user_profile.centro
-            localizacion.save()
+            form.instance.centro = user_profile.centro
             messages.success(self.request, 'Localización creada correctamente.')
             return super().form_valid(form)
         else:
             messages.error(self.request, 'No está asociado a ningún centro.')
             return self.form_invalid(form)
+
 
     def form_invalid(self, form):
         for field, errors in form.errors.items():
@@ -604,7 +592,6 @@ class LocalizacionUpdate(LoginRequiredMixin, UpdateView):
             return localizacion.objects.none()
 
     def form_valid(self, form):
-        self.object = form.save()
         messages.success(self.request, 'Localización actualizada correctamente.')
         return super().form_valid(form)
 
@@ -686,14 +673,13 @@ class ConservacionCreate(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         user_profile = get_object_or_404(UserProfile, user=self.request.user)
         if user_profile.centro:
-            conservacion = form.save(commit=False)
-            conservacion.centro = user_profile.centro
-            conservacion.save()
-            messages.success(self.request, 'Conservacion creada correctamente.')
-            return super().form_valid(form)
+            form.instance.centro = user_profile.centro
+            messages.success(self.request, 'Conservación creada correctamente.')
+            return super().form_valid(form) 
         else:
             messages.error(self.request, 'No está asociado a ningún centro.')
             return self.form_invalid(form)
+
 
     def form_invalid(self, form):
         for field, errors in form.errors.items():
@@ -718,7 +704,6 @@ class ConservacionUpdate(LoginRequiredMixin, UpdateView):
             return Conservacion.objects.none()
 
     def form_valid(self, form):
-        self.object = form.save()
         messages.success(self.request, 'Conservacion actualizada correctamente.')
         return super().form_valid(form)
 

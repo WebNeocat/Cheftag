@@ -39,6 +39,7 @@
                             <tr>
                                 <th>Fecha Recepción</th>
                                 <th>Alimento</th>
+                                <th>Cantidad</th>
                                 <th>Proveedor</th>
                                 <td>Lote</td>
                                 <th>Opciones</th>
@@ -51,16 +52,17 @@
                                 {{ recepcion.fecha_recepcion|date:"d/m/Y H:i" }}
                             </td>
                             <td>{{ recepcion.alimento }}</td>
+                            <td>{{ recepcion.cantidad }} {{ recepcion.unidad_medida.abreviatura }}</td>
                             <td>{{ recepcion.proveedor }}</td>
                             <td>{{ recepcion.lote }}</td>
                             <td>
-                                <a class="btn btn-inverse-success" style="--bs-btn-padding-y: 10px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'recepcion:RecepcionManualDetail' pk=recepcion.id %}')" data-toggle="tooltip" title="Detalles del proveedor">
+                                <a class="btn btn-inverse-success" style="--bs-btn-padding-y: 10px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'recepcion:RecepcionManualDetail' pk=recepcion.id %}')" data-toggle="tooltip" title="Detalles recepción">
                                     <i class="fa fa-eye"></i>
                                 </a>
-                                <a class="btn btn-inverse-info" style="--bs-btn-padding-y: 10px; --bs-btn-padding-x: 14px;" onclick="" data-toggle="tooltip" title="Editar el proveedor">
+                                <a class="btn btn-inverse-info" style="--bs-btn-padding-y: 10px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'recepcion:RecepcionManualUpdate' pk=recepcion.id %}')" data-toggle="tooltip" title="Editar recepción">
                                     <i class="fa fa-pencil"></i>
                                 </a>
-                                <a class="btn btn-inverse-danger" style="--bs-btn-padding-y: 10px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'recepcion:RecepcionManualDelete' pk=recepcion.id %}')" data-toggle="tooltip" title="Editar el proveedor">
+                                <a class="btn btn-inverse-danger" style="--bs-btn-padding-y: 10px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'recepcion:RecepcionManualDeleteFormView' pk=recepcion.id %}')" data-toggle="tooltip" title="Eliminar recepción">
                                     <i class="fa fa-trash"></i>
                                 </a>
                             </td>

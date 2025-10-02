@@ -2,6 +2,8 @@ from django.db import models
 from django.utils import timezone
 from django.core.validators import RegexValidator
 from app.super.models import ModeloBaseCentro
+from app.super.models import UserProfile
+
 
 
 class Alergenos(ModeloBaseCentro):
@@ -93,12 +95,12 @@ class Alimento(ModeloBaseCentro):
     imagen = models.ImageField(default='alimentos/default.jpg', upload_to='alimentos/', blank=True, null=True)
     descripcion = models.TextField(blank=True, null=True)
     tipo_alimento = models.ForeignKey(TipoAlimento, on_delete=models.CASCADE, blank=True, null=True)
-    conservacion = models.ForeignKey(Conservacion, on_delete=models.CASCADE, blank=True)
-    localizacion = models.ForeignKey(localizacion, on_delete=models.CASCADE, blank=True)
-    alergenos = models.ManyToManyField(Alergenos, blank=True)
-    trazas = models.ManyToManyField(Trazas, blank=True)
-    stock_actual = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True)
-    stock_minimo = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True)
+    conservacion = models.ForeignKey(Conservacion, on_delete=models.CASCADE, blank=True, null=True)
+    localizacion = models.ForeignKey(localizacion, on_delete=models.CASCADE, blank=True, null=True)
+    alergenos = models.ManyToManyField(Alergenos, blank=True, null=True)
+    trazas = models.ManyToManyField(Trazas, blank=True, null=True)
+    stock_actual = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True, null=True)
+    stock_minimo = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True, null=True)
 
     class Meta:
         ordering = ['nombre']
@@ -138,3 +140,4 @@ class EtiquetaAlimento(models.Model):
 
     def __str__(self):
         return f"Etiqueta {self.alimento.nombre} - Lote {self.lote}"    
+  

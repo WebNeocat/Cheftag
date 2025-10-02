@@ -1,6 +1,6 @@
 <div class="modal-dialog modal-lg" role="document">
   <div class="modal-content">
-    <div class="modal-header bg-primary text-white">
+    <div class="modal-header bg-inverse-success">
       <h2 class="modal-title">Registrar recepción de producto</h2>
       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
     </div>
@@ -8,34 +8,47 @@
       <div class="container">
         <form method="POST" action="{% url 'recepcion:RecepcionManualCreate' %}">
           {% csrf_token %}
-          <div class="card-body">
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label">Proveedor</label>
-                {{ form.proveedor }}
+          {{ formset.management_form }}  <!-- MUY IMPORTANTE -->
+
+          <div id="formset-container">
+            {% for form in formset %}
+              <div class="form-row border p-2 mb-2">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Proveedor</label>
+                    {{ form.proveedor }}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Alimento</label>
+                    {{ form.alimento }}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Lote</label>
+                    {{ form.lote }}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Fecha de caducidad</label>
+                    {{ form.fecha_caducidad }}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Cantidad</label>
+                    {{ form.cantidad }}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Unidad de medida</label>
+                    {{ form.unidad_medida }}
+                  </div>
+                  <div class="col-md-12">
+                    <label class="form-label">Observaciones</label>
+                    {{ form.observaciones }}
+                  </div>
+                </div>
               </div>
-              <div class="col-md-6">
-                <label class="form-label">Alimento</label>
-                {{ form.alimento }}
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">Lote</label>
-                {{ form.lote }}
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">Fecha de caducidad</label>
-                {{ form.fecha_caducidad }}
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">Cantidad</label>
-                {{ form.cantidad }}
-              </div>
-            </div>
-            <div class="mt-3 text-end">
-              <button type="submit" class="btn btn-primary">Guardar recepción</button>
-              <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
-            </div>
+            {% endfor %}
           </div>
+
+          <button type="button" class="btn btn-success" id="add-form">Añadir otro alimento</button>
+          <button type="submit" class="btn btn-info">Guardar todas las recepciones</button>
         </form>
       </div>
     </div>
@@ -43,6 +56,25 @@
 </div>
 
 <script>
+  document.getElementById('add-form').addEventListener('click', function() {
+      let container = document.getElementById('formset-container');
+      let totalForms = parseInt(document.getElementById('id_form-TOTAL_FORMS').value);
+      
+      let newForm = container.children[0].cloneNode(true);
+
+      // Limpiar los valores
+      newForm.querySelectorAll('input, select').forEach(function(input){
+          if (input.type != 'hidden') input.value = '';
+      });
+
+      // Actualizar índices del formset
+      newForm.innerHTML = newForm.innerHTML.replace(/form-0-/g, 'form-' + totalForms + '-');
+
+      container.appendChild(newForm);
+      document.getElementById('id_form-TOTAL_FORMS').value = totalForms + 1;
+  });
+
+
   // cerrar modal al hacer clic en cancelar
   $('.modal .btn-danger').click(function() {
     $('.modal').modal('hide');

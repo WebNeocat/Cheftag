@@ -1,0 +1,29 @@
+<div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-danger">
+            <h2 class="modal-title text-white">Eliminar recepción</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <div class="container">
+                <form method="POST" action="{% url 'recepcion:RecepcionManualDeleteFormView' recepcion.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="recepcion_id" value="{{ recepcion.id }}">
+                    <p>¿Estás seguro de que deseas eliminar esta recepción?</p>
+                    <p class="fw-bold text-danger">{{ recepcion.alimento }}</p>
+                    <p class="fw-bold text-danger">{{ recepcion.cantidad }} {{ recepcion.unidad_medida }}</p>
+                    <p class="text-danger mt-3"><i class="fa fa-exclamation-triangle"></i> Esta acción no se puede deshacer.</p>
+
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fa fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fa fa-trash"></i> Sí, eliminar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

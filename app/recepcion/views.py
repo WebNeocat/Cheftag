@@ -6,12 +6,13 @@ from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.views.generic import DetailView
+from django.views.generic import DetailView, TemplateView, FormView
 from django.views.generic.list import ListView
+from django.views import View
 from app.super.models import UserProfile
 from app.core.mixins import PaginationMixin
 from .models import Proveedor, Recepcion, TipoDeMerma, Merma
-from .forms import ProveedorForm, RecepcionForm, TipoDeMermaForm, MermaForm
+from .forms import ProveedorForm, RecepcionForm, TipoDeMermaForm, MermaForm, RecepcionFormSet, RecepcionEliminarForm
 from app.dashuser.views import datos_centro
 from app.dashuser.models import Alimento
 import re
@@ -71,14 +72,13 @@ class ProveedorCreate(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         user_profile = get_object_or_404(UserProfile, user=self.request.user)
         if user_profile.centro:
-            proveedores = form.save(commit=False)
-            proveedores.centro = user_profile.centro
-            proveedores.save()
+            form.instance.centro = user_profile.centro
             messages.success(self.request, 'Proveedor creado correctamente.')
-            return super().form_valid(form)
+            return super().form_valid(form)  # solo guarda 1 vez
         else:
             messages.error(self.request, 'No está asociado a ningún centro.')
             return self.form_invalid(form)
+
 
     def form_invalid(self, form):
         for field, errors in form.errors.items():
@@ -103,7 +103,6 @@ class ProveedorUpdate(LoginRequiredMixin, UpdateView):
             return Proveedor.objects.none()
 
     def form_valid(self, form):
-        self.object = form.save()
         messages.success(self.request, 'Proveedor actualizado correctamente.')
         return super().form_valid(form)
 
@@ -190,37 +189,68 @@ class RecepcionManualList(PaginationMixin, LoginRequiredMixin, ListView):
         return context
     
 
-class RecepcionManualCreate(LoginRequiredMixin, CreateView):
+class RecepcionManualCreate(LoginRequiredMixin, View):
+    template_name = 'recepcion/crear_recepcion_manual.html'
+    success_url = 'recepcion:RecepcionManualList' 
+
+    def get(self, request, *args, **kwargs):
+        formset = RecepcionFormSet(queryset=Recepcion.objects.none())
+        return render(request, self.template_name, {'formset': formset})
+
+    def post(self, request, *args, **kwargs):
+        formset = RecepcionFormSet(request.POST, queryset=Recepcion.objects.none())
+        user_profile = get_object_or_404(UserProfile, user=request.user)
+
+        if formset.is_valid() and user_profile.centro:
+            for form in formset:
+                if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
+                    recepcion = form.save(commit=False)
+                    recepcion.centro = user_profile.centro
+                    recepcion.save()
+                    # Actualizar stock
+                    alimento = recepcion.alimento
+                    alimento.stock_actual += recepcion.cantidad
+                    alimento.save()
+            messages.success(request, 'Recepciones registradas correctamente.')
+            return redirect(self.success_url)
+        else:
+            messages.error(request, 'Error al guardar las recepciones o no estás asociado a un centro.')
+            return render(request, self.template_name, {'formset': formset})
+
+    
+    
+class RecepcionManualUpdate(LoginRequiredMixin, UpdateView):
     model = Recepcion
     form_class = RecepcionForm
-    template_name = 'recepcion/crear_recepcion_manual.html'
+    template_name = 'recepcion/editar_recepcion_manual.html'
+    context_object_name = 'recepcion'
     success_url = reverse_lazy('recepcion:RecepcionManualList')
 
-    def form_valid(self, form):
+    def get_queryset(self):
         user_profile = get_object_or_404(UserProfile, user=self.request.user)
         if user_profile.centro:
-            recepciones = form.save(commit=False)
-            recepciones.centro = user_profile.centro
-            recepciones.save()
-            
-            # Actualizar stock automáticamente
-            alimento = recepciones.alimento
-            alimento.stock_actual += recepciones.cantidad
-            alimento.save()
-            
-            messages.success(self.request, 'Recepcion entrada correctamente.')
-            return super().form_valid(form)
+            return Recepcion.objects.filter(centro=user_profile.centro)
         else:
-            messages.error(self.request, 'No está asociado a ningún centro.')
-            return self.form_invalid(form)
+            return Recepcion.objects.none()
 
+    def form_valid(self, form):
+        old_recepcion = form.instance.__class__.objects.get(pk=form.instance.pk)
+        
+        # Ajustar stock antes de guardar
+        diferencia = form.instance.cantidad - old_recepcion.cantidad
+        form.instance.alimento.stock_actual += diferencia
+        form.instance.alimento.save()
+
+        return super().form_valid(form)
+    
     def form_invalid(self, form):
         for field, errors in form.errors.items():
             for error in errors:
                 messages.error(self.request, f"Error en el campo '{field}': {error}")
         return super().form_invalid(form)
-    
-    
+
+
+
     
 class RecepcionManualDetail(LoginRequiredMixin, DetailView):
     model = Recepcion
@@ -233,24 +263,37 @@ class RecepcionManualDetail(LoginRequiredMixin, DetailView):
         return context    
         
         
-class RecepcionManualDelete(LoginRequiredMixin, DeleteView):
-    model = Recepcion
+class RecepcionManualDeleteFormView(LoginRequiredMixin, FormView):
     template_name = 'recepcion/recepcionmanual_confirm_delete.html'
-    success_url = reverse_lazy('recepcion:RecepcionList')
-    context_object_name = 'recepcion'
+    form_class = RecepcionEliminarForm
+    success_url = reverse_lazy('recepcion:RecepcionManualList')
 
-    def get_queryset(self):
+    def get_initial(self):
+        return {'recepcion_id': self.kwargs['pk']}
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['recepcion'] = get_object_or_404(Recepcion, pk=self.kwargs['pk'])
+        return context
+
+    def form_valid(self, form):
+        recepcion_id = form.cleaned_data['recepcion_id']
+        recepcion = get_object_or_404(Recepcion, pk=recepcion_id)
+
         user_profile = get_object_or_404(UserProfile, user=self.request.user)
-        if user_profile.centro:
-            return Recepcion.objects.filter(centro=user_profile.centro)
-        else:
-            return Recepcion.objects.none()
+        if recepcion.centro != user_profile.centro:
+            messages.error(self.request, "No puedes eliminar recepciones de otro centro.")
+            return super().form_invalid(form)
 
-    def post(self, request, *args, **kwargs):
-        obj = self.get_object()
-        obj.save
-        messages.success(self.request, 'Recepcion eliminada correctamenta.')
-        return super().delete(request, *args, **kwargs)         
+        # Actualizar stock
+        recepcion.alimento.stock_actual -= recepcion.cantidad
+        recepcion.alimento.save()
+
+        # Eliminar la recepción
+        recepcion.delete()
+
+        messages.success(self.request, f"Recepción de {recepcion.alimento} eliminada correctamente.")
+        return super().form_valid(form) 
     
     
     
@@ -359,14 +402,13 @@ class TipoDeMermaCreate(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         user_profile = get_object_or_404(UserProfile, user=self.request.user)
         if user_profile.centro:
-            tiposdemermas = form.save(commit=False)
-            tiposdemermas.centro = user_profile.centro
-            tiposdemermas.save()
-            messages.success(self.request, 'Tipo de merma creado correctamente.')
-            return super().form_valid(form)
+            form.instance.centro = user_profile.centro
+            messages.success(self.request, 'Tipo de merma creada correctamente.')
+            return super().form_valid(form)  # solo guarda 1 vez
         else:
             messages.error(self.request, 'No está asociado a ningún centro.')
             return self.form_invalid(form)
+
 
     def form_invalid(self, form):
         for field, errors in form.errors.items():
@@ -390,7 +432,6 @@ class TipoDeMermaUpdate(LoginRequiredMixin, UpdateView):
             return TipoDeMerma.objects.none()
 
     def form_valid(self, form):
-        self.object = form.save()
         messages.success(self.request, 'Tipo dee merma actualizado correctamente.')
         return super().form_valid(form)
 
@@ -551,3 +592,44 @@ class MermasDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         context.update(datos_centro(self.request)) 
         return context      
+    
+    
+    
+    
+    
+class AuditoriaList(PaginationMixin, LoginRequiredMixin, TemplateView):
+    template_name = 'recepcion/listar_auditoria.html'
+    paginate_by = 10  # Número de registros por página
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(datos_centro(self.request)) 
+        user_profile = UserProfile.objects.filter(user=self.request.user).first()
+
+        if user_profile and user_profile.centro:
+            centro = user_profile.centro
+            recepciones = Recepcion.objects.filter(centro=centro)
+            mermas = Merma.objects.filter(centro=centro)
+
+            movimientos = []
+
+            # Normalizar Recepciones
+            for r in recepciones:
+                r.fecha_movimiento = r.fecha_recepcion
+                r.tipo_movimiento = "Recepción"
+                movimientos.append(r)
+
+            # Normalizar Mermas
+            for m in mermas:
+                m.fecha_movimiento = m.fecha
+                m.tipo_movimiento = "Merma"
+                movimientos.append(m)
+
+            # Ordenar por fecha descendente
+            movimientos.sort(key=lambda x: x.fecha_movimiento, reverse=True)
+
+            context['movimientos'] = movimientos
+        else:
+            context['movimientos'] = []
+
+        return context

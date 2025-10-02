@@ -112,14 +112,13 @@ class TipoPlatoCreate(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         user_profile = get_object_or_404(UserProfile, user=self.request.user)
         if user_profile.centro:
-            tipoplatos = form.save(commit=False)
-            tipoplatos.centro = user_profile.centro
-            tipoplatos.save()
+            form.instance.centro = user_profile.centro
             messages.success(self.request, 'Tipo de plato creado correctamente.')
-            return super().form_valid(form)
+            return super().form_valid(form)  # solo guarda 1 vez
         else:
             messages.error(self.request, 'No está asociado a ningún centro.')
             return self.form_invalid(form)
+
 
     def form_invalid(self, form):
         for field, errors in form.errors.items():
@@ -236,14 +235,13 @@ class TextoModoCreate(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         user_profile = get_object_or_404(UserProfile, user=self.request.user)
         if user_profile.centro:
-            textomodos = form.save(commit=False)
-            textomodos.centro = user_profile.centro
-            textomodos.save()
+            form.instance.centro = user_profile.centro
             messages.success(self.request, 'Texto de modo de uso creado correctamente.')
-            return super().form_valid(form)
+            return super().form_valid(form)  # solo guarda 1 vez
         else:
             messages.error(self.request, 'No está asociado a ningún centro.')
             return self.form_invalid(form)
+
 
     def form_invalid(self, form):
         for field, errors in form.errors.items():
@@ -548,7 +546,7 @@ class PlatoUpdate(LoginRequiredMixin, UpdateView):
                 datos_nutricionales.save()
 
             messages.success(self.request, 'Plato actualizado correctamente.')
-            return super().form_valid(form)
+            return redirect(self.get_success_url())
         else:
             # Mostrar errores si los hay
             for form_ing in ingredientes_formset:
@@ -834,7 +832,7 @@ class SalsaUpdate(LoginRequiredMixin, UpdateView):
                     nutricion_obj.save()
 
             messages.success(self.request, 'Salsa actualizada correctamente.')
-            return super().form_valid(form)
+            return redirect(self.get_success_url())
         else:
             # Mostrar errores específicos del formset
             for form_ing in ingredientes_formset:

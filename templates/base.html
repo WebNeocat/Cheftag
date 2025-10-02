@@ -93,7 +93,7 @@
         <ul class="nav">
           <li class="nav-item">
             <a class="nav-link" href="{% url 'dashuser:home' %}">
-              <i class="mdi mdi-monitor-dashboardEV  menu-icon"></i>
+              <i class="mdi mdi-monitor-dashboard  menu-icon"></i>
               <span class="menu-title">Dashboard</span>
             </a>
           </li>
@@ -137,8 +137,7 @@
                 <span class="menu-title">Lotes Etiquetas</span>
               </a>
             </li>
-            <li class="nav-item nav-category">Stock</li>
-            
+            <li class="nav-item nav-category">STOCKS</li>
             <li class="nav-item">
               <a class="nav-link" href="{% url 'recepcion:RecepcionManualList' %}">
                 <i class="menu-icon mdi mdi-dolly"></i>
@@ -152,17 +151,24 @@
               </a>
             </li>            
             <li class="nav-item">
-              <a class="nav-link" href="">
+              <a class="nav-link" href="{% url 'recepcion:AuditoriaList' %}">
                 <i class="menu-icon mdi mdi-format-list-checks"></i>
                 <span class="menu-title">Auditoria</span>
               </a>
             </li>
           </li>
-          <li class="nav-item nav-category">Opciones</li>
+          <li class="nav-item nav-category">CONTROL</li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'core:registro_accion_list' %}">
+                <i class="menu-icon mdi mdi-math-log"></i>
+                <span class="menu-title"> Registros</span>
+              </a>
+            </li>
+          <li class="nav-item nav-category">CONFIGURACIÓN</li>
             <li class="nav-item">
               <a class="nav-link" data-bs-toggle="collapse" href="#confi" aria-expanded="false" aria-controls="confi">
                 <i class="menu-icon mdi mdi-tools"></i>
-                <span class="menu-title">configuración</span>
+                <span class="menu-title">Opciones</span>
                 <i class="menu-arrow"></i>
               </a>
               <div class="collapse" id="confi">

@@ -1,0 +1,80 @@
+<div class="modal-dialog modal-lg" role="document">
+  <div class="modal-content">
+    
+    <!-- Header -->
+    <div class="modal-header bg-primary text-white">
+      <h5 class="modal-title">
+        <i class="fa fa-clipboard-list me-2"></i> Detalle del Registro de Auditoría
+      </h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    </div>
+
+    <!-- Body -->
+    <div class="modal-body">
+      <div class="container">
+
+        <!-- Acción -->
+        <div class="mb-3">
+          <span class="fw-bold">Acción:</span>
+          {% if registro.accion == "crear" %}
+            <span class="badge bg-success"><i class="fa fa-plus-circle"></i> Crear</span>
+          {% elif registro.accion == "modificar" %}
+            <span class="badge bg-warning text-dark"><i class="fa fa-edit"></i> Modificar</span>
+          {% elif registro.accion == "eliminar" %}
+            <span class="badge bg-danger"><i class="fa fa-trash"></i> Eliminar</span>
+          {% else %}
+            <span class="badge bg-secondary">{{ registro.accion }}</span>
+          {% endif %}
+        </div>
+
+        <!-- Datos principales -->
+        <ul class="list-group list-group-flush mb-3">
+          <li class="list-group-item"><i class="fa fa-user text-primary me-2"></i><strong>Usuario:</strong> {{ registro.usuario }}</li>
+          <li class="list-group-item"><i class="fa fa-building text-secondary me-2"></i><strong>Centro:</strong> {{ registro.centro }}</li>
+          <li class="list-group-item"><i class="fa fa-database text-info me-2"></i><strong>Modelo:</strong> {{ registro.modelo }}</li>
+          <li class="list-group-item"><i class="fa fa-key text-dark me-2"></i><strong>ID Objeto:</strong> {{ registro.objeto_id }}</li>
+          <li class="list-group-item"><i class="fa fa-info-circle text-success me-2"></i><strong>Objeto:</strong> {{ registro.objeto_repr }}</li>
+          <li class="list-group-item"><i class="fa fa-clock text-warning me-2"></i><strong>Fecha:</strong> {{ registro.fecha|date:"d/m/Y H:i:s" }}</li>
+        </ul>
+
+        <!-- Cambios: solo si existen -->
+        {% if registro.cambios %}
+        <h6 class="mb-2">
+          {% if registro.accion == "crear" %}Valores iniciales{% else %}Cambios realizados{% endif %}
+        </h6>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered">
+            <thead class="table-light">
+              <tr>
+                <th>Campo</th>
+                <th>Antes</th>
+                <th>Después</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for campo, cambio in registro.cambios.items %}
+                <tr>
+                  <td class="text-capitalize">{{ campo }}</td>
+                  <td class="bg-danger text-white">
+                    {% if cambio.antes is not None %}{{ cambio.antes }}{% else %}-{% endif %}
+                  </td>
+                  <td class="bg-success text-white">{{ cambio.despues }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+
+
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer bg-light">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fa fa-times"></i> Cerrar
+      </button>
+    </div>
+  </div>
+</div>

@@ -13,8 +13,9 @@ urlpatterns = [
     
     path('recepcion_manual/nuevo/', RecepcionManualCreate.as_view(), name='RecepcionManualCreate'),
     path('recepcion_manual/listado/', RecepcionManualList.as_view(), name='RecepcionManualList'),
+    path('editar/recepcion_manual/<int:pk>/', RecepcionManualUpdate.as_view(), name="RecepcionManualUpdate"),
     path('detalle/recepcion_manual/<int:pk>/', RecepcionManualDetail.as_view(), name="RecepcionManualDetail"),
-    path('eliminar_recepcion_manual/<int:pk>/', RecepcionManualDelete.as_view(), name="RecepcionManualDelete"),
+    path('eliminar_recepcion_manual/<int:pk>/', RecepcionManualDeleteFormView.as_view(), name="RecepcionManualDeleteFormView"),
     
     path('recepcion_gs1', views.recepcion_gs1, name="recepcion_gs1"),
     path('parse_gs1_128', views.parse_gs1_128, name="parse_gs1_128"),
@@ -29,6 +30,8 @@ urlpatterns = [
     path('actualizar_mermas/<int:pk>/', MermasUpdate.as_view(), name="MermasUpdate"),
     path('eliminar_mermas/<int:pk>/', MermasDelete.as_view(), name="MermasDelete"),
     path('datos/mermas/<int:pk>/', MermasDetailView.as_view(), name="MermasDetailView"),
+    
+    path('auditoria/listado/', AuditoriaList.as_view(), name='AuditoriaList'),
     
     
 ]

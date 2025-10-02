@@ -80,21 +80,24 @@ class AlimentoForm(forms.ModelForm):
         queryset=Conservacion.objects.all(),
         label="Conservacion",
         widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
-        empty_label="Selecciona un tipo"
+        empty_label="Selecciona un tipo",
+        required=False
     )
     
     tipo_alimento = forms.ModelChoiceField(
         queryset=TipoAlimento.objects.all(),
         label="Tipo de Alimento",
         widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
-        empty_label="Selecciona un tipo"
+        empty_label="Selecciona un tipo",
+        required=False
     )
     
     localizacion = forms.ModelChoiceField(
         queryset=localizacion.objects.all(),
         label="Localización",
         widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
-        empty_label="Selecciona una localizacion"
+        empty_label="Selecciona una localizacion",
+        required=False
     )
 
     alergenos = AlergenosModelMultipleChoiceField(
@@ -119,6 +122,13 @@ class AlimentoForm(forms.ModelForm):
             'stock_minimo': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
             'imagen': forms.FileInput(attrs={"class":"form-control form-control-sm form-control-border"}),
         } 
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Poner todos los campos como opcionales excepto 'nombre'
+        for field_name, field in self.fields.items():
+            if field_name != 'nombre':
+                field.required = False    
         
 class InformacionNutricionalForm(forms.ModelForm):
     class Meta:

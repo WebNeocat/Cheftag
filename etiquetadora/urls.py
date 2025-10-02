@@ -10,4 +10,5 @@ urlpatterns = [
     path('dashuser/', include('app.dashuser.urls', namespace='dashuser')),
     path('platos/', include('app.platos.urls', namespace='platos')),
     path('recepcion/', include('app.recepcion.urls', namespace='recepcion')),
+    path('audit/', include('app.core.urls', namespace='core')),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

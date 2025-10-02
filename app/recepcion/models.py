@@ -39,6 +39,8 @@ class Recepcion(ModeloBaseCentro):
     lote = models.CharField(max_length=50, help_text="Número de lote del proveedor")
     fecha_caducidad = models.DateField()
     cantidad = models.DecimalField(max_digits=10, decimal_places=2, help_text="Cantidad recibida (kg, L, etc.)")
+    unidad_medida = models.ForeignKey(UnidadDeMedida, on_delete=models.PROTECT, help_text="Unidad de medida (kg, L, etc.)")
+    observaciones = models.TextField(blank=True, null=True)
     fecha_recepcion = models.DateTimeField(default=timezone.now, editable=False)
 
     class Meta:
@@ -80,7 +82,7 @@ class Merma(ModeloBaseCentro):
         ordering = ["-fecha"]
 
     def __str__(self):
-        return f"{self.producto.nombre} - {self.cantidad} {self.unidad_medida} ({self.tipo_merma})"
+        return f"{self.alimento.nombre} - {self.cantidad} {self.unidad_medida} ({self.tipo_merma})"
 
     def save(self, *args, **kwargs):
         # Si la merma ya existía, calculamos diferencia
