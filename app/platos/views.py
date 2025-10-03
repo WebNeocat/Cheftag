@@ -1085,14 +1085,162 @@ class EtiquetaDetail(LoginRequiredMixin, DetailView):
 
 def generar_etiqueta(request):
     if request.method == "POST":
+        accion = request.POST.get("accion")
+        etiquetas_ids = request.POST.getlist("etiquetas")
+
+        if accion == "imprimir":
+            if not etiquetas_ids:
+                messages.warning(request, "⚠️ Debes seleccionar al menos una etiqueta para imprimir.")
+                return redirect("platos:generar_etiqueta")
+
+            request.session["etiquetas_a_imprimir"] = etiquetas_ids
+            return redirect("platos:imprimir_etiquetas")
+
+        elif accion == "eliminar":
+            if not etiquetas_ids:
+                messages.warning(request, "⚠️ Debes seleccionar al menos una etiqueta para eliminar.")
+                return redirect("platos:generar_etiqueta")
+
+            # Eliminar etiquetas seleccionadas
+            EtiquetaPlato.objects.filter(id__in=etiquetas_ids).delete()
+
+            # También eliminarlas de la sesión
+            session_ids = request.session.get("etiquetas_ids", [])
+            request.session["etiquetas_ids"] = [eid for eid in session_ids if str(eid) not in etiquetas_ids]
+            request.session.modified = True
+
+            messages.success(request, f"✅ Se eliminaron {len(etiquetas_ids)} etiqueta(s).")
+            return redirect("platos:generar_etiqueta")
+
+        # Si no es acción de imprimir ni eliminar, asumimos que es creación
         form = GenerarEtiquetaForm(request.POST)
-        cantidad = int(request.POST.get("cantidad", 1))  # 👈 recogemos la cantidad
+        cantidad = int(request.POST.get("cantidad", 1))
 
         if form.is_valid():
             plato = form.cleaned_data["plato"]
             peso = form.cleaned_data["peso"]
 
-            for i in range(cantidad):  # 👈 repetimos según la cantidad
+            for _ in range(cantidad):
+                nutricion = getattr(plato, 'nutricion', None)
+                etiqueta = EtiquetaPlato.objects.create(
+                    plato=plato,
+                    peso=peso,
+                    energia=getattr(nutricion, 'energia', 0),
+                    carbohidratos=getattr(nutricion, 'hidratosdecarbono', 0),
+                    proteinas=getattr(nutricion, 'proteinas', 0),
+                    grasas_totales=getattr(nutricion, 'grasas_totales', 0),
+                    azucares=getattr(nutricion, 'azucares', 0),
+                    sal=getattr(nutricion, 'sal', 0),
+                    grasas_saturadas=getattr(nutricion, 'grasas_saturadas', 0),
+                    centro=plato.centro
+                )
+
+                # Guardar en sesión
+                if "etiquetas_ids" not in request.session:
+                    request.session["etiquetas_ids"] = []
+                request.session["etiquetas_ids"].append(etiqueta.id)
+
+            request.session.modified = True
+            messages.success(request, f"✅ Se generaron {cantidad} etiqueta(s).")
+            return redirect("platos:generar_etiqueta")
+
+    else:
+        form = GenerarEtiquetaForm()
+
+    etiquetas_ids = request.session.get("etiquetas_ids", [])
+    etiquetas = EtiquetaPlato.objects.filter(
+        id__in=etiquetas_ids, impresa=False
+    ).select_related('plato')
+
+    contexto_centro = datos_centro(request)
+    return render(request, "platos/generar_etiqueta.html", {
+        "form": form,
+        "etiquetas": etiquetas,
+        **contexto_centro
+    })
+    
+    
+def generar_etiqueta(request):
+    if request.method == "POST":
+        accion = request.POST.get("accion")
+        etiquetas_ids = request.POST.getlist("etiquetas")
+
+        # 🔹 ACCIÓN: ELIMINAR
+        if accion == "eliminar" and etiquetas_ids:
+            etiquetas = EtiquetaPlato.objects.filter(id__in=etiquetas_ids)
+            etiquetas.delete()
+
+            # Actualizar la sesión
+            session_ids = request.session.get("etiquetas_ids", [])
+            request.session["etiquetas_ids"] = [i for i in session_ids if str(i) not in etiquetas_ids]
+            request.session.modified = True
+
+            return redirect("platos:generar_etiqueta")
+
+        # 🔹 ACCIÓN: IMPRIMIR
+        if accion == "imprimir" and etiquetas_ids:
+            etiquetas = EtiquetaPlato.objects.filter(id__in=etiquetas_ids)
+            merger = PdfMerger()
+
+            for etiqueta in etiquetas:
+                plato = etiqueta.plato
+                ingredientes_info = plato.get_ingredientes_con_info()
+
+                todos_alergenos = set()
+                todas_trazas = set()
+                for ing in ingredientes_info:
+                    if ing.get("alergenos"):
+                        todos_alergenos.update(ing["alergenos"])
+                    if ing.get("trazas"):
+                        todas_trazas.update(ing["trazas"])
+
+                # 🔹 Usar URL como contenido del QR
+                url = request.build_absolute_uri(
+                    reverse('platos:etiqueta_qr', args=[etiqueta.pk])
+                )
+                qr_img = qrcode.make(url)
+                buffer = BytesIO()
+                qr_img.save(buffer, format="PNG")
+                qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+                context = {
+                    "etiqueta": etiqueta,
+                    "ingredientes_info": ingredientes_info,
+                    "todos_alergenos": list(todos_alergenos),
+                    "todas_trazas": list(todas_trazas),
+                    "texto_modo_empleo": plato.texto.texto if plato.texto else "",
+                    "qr_base64": qr_base64,
+                }
+
+                html = render_to_string("platos/preview_etiqueta.html", context)
+
+                pdf_buffer = BytesIO()
+                html_obj = HTML(string=html, base_url=request.build_absolute_uri())
+                css = CSS(string='@page { size: 100mm auto; margin: 5mm; }')
+
+                html_obj.write_pdf(pdf_buffer, stylesheets=[css])
+                pdf_buffer.seek(0)
+                merger.append(pdf_buffer)
+
+                # Marcar como impresa
+                etiqueta.impresa = True
+                etiqueta.save()
+
+            response = HttpResponse(content_type="application/pdf")
+            response["Content-Disposition"] = 'inline; filename="etiquetas.pdf"'
+            merger.write(response)
+            merger.close()
+            return response
+
+        # 🔹 ACCIÓN: GENERAR nuevas etiquetas
+        form = GenerarEtiquetaForm(request.POST)
+        cantidad = int(request.POST.get("cantidad", 1))
+
+        if form.is_valid():
+            plato = form.cleaned_data["plato"]
+            peso = form.cleaned_data["peso"]
+
+            for _ in range(cantidad):
                 if hasattr(plato, 'nutricion') and plato.nutricion:
                     nutricion = plato.nutricion
                     etiqueta = EtiquetaPlato.objects.create(
@@ -1121,30 +1269,26 @@ def generar_etiqueta(request):
                         centro=plato.centro
                     )
 
-                # Guardar en sesión cada etiqueta
+                # Guardar el ID en la sesión
                 if "etiquetas_ids" not in request.session:
                     request.session["etiquetas_ids"] = []
                 request.session["etiquetas_ids"].append(etiqueta.id)
 
             request.session.modified = True
             return redirect("platos:generar_etiqueta")
+
     else:
         form = GenerarEtiquetaForm()
 
     etiquetas_ids = request.session.get("etiquetas_ids", [])
-    etiquetas = EtiquetaPlato.objects.filter(
-        id__in=etiquetas_ids, impresa=False
-    ).select_related('plato')
-
+    etiquetas = EtiquetaPlato.objects.filter(id__in=etiquetas_ids, impresa=False).select_related("plato")
     contexto_centro = datos_centro(request)
+
     return render(request, "platos/generar_etiqueta.html", {
         "form": form,
         "etiquetas": etiquetas,
         **contexto_centro
-    })
-
-    
-    
+    })   
     
 def preview_etiqueta(request, etiqueta_id):
     etiqueta = get_object_or_404(EtiquetaPlato, id=etiqueta_id)
@@ -1216,8 +1360,6 @@ def preview_etiqueta(request, etiqueta_id):
 
     # Generamos PDF
     weasyprint.HTML(string=html, base_url=request.build_absolute_uri()).write_pdf(response)
-    
-    
 
     return response
 
@@ -1244,7 +1386,6 @@ def imprimir_etiquetas(request):
                 if ing.get("trazas"):
                     todas_trazas.update(ing["trazas"])
 
-            # 🔹 Aquí generamos SOLO la URL en el QR:
             url = request.build_absolute_uri(
                 reverse('platos:etiqueta_qr', args=[etiqueta.pk])
             )
@@ -1262,18 +1403,15 @@ def imprimir_etiquetas(request):
                 "todos_alergenos": list(todos_alergenos),
                 "todas_trazas": list(todas_trazas),
                 "texto_modo_empleo": texto_modo_empleo,
-                "qr_base64": qr_base64  # en tu plantilla haces <img src="data:image/png;base64,{{qr_base64}}">
+                "qr_base64": qr_base64
             }
 
             html = render_to_string("platos/preview_etiqueta.html", context)
 
-            # ✅ marcar como impresa
             etiqueta.impresa = True
             etiqueta.save()
 
             pdf_buffer = BytesIO()
-
-            # Configuración específica para WeasyPrint con tamaño personalizado
             html_obj = HTML(string=html, base_url=request.build_absolute_uri())
             css = CSS(string='@page { size: 100mm auto; margin: 5mm; }')
 
@@ -1291,6 +1429,11 @@ def imprimir_etiquetas(request):
         merger.write(response)
         merger.close()
         return response
+
+    # 👇 Si llega por GET (o sin etiquetas seleccionadas), redirigir con mensaje
+    messages.warning(request, "⚠️ Debes seleccionar al menos una etiqueta para imprimir.")
+    return redirect("platos:generar_etiqueta")
+
     
 
 ######################################################################################
@@ -1440,62 +1583,70 @@ def reimprimir_etiqueta(request, pk):
 
 def reimprimir_etiquetas(request):
     if request.method == "POST":
-        ids = request.POST.getlist("etiquetas")  # IDs de las raciones seleccionadas
+        accion = request.POST.get("accion")
+        ids = request.POST.getlist("etiquetas")
         etiquetas = EtiquetaPlato.objects.filter(id__in=ids)
 
         if not etiquetas.exists():
-            return HttpResponse("No se seleccionaron raciones.", status=400)
+            return HttpResponse("No se seleccionaron etiquetas.", status=400)
 
-        merger = PdfMerger()
+        if accion == "eliminar":
+            etiquetas.delete()
+            # Redirigir a la misma página para refrescar el listado
+            return redirect(request.META.get('HTTP_REFERER', '/'))
 
-        for etiqueta in etiquetas:
-            plato = etiqueta.plato
-            ingredientes_info = plato.get_ingredientes_con_info()
+        elif accion == "imprimir":
+            merger = PdfMerger()
 
-            todos_alergenos = set()
-            todas_trazas = set()
-            for ing in ingredientes_info:
-                if ing.get("alergenos"):
-                    todos_alergenos.update(ing["alergenos"])
-                if ing.get("trazas"):
-                    todas_trazas.update(ing["trazas"])
+            for etiqueta in etiquetas:
+                plato = etiqueta.plato
+                ingredientes_info = plato.get_ingredientes_con_info()
 
-            # URL pública de la vista de la ración (nuevo QR)
-            url = request.build_absolute_uri(
-                reverse('platos:etiqueta_qr', args=[etiqueta.pk])
-            )
+                todos_alergenos = set()
+                todas_trazas = set()
+                for ing in ingredientes_info:
+                    if ing.get("alergenos"):
+                        todos_alergenos.update(ing["alergenos"])
+                    if ing.get("trazas"):
+                        todas_trazas.update(ing["trazas"])
 
-            qr_img = qrcode.make(url)
-            buffer = BytesIO()
-            qr_img.save(buffer, format="PNG")
-            qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+                url = request.build_absolute_uri(
+                    reverse('platos:etiqueta_qr', args=[etiqueta.pk])
+                )
 
-            texto_modo_empleo = plato.texto.texto if plato.texto else ""
+                qr_img = qrcode.make(url)
+                buffer = BytesIO()
+                qr_img.save(buffer, format="PNG")
+                qr_base64 = base64.b64encode(buffer.getvalue()).decode()
 
-            context = {
-                "etiqueta": etiqueta,
-                "plato": plato,
-                "ingredientes_info": ingredientes_info,
-                "todos_alergenos": list(todos_alergenos),
-                "todas_trazas": list(todas_trazas),
-                "texto_modo_empleo": texto_modo_empleo,
-                "qr_base64": qr_base64
-            }
+                texto_modo_empleo = plato.texto.texto if plato.texto else ""
 
-            html = render_to_string("platos/preview_etiqueta.html", context)
-            pdf_buffer = BytesIO()
-            html_obj = HTML(string=html, base_url=request.build_absolute_uri())
-            css = CSS(string='@page { size: 60mm auto; margin: 0; }')
-            html_obj.write_pdf(pdf_buffer, stylesheets=[css], presentational_hints=True)
-            pdf_buffer.seek(0)
-            merger.append(pdf_buffer)
+                context = {
+                    "etiqueta": etiqueta,
+                    "plato": plato,
+                    "ingredientes_info": ingredientes_info,
+                    "todos_alergenos": list(todos_alergenos),
+                    "todas_trazas": list(todas_trazas),
+                    "texto_modo_empleo": texto_modo_empleo,
+                    "qr_base64": qr_base64
+                }
 
-        response = HttpResponse(content_type="application/pdf")
-        response["Content-Disposition"] = 'inline; filename="etiquetas.pdf"'
-        merger.write(response)
-        merger.close()
-        return response
+                html = render_to_string("platos/preview_etiqueta.html", context)
+                pdf_buffer = BytesIO()
+                html_obj = HTML(string=html, base_url=request.build_absolute_uri())
+                css = CSS(string='@page { size: 60mm auto; margin: 0; }')
+                html_obj.write_pdf(pdf_buffer, stylesheets=[css], presentational_hints=True)
+                pdf_buffer.seek(0)
+                merger.append(pdf_buffer)
 
+            response = HttpResponse(content_type="application/pdf")
+            response["Content-Disposition"] = 'inline; filename="etiquetas.pdf"'
+            merger.write(response)
+            merger.close()
+            return response
+
+        else:
+            return HttpResponse("Acción no reconocida.", status=400)
 
 
 

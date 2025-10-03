@@ -44,10 +44,10 @@
                             </td>
                             <td data-label="Tipo" class="fw-bold">{{ tipoplato.nombre }}</td>
                             <td data-label="Acciones">
-                                <a class="btn btn-info" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'platos:TipoPlatoUpdate' pk=tipoplato.id %}')" data-toggle="tooltip" title="Editar Tipo de Iva">
+                                <a class="btn btn-info" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'platos:TipoPlatoUpdate' pk=tipoplato.id %}')" data-toggle="tooltip" title="Editar Tipo de Plato">
                                     <i class="fa fa-pencil"></i>
                                 </a>
-                                <a class="btn btn-danger" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'platos:TipoPlatoDelete' pk=tipoplato.id %}')" data-toggle="tooltip" title="Eliminar Tipo de Iva">
+                                <a class="btn btn-danger" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'platos:TipoPlatoDelete' pk=tipoplato.id %}')" data-toggle="tooltip" title="Eliminar Tipo de Plato">
                                     <i class="fa fa-trash"></i>
                                 </a>
                             </td>

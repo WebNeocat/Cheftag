@@ -18,7 +18,6 @@
                     </div>
                 {% endfor %}
 
-                <!-- Aquí va cantidad con label -->
                 <div class="col-md-2">
                     <label class="form-label fw-bold">Cantidad Platos</label>
                     <input type="number" name="cantidad" class="form-control" value="1" min="1" required>
@@ -40,7 +39,7 @@
         </div>
         <div class="card-body p-0">
             {% if etiquetas %}
-                <form id="form-imprimir" method="post" action="{% url 'platos:imprimir_etiquetas' %}" target="_blank">
+                <form id="form-etiquetas" method="post" action="{% url 'platos:generar_etiqueta' %}">
                     {% csrf_token %}
                     <table class="table table-striped table-hover align-middle">
                         <thead class="table-light">
@@ -72,7 +71,18 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                    <button type="submit" class="btn btn-success w-100">Imprimir seleccionadas</button>
+
+                    <!-- Botones de acción -->
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="submit" id="btn-imprimir" name="accion" value="imprimir" class="btn btn-success w-50">
+                            <i class="bi bi-printer"></i> Imprimir seleccionadas
+                        </button>
+
+                        <!-- Cambiado a botón tipo "button" para abrir modal -->
+                        <button type="button" id="btn-eliminar" class="btn btn-danger w-50">
+                            <i class="bi bi-trash"></i> Eliminar seleccionadas
+                        </button>
+                    </div>
                 </form>
             {% else %}
                 <div class="p-3 text-muted text-center">
@@ -82,6 +92,44 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Confirmar Eliminación -->
+<div class="modal fade" id="confirmEliminarModal" tabindex="-1" aria-labelledby="confirmEliminarLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="confirmEliminarLabel">Confirmar Eliminación</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        ¿Eliminar las etiquetas seleccionadas?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" id="confirmarEliminar" class="btn btn-danger">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Advertencia Selección -->
+<div class="modal fade" id="modalAdvertencia" tabindex="-1" aria-labelledby="modalAdvertenciaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-warning">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title" id="modalAdvertenciaLabel">Advertencia</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        ⚠️ Debes seleccionar al menos una etiqueta para continuar.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extrajs %}
@@ -90,27 +138,64 @@ document.getElementById("select-all").addEventListener("click", function(e) {
     document.querySelectorAll("input[name='etiquetas']").forEach(cb => cb.checked = e.target.checked);
 });
 
-document.getElementById("form-imprimir").addEventListener("submit", function(e) {
-    const seleccionados = document.querySelectorAll("input[name='etiquetas']:checked");
+document.getElementById("btn-imprimir").addEventListener("click", function(e) {
+    const form = document.getElementById("form-etiquetas");
+    const checkboxes = form.querySelectorAll("input[name='etiquetas']:checked");
 
-    if (seleccionados.length === 0) {
-        e.preventDefault(); // cancelamos el submit
-        alert("⚠️ Debes seleccionar al menos una etiqueta para imprimir.");
+    if (checkboxes.length === 0) {
+        e.preventDefault();
+        // Mostrar modal advertencia en vez de alert
+        const modalAdvertencia = new bootstrap.Modal(document.getElementById('modalAdvertencia'));
+        modalAdvertencia.show();
         return;
     }
 
-    // Guardamos las filas seleccionadas antes de enviar
-    const filas = [];
-    seleccionados.forEach(cb => {
-        filas.push(cb.closest("tr"));
-    });
+    // Abrir en pestaña nueva
+    form.target = "_blank";
 
-    // Dejamos que el formulario se envíe y se abra la nueva pestaña
+    // Recargar página después de 1 segundo
     setTimeout(() => {
-        filas.forEach(fila => fila.remove()); // eliminamos solo las filas seleccionadas
-    }, 500);
+        window.location.reload();
+    }, 1000);
+});
+
+// Al pulsar botón Eliminar, validar selección y abrir modal confirmación
+document.getElementById("btn-eliminar").addEventListener("click", function(e) {
+    const form = document.getElementById("form-etiquetas");
+    const checkboxes = form.querySelectorAll("input[name='etiquetas']:checked");
+
+    if (checkboxes.length === 0) {
+        // Mostrar modal advertencia
+        const modalAdvertencia = new bootstrap.Modal(document.getElementById('modalAdvertencia'));
+        modalAdvertencia.show();
+        return;
+    }
+
+    // Mostrar modal confirmación eliminación
+    const modalConfirm = new bootstrap.Modal(document.getElementById('confirmEliminarModal'));
+    modalConfirm.show();
+});
+
+// Confirmar eliminación: se añade campo acción y se envía formulario
+document.getElementById("confirmarEliminar").addEventListener("click", function() {
+    const form = document.getElementById("form-etiquetas");
+
+    // Crear o actualizar input hidden para la acción eliminar
+    let inputAccion = form.querySelector("input[name='accion']");
+    if (!inputAccion) {
+        inputAccion = document.createElement('input');
+        inputAccion.type = 'hidden';
+        inputAccion.name = 'accion';
+        form.appendChild(inputAccion);
+    }
+    inputAccion.value = 'eliminar';
+
+    form.submit();
 });
 </script>
-{% endblock extrajs %}
+{% endblock %}
+
+
+
 
 

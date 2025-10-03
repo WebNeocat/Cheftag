@@ -5,7 +5,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-            <form id="form-reimprimir" method="post" action="{% url 'platos:reimprimir_etiquetas' %}" target="_blank">
+            <form id="form-reimprimir" method="post" action="{% url 'platos:reimprimir_etiquetas' %}">
                 {% csrf_token %}
                 <div class="table-wrapper">
                     <table class="table table-hover tabla-responsive align-middle" style="table-layout: auto; width: 100%;">
@@ -18,8 +18,7 @@
                                 <th style="width: 20%;">Lote</th>
                                 <th style="width: 30%;">Plato</th>
                                 <th style="width: 10%;">Turno</th>
-                                <th style="width: 15%;">Cantidad (Kg)</th>
-                                <th style="width: 10%;">Opciones</th>
+                                <th style="width: 15%;">Cantidad</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -34,12 +33,7 @@
                                     {{ racion.plato.nombre|truncatewords:5 }}
                                 </td>
                                 <td>{{ racion.turno }}</td>
-                                <td>{{ racion.peso|floatformat:2 }} Kg</td>
-                                <td>
-                                    <a class="btn btn-inverse-danger" data-toggle="tooltip" title="Imprimir" href="{% url 'platos:reimprimir_etiqueta' racion.id %}" target="_blank">
-                                        <i class="fa fa-print"></i>
-                                    </a>
-                                </td>
+                                <td>{{ racion.peso|floatformat:2 }} g</td>
                             </tr>
                             {% empty %}
                             <tr>
@@ -50,9 +44,15 @@
                     </table>
                 </div>
 
-                <div class="mt-2 text-end">
-                    <button type="submit" class="btn btn-danger">
+                <!-- Botones para imprimir y eliminar -->
+                <div class="d-flex gap-2 mt-3 justify-content-end">
+                    <button type="submit" name="accion" value="imprimir" class="btn btn-success">
                         <i class="fa fa-print"></i> Reimprimir
+                    </button>
+
+                    <!-- Botón para eliminar, ahora tipo button para abrir modal -->
+                    <button type="button" id="btn-eliminar" class="btn btn-danger">
+                        <i class="fa fa-trash"></i> Eliminar
                     </button>
                 </div>
             </form>
@@ -60,25 +60,93 @@
     </div>
 </div>
 
+<!-- Modal Confirmar Eliminación -->
+<div class="modal fade" id="confirmEliminarModal" tabindex="-1" aria-labelledby="confirmEliminarLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="confirmEliminarLabel">Confirmar Eliminación</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        ¿Eliminar las etiquetas seleccionadas?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" id="confirmarEliminar" class="btn btn-danger">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
     // Seleccionar / deseleccionar todas las checkboxes
-    $('#seleccionar-todo').on('change', function(){
-        var checked = $(this).is(':checked');
-        $('input[name="etiquetas"]').prop('checked', checked);
+    document.getElementById('seleccionar-todo').addEventListener('change', function() {
+        const checked = this.checked;
+        document.querySelectorAll("input[name='etiquetas']").forEach(cb => cb.checked = checked);
     });
 
-    // Cerrar modal y eliminar backdrop
-    $('.modal .close, .modal .btn-danger').click(function() {
-        $('.modal').modal('hide');
-        $('.modal-backdrop').remove();
+    // Validar selección y controlar target del formulario
+    document.getElementById('form-reimprimir').addEventListener('submit', function(e) {
+        const seleccionados = document.querySelectorAll("input[name='etiquetas']:checked");
+        if (seleccionados.length === 0) {
+            e.preventDefault();
+            alert("⚠️ Debes seleccionar al menos una etiqueta para continuar.");
+            return;
+        }
+
+        if (e.submitter && e.submitter.name === 'accion' && e.submitter.value === 'imprimir') {
+            // Para imprimir, abrir en nueva pestaña
+            this.target = '_blank';
+            // Recarga la página tras imprimir para actualizar listado
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            // Para eliminar, abrir en misma pestaña
+            this.target = '_self';
+        }
     });
 
-    // Agrega un evento de clic a los botones de cerrar y cancelar
-    $('.modal .close, .modal .btn-danger').click(function() {
-        // Oculta el modal
-        $('.modal').modal('hide');
-        // Elimina el fondo oscuro
-        $('.modal-backdrop').remove();
+    // Abrir modal de confirmación al hacer clic en eliminar
+    document.getElementById('btn-eliminar').addEventListener('click', function() {
+        const seleccionados = document.querySelectorAll("input[name='etiquetas']:checked");
+        if (seleccionados.length === 0) {
+            alert("⚠️ Debes seleccionar al menos una etiqueta para continuar.");
+            return;
+        }
+        const eliminarModal = new bootstrap.Modal(document.getElementById('confirmEliminarModal'));
+        eliminarModal.show();
+    });
+
+    // Confirmar eliminación y enviar formulario con acción eliminar
+    document.getElementById('confirmarEliminar').addEventListener('click', function() {
+        const form = document.getElementById('form-reimprimir');
+
+        // Crear o actualizar el input hidden para la acción eliminar
+        let inputAccion = form.querySelector("input[name='accion']");
+        if (!inputAccion) {
+            inputAccion = document.createElement('input');
+            inputAccion.type = 'hidden';
+            inputAccion.name = 'accion';
+            form.appendChild(inputAccion);
+        }
+        inputAccion.value = 'eliminar';
+
+        form.submit();
+    });
+
+    // Cerrar modal y eliminar backdrop (si usas Bootstrap 5)
+    document.querySelectorAll('.modal .btn-close, .modal .btn-secondary').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const modal = btn.closest('.modal');
+            if (modal) {
+                const modalInstance = bootstrap.Modal.getInstance(modal);
+                if (modalInstance) modalInstance.hide();
+                document.querySelector('.modal-backdrop')?.remove();
+            }
+        });
     });
 </script>
+
+
+
+
