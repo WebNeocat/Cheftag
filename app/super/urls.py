@@ -21,5 +21,7 @@ urlpatterns = [
     path('centros/<int:pk>/', CentroDetail.as_view(), name='CentroDetail'),
     path('centros/eliminar/<int:pk>/', CentroDelete.as_view(), name='CentroDelete'),
     path('centros/<int:pk>/usuarios/', UsuariosCentroListView.as_view(), name='UsuariosCentro'),
+    
+        path('usuarios/<int:pk>/permisos/', UserPermisosView.as_view(), name='user_permisos'),
 
 ]

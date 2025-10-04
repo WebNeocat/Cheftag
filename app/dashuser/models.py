@@ -97,8 +97,8 @@ class Alimento(ModeloBaseCentro):
     tipo_alimento = models.ForeignKey(TipoAlimento, on_delete=models.CASCADE, blank=True, null=True)
     conservacion = models.ForeignKey(Conservacion, on_delete=models.CASCADE, blank=True, null=True)
     localizacion = models.ForeignKey(localizacion, on_delete=models.CASCADE, blank=True, null=True)
-    alergenos = models.ManyToManyField(Alergenos, blank=True, null=True)
-    trazas = models.ManyToManyField(Trazas, blank=True, null=True)
+    alergenos = models.ManyToManyField(Alergenos, blank=True)
+    trazas = models.ManyToManyField(Trazas, blank=True)
     stock_actual = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True, null=True)
     stock_minimo = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True, null=True)
 

@@ -1,5 +1,7 @@
 from django.urls import path
-from .views import RegistroAccionListView, RegistroAccionDetailView, UsersListView, UsersUpdateView, UserCreateView, UserDeleteView, UserDetailView
+from .views import *
+from . import views
+
 
 app_name = 'core'
 
@@ -12,4 +14,6 @@ urlpatterns = [
     path("editar/usuarios/<int:pk>/", UsersUpdateView.as_view(), name="UsersUpdateView"),
     path("eliminar/usuario/<int:pk>/", UserDeleteView.as_view(), name="UserDeleteView"),
     path("detalles/usuario/<int:pk>/", UserDetailView.as_view(), name="UserDetailView"),
+    
+    
 ]

@@ -15,9 +15,10 @@ from PyPDF2 import PdfMerger
 import weasyprint
 from django.urls import reverse_lazy, reverse
 from django.shortcuts import get_object_or_404
+from app.dashuser.views import datos_centro
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.mixins import LoginRequiredMixin
-from app.core.mixins import PaginationMixin
+from app.core.mixins import PaginationMixin, PermisoMixin
 from .models import TipoPlato, Plato, Salsa, Receta, EtiquetaPlato, TextoModo, NuticionalesSalsa, DatosNuticionales
 from .forms import TipoPlatoForm, PlatoForm, AlimentoPlatoFormSet, SalsaForm, AlimentoSalsaFormSet, RecetaForm, GenerarEtiquetaForm, DatosNuticionalesForm, TextoModoForm
 import qrcode
@@ -26,48 +27,14 @@ import base64
 
 
 
-def datos_centro(request):
-    hora_actual = localtime().hour  # Obtiene la hora actual en la zona horaria configurada
-    if 5 <= hora_actual < 12:
-        saludo = "Buenos días"
-    elif 12 <= hora_actual < 18:
-        saludo = "Buenas tardes"
-    else:
-        saludo = "Buenas noches"
-        
-    # obtenemos el perfil del usuario logueado
-    user_profile = UserProfile.objects.get(user=request.user)
-    
-    # obtenemos el centro asociado al perfil
-    centro = user_profile.centro
-    imagen = user_profile.imagen
-    cargo = user_profile.cargo
-    nombre = user_profile.nombre
-    apellidos = user_profile.apellidos
-    
-     # Comprobamos si el centro tiene una imagen
-    if imagen and user_profile.imagen:
-        imagen_user_url = user_profile.imagen.url  # obtenemos la URL de la imagen
-    else:
-        imagen_user_url = None  # Si no hay imagen
-        
-    # Comprobamos si el centro tiene una imagen
-    if centro and centro.imagen:
-        imagen_centro_url = centro.imagen.url  # obtenemos la URL de la imagen
-    else:
-        imagen_centro_url = None  # Si no hay imagen
-
-    # Retornar el contexto con la URL del logo
-    return {'imagen_centro_url': imagen_centro_url, 'imagen_user_url': imagen_user_url, 'centro': centro, 'cargo': cargo, 'nombre': nombre, 'apellidos': apellidos, 'saludo': saludo}
-
-
 
 ######################################################################################
 ###############################     TIPO PLATOS   ####################################
 ######################################################################################
 
 
-class TipoPlatoList(PaginationMixin, LoginRequiredMixin, ListView):
+class TipoPlatoList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "TipoPlato"
     model = TipoPlato
     template_name = 'platos/listar_tipoplato.html'
     context_object_name = 'tipoplatos'
@@ -103,7 +70,8 @@ class TipoPlatoList(PaginationMixin, LoginRequiredMixin, ListView):
         return context
     
     
-class TipoPlatoCreate(LoginRequiredMixin, CreateView):
+class TipoPlatoCreate(PermisoMixin, LoginRequiredMixin, CreateView):
+    permiso_modulo = "TipoPlato"
     model = TipoPlato
     form_class = TipoPlatoForm
     template_name = 'platos/crear_tipoplato.html'
@@ -127,7 +95,8 @@ class TipoPlatoCreate(LoginRequiredMixin, CreateView):
         return super().form_invalid(form)
     
     
-class TipoPlatoUpdate(LoginRequiredMixin, UpdateView):
+class TipoPlatoUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
+    permiso_modulo = "TipoPlato"
     model = TipoPlato
     template_name = 'platos/detalle_tipoplato.html'
     form_class = TipoPlatoForm
@@ -157,7 +126,8 @@ class TipoPlatoUpdate(LoginRequiredMixin, UpdateView):
         return super().form_invalid(form)
     
 
-class TipoPlatoDelete(LoginRequiredMixin, DeleteView):
+class TipoPlatoDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
+    permiso_modulo = "TipoPlato"
     model = TipoPlato
     template_name = 'platos/tipoplato_confirm_delete.html'
     success_url = reverse_lazy('platos:TipoPlatoList')
@@ -190,7 +160,8 @@ class TipoPlatoDelete(LoginRequiredMixin, DeleteView):
 ######################################################################################
 
 
-class TextoModoList(PaginationMixin, LoginRequiredMixin, ListView):
+class TextoModoList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "TextoModo"
     model = TextoModo
     template_name = 'platos/listar_textomodo.html'
     context_object_name = 'textomodos'
@@ -226,7 +197,8 @@ class TextoModoList(PaginationMixin, LoginRequiredMixin, ListView):
         return context
     
     
-class TextoModoCreate(LoginRequiredMixin, CreateView):
+class TextoModoCreate(PermisoMixin, LoginRequiredMixin, CreateView):
+    permiso_modulo = "TextoModo"
     model = TextoModo
     form_class = TextoModoForm
     template_name = 'platos/crear_textomodo.html'
@@ -280,7 +252,8 @@ class TextoModoUpdate(LoginRequiredMixin, UpdateView):
         return super().form_invalid(form)
     
 
-class TextoModoDelete(LoginRequiredMixin, DeleteView):
+class TextoModoDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
+    permiso_modulo = "TextoModo"
     model = TextoModo
     template_name = 'platos/textomodo_confirm_delete.html'
     success_url = reverse_lazy('platos:TextoModoList')
@@ -312,7 +285,8 @@ class TextoModoDelete(LoginRequiredMixin, DeleteView):
 ###############################       PLATOS      ####################################
 ######################################################################################    
 
-class PlatoList(PaginationMixin, LoginRequiredMixin, ListView):
+class PlatoList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "Plato"
     model = Plato
     template_name = 'platos/listar_platos.html'
     context_object_name = 'platos'
@@ -347,7 +321,8 @@ class PlatoList(PaginationMixin, LoginRequiredMixin, ListView):
     
     
     
-class PlatoCreate(LoginRequiredMixin, CreateView):
+class PlatoCreate(PermisoMixin, LoginRequiredMixin, CreateView):
+    permiso_modulo = "Plato"
     model = Plato
     form_class = PlatoForm
     template_name = 'platos/crear_plato.html'
@@ -449,7 +424,8 @@ class PlatoCreate(LoginRequiredMixin, CreateView):
 
         
         
-class PlatoUpdate(LoginRequiredMixin, UpdateView):
+class PlatoUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
+    permiso_modulo = "Plato"
     model = Plato
     form_class = PlatoForm
     template_name = 'platos/detalle_plato.html'
@@ -559,7 +535,8 @@ class PlatoUpdate(LoginRequiredMixin, UpdateView):
 
         
 
-class PlatoDetail(LoginRequiredMixin, DetailView):
+class PlatoDetail(PermisoMixin, LoginRequiredMixin, DetailView):
+    permiso_modulo = "Plato"
     model = Plato
     template_name = 'platos/datos_plato.html'
     context_object_name = 'plato'
@@ -594,7 +571,8 @@ class PlatoDetail(LoginRequiredMixin, DetailView):
     
     
 
-class PlatoDelete(LoginRequiredMixin, DeleteView):
+class PlatoDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
+    permiso_modulo = "Plato"
     model = Plato
     template_name = 'platos/plato_confirm_delete.html'
     success_url = reverse_lazy('platos:PlatoList')
@@ -617,7 +595,8 @@ class PlatoDelete(LoginRequiredMixin, DeleteView):
 ######################################################################################
 
 
-class SalsaList(PaginationMixin, LoginRequiredMixin, ListView):
+class SalsaList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "Salsa"
     model = Salsa
     template_name = 'platos/listar_salsas.html'
     context_object_name = 'salsas'
@@ -643,7 +622,8 @@ class SalsaList(PaginationMixin, LoginRequiredMixin, ListView):
         return context
     
 
-class SalsaCreate(LoginRequiredMixin, CreateView):
+class SalsaCreate(PermisoMixin, LoginRequiredMixin, CreateView):
+    permiso_modulo = "Salsa"
     model = Salsa
     form_class = SalsaForm
     template_name = 'platos/crear_salsa.html'
@@ -744,7 +724,8 @@ class SalsaCreate(LoginRequiredMixin, CreateView):
         )
 
 
-class SalsaUpdate(LoginRequiredMixin, UpdateView):
+class SalsaUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
+    permiso_modulo = "Salsa"
     model = Salsa
     form_class = SalsaForm
     template_name = 'platos/detalle_salsa.html'
@@ -844,7 +825,8 @@ class SalsaUpdate(LoginRequiredMixin, UpdateView):
 
         
 
-class SalsaDetail(LoginRequiredMixin, DetailView):
+class SalsaDetail(PermisoMixin, LoginRequiredMixin, DetailView):
+    permiso_modulo = "Salsa"
     model = Salsa
     template_name = 'platos/datos_salsa.html'
     context_object_name = 'salsa'
@@ -864,7 +846,8 @@ class SalsaDetail(LoginRequiredMixin, DetailView):
     
     
 
-class SalsaDelete(LoginRequiredMixin, DeleteView):
+class SalsaDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
+    permiso_modulo = "Salsa"
     model = Salsa
     template_name = 'platos/salsa_confirm_delete.html'
     success_url = reverse_lazy('platos:SalsaList')
@@ -887,7 +870,8 @@ class SalsaDelete(LoginRequiredMixin, DeleteView):
 ######################################################################################
 
 
-class RecetaCreate(LoginRequiredMixin, CreateView):
+class RecetaCreate(PermisoMixin, LoginRequiredMixin, CreateView):
+    permiso_modulo = "Receta"
     model = Receta
     form_class = RecetaForm
     template_name = 'platos/crear_receta.html'
@@ -935,7 +919,8 @@ class RecetaCreate(LoginRequiredMixin, CreateView):
         return super().form_invalid(form)
     
     
-class RecetaDetailView(LoginRequiredMixin, DetailView):
+class RecetaDetailView(PermisoMixin, LoginRequiredMixin, DetailView):
+    permiso_modulo = "Receta"
     model = Receta
     template_name = 'platos/detalle_receta.html'
     context_object_name = 'receta'
@@ -967,7 +952,8 @@ class RecetaDetailView(LoginRequiredMixin, DetailView):
         
         return context
     
-class RecetaUpdate(LoginRequiredMixin, UpdateView):
+class RecetaUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
+    permiso_modulo = "Receta"
     model = Receta
     form_class = RecetaForm
     template_name = 'platos/editar_receta.html'
@@ -1021,7 +1007,8 @@ class RecetaUpdate(LoginRequiredMixin, UpdateView):
 ######################################################################################    
 
 
-class EtiquetaDetail(LoginRequiredMixin, DetailView):
+class EtiquetaDetail(PermisoMixin, LoginRequiredMixin, DetailView):
+    permiso_modulo = "EtiquetaPlato"
     model = Plato
     template_name = 'platos/etiqueta_plato.html'
     context_object_name = 'plato'
@@ -1440,7 +1427,8 @@ def imprimir_etiquetas(request):
 ##################################     LOTES   #######################################
 ######################################################################################
 
-class LotesResumenListView(PaginationMixin, LoginRequiredMixin, ListView):
+class LotesResumenListView(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "EtiquetaPlato"
     template_name = "platos/lotes_resumen.html"
     context_object_name = "lotes_agrupados"
     paginate_by = 10
@@ -1514,7 +1502,8 @@ class LotesResumenListView(PaginationMixin, LoginRequiredMixin, ListView):
 
  
     
-class LoteDetalleListView(LoginRequiredMixin, ListView):
+class LoteDetalleListView(PermisoMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "EtiquetaPlato"
     model = EtiquetaPlato
     template_name = "platos/lote_detalle.html"
     context_object_name = "raciones"

@@ -10,7 +10,7 @@ from django.views.generic import DetailView, TemplateView, FormView
 from django.views.generic.list import ListView
 from django.views import View
 from app.super.models import UserProfile
-from app.core.mixins import PaginationMixin
+from app.core.mixins import PaginationMixin, PermisoMixin
 from .models import Proveedor, Recepcion, TipoDeMerma, Merma
 from .forms import ProveedorForm, RecepcionForm, TipoDeMermaForm, MermaForm, RecepcionFormSet, RecepcionEliminarForm
 from app.dashuser.views import datos_centro
@@ -24,7 +24,8 @@ import re
 ###############################  PROVEEDORES  ########################################
 ######################################################################################
 
-class ProveedorList(PaginationMixin, LoginRequiredMixin, ListView):
+class ProveedorList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "Proveedor"
     model = Proveedor
     template_name = 'recepcion/listar_proveedor.html'
     context_object_name = 'proveedores'
@@ -63,7 +64,8 @@ class ProveedorList(PaginationMixin, LoginRequiredMixin, ListView):
     
     
     
-class ProveedorCreate(LoginRequiredMixin, CreateView):
+class ProveedorCreate(PermisoMixin, LoginRequiredMixin, CreateView):
+    permiso_modulo = "Proveedor"
     model = Proveedor
     form_class = ProveedorForm
     template_name = 'recepcion/crear_proveedor.html'
@@ -87,7 +89,8 @@ class ProveedorCreate(LoginRequiredMixin, CreateView):
         return super().form_invalid(form)
 
 
-class ProveedorUpdate(LoginRequiredMixin, UpdateView):
+class ProveedorUpdate(PermisoMixin,LoginRequiredMixin, UpdateView):
+    permiso_modulo = "Proveedor"
     model = Proveedor
     template_name = 'recepcion/editar_proveedor.html'
     form_class = ProveedorForm
@@ -113,7 +116,8 @@ class ProveedorUpdate(LoginRequiredMixin, UpdateView):
         return super().form_invalid(form)   
     
 
-class ProveedorDelete(LoginRequiredMixin, DeleteView):
+class ProveedorDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
+    permiso_modulo = "Proveedor"
     model = Proveedor
     template_name = 'recepcion/proveedor_confirm_delete.html'
     success_url = reverse_lazy('recepcion:ProveedorList')
@@ -133,7 +137,8 @@ class ProveedorDelete(LoginRequiredMixin, DeleteView):
         return super().delete(request, *args, **kwargs) 
     
     
-class ProveedorDetailView(DetailView):
+class ProveedorDetailView(PermisoMixin, LoginRequiredMixin, DetailView):
+    permiso_modulo = "Proveedor"
     model = Proveedor
     template_name = 'recepcion/detalle_proveedor.html'
     context_object_name = 'proveedor'
@@ -150,7 +155,8 @@ class ProveedorDetailView(DetailView):
 ######################################################################################
 
 
-class RecepcionManualList(PaginationMixin, LoginRequiredMixin, ListView):
+class RecepcionManualList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "Recepcion"
     model = Recepcion
     template_name = 'recepcion/listar_recepcion_manual.html'
     context_object_name = 'recepciones'
@@ -189,7 +195,8 @@ class RecepcionManualList(PaginationMixin, LoginRequiredMixin, ListView):
         return context
     
 
-class RecepcionManualCreate(LoginRequiredMixin, View):
+class RecepcionManualCreate(PermisoMixin, LoginRequiredMixin, View):
+    permiso_modulo = "Recepcion"
     template_name = 'recepcion/crear_recepcion_manual.html'
     success_url = 'recepcion:RecepcionManualList' 
 
@@ -219,7 +226,8 @@ class RecepcionManualCreate(LoginRequiredMixin, View):
 
     
     
-class RecepcionManualUpdate(LoginRequiredMixin, UpdateView):
+class RecepcionManualUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
+    permiso_modulo = "Recepcion"
     model = Recepcion
     form_class = RecepcionForm
     template_name = 'recepcion/editar_recepcion_manual.html'
@@ -252,7 +260,8 @@ class RecepcionManualUpdate(LoginRequiredMixin, UpdateView):
 
 
     
-class RecepcionManualDetail(LoginRequiredMixin, DetailView):
+class RecepcionManualDetail(PermisoMixin, LoginRequiredMixin, DetailView):
+    permiso_modulo = "Recepcion"
     model = Recepcion
     template_name = 'recepcion/detalle_recepcion_manual.html'
     context_object_name = 'recepcion'
@@ -263,7 +272,8 @@ class RecepcionManualDetail(LoginRequiredMixin, DetailView):
         return context    
         
         
-class RecepcionManualDeleteFormView(LoginRequiredMixin, FormView):
+class RecepcionManualDeleteFormView(PermisoMixin, LoginRequiredMixin, FormView):
+    permiso_modulo = "Recepcion"
     template_name = 'recepcion/recepcionmanual_confirm_delete.html'
     form_class = RecepcionEliminarForm
     success_url = reverse_lazy('recepcion:RecepcionManualList')
@@ -356,7 +366,8 @@ def recepcion_gs1(request):
 ##############################    TIPO DE MERMAS  ####################################
 ######################################################################################
 
-class TipoDeMermaList(PaginationMixin, LoginRequiredMixin, ListView):
+class TipoDeMermaList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "TipoMerma"
     model = TipoDeMerma
     template_name = 'recepcion/listar_tipodemerma.html'
     context_object_name = 'tipodemermas'
@@ -393,7 +404,8 @@ class TipoDeMermaList(PaginationMixin, LoginRequiredMixin, ListView):
         return context
     
     
-class TipoDeMermaCreate(LoginRequiredMixin, CreateView):
+class TipoDeMermaCreate(PermisoMixin, LoginRequiredMixin, CreateView):
+    permiso_modulo = "TipoMerma"
     model = TipoDeMerma
     form_class = TipoDeMermaForm
     template_name = 'recepcion/crear_tipodemerma.html'
@@ -416,7 +428,8 @@ class TipoDeMermaCreate(LoginRequiredMixin, CreateView):
                 messages.error(self.request, f"Error en el campo '{field}': {error}")
         return super().form_invalid(form)
     
-class TipoDeMermaUpdate(LoginRequiredMixin, UpdateView):
+class TipoDeMermaUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
+    permiso_modulo = "TipoMerma"
     model = TipoDeMerma
     template_name = 'recepcion/detalle_tipodemerma.html'
     form_class = TipoDeMermaForm
@@ -442,7 +455,8 @@ class TipoDeMermaUpdate(LoginRequiredMixin, UpdateView):
         return super().form_invalid(form)   
     
 
-class TipoDeMermaDelete(LoginRequiredMixin, DeleteView):
+class TipoDeMermaDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
+    permiso_modulo = "TipoMerma"
     model = TipoDeMerma
     template_name = 'recepcion/tipodemerma_confirm_delete.html'
     success_url = reverse_lazy('recepcion:TipoDeMermaList')
@@ -467,7 +481,8 @@ class TipoDeMermaDelete(LoginRequiredMixin, DeleteView):
 ################################      MERMAS    ######################################
 ######################################################################################
 
-class MermasList(PaginationMixin, LoginRequiredMixin, ListView):
+class MermasList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "Merma"
     model = Merma
     template_name = 'recepcion/listar_mermas.html'
     context_object_name = 'mermas'
@@ -505,7 +520,8 @@ class MermasList(PaginationMixin, LoginRequiredMixin, ListView):
         return context
     
         
-class MermasCreate(LoginRequiredMixin, CreateView):
+class MermasCreate(PermisoMixin, LoginRequiredMixin, CreateView):
+    permiso_modulo = "Merma"
     model = Merma
     form_class = MermaForm
     template_name = 'recepcion/crear_mermas.html'
@@ -534,7 +550,8 @@ class MermasCreate(LoginRequiredMixin, CreateView):
     
     
     
-class MermasUpdate(LoginRequiredMixin, UpdateView):
+class MermasUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
+    permiso_modulo = "Merma"
     model = Merma
     template_name = 'recepcion/detalle_merma.html'
     form_class = MermaForm
@@ -562,7 +579,8 @@ class MermasUpdate(LoginRequiredMixin, UpdateView):
         return super().form_invalid(form)   
     
 
-class MermasDelete(LoginRequiredMixin, DeleteView):
+class MermasDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
+    permiso_modulo = "Merma"
     model = Merma
     template_name = 'recepcion/merma_confirm_delete.html'
     success_url = reverse_lazy('recepcion:MermasList')
@@ -583,7 +601,8 @@ class MermasDelete(LoginRequiredMixin, DeleteView):
 
 
     
-class MermasDetailView(DetailView):
+class MermasDetailView(PermisoMixin, LoginRequiredMixin, DetailView):
+    permiso_modulo = "Merma"
     model = Merma
     template_name = 'recepcion/datos_merma.html'
     context_object_name = 'merma'
@@ -597,7 +616,8 @@ class MermasDetailView(DetailView):
     
     
     
-class AuditoriaList(PaginationMixin, LoginRequiredMixin, TemplateView):
+class AuditoriaList(PermisoMixin, PaginationMixin, LoginRequiredMixin, TemplateView):
+    permiso_modulo = "Recepcion"
     template_name = 'recepcion/listar_auditoria.html'
     paginate_by = 10  # Número de registros por página
 

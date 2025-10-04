@@ -1,0 +1,47 @@
+{% load form_tags %}
+<div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">Permisos de {{ user_profile.nombre }} {{ user_profile.apellidos }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+
+        <form method="post" action="{% url 'super:user_permisos' user_profile.pk %}">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle text-center">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Módulo</th>
+                                {% for accion in acciones %}
+                                <th>{{ accion|capfirst }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for modulo in modulos %}
+                            <tr>
+                                <td class="fw-bold">{{ modulo }}</td>
+                                {% for accion in acciones %}
+                                <td>
+                                    <div class="form-check form-switch d-flex justify-content-center">
+                                        <input class="form-check-input" type="checkbox" name="{{ modulo }}_{{ accion }}"
+                                            id="{{ modulo }}_{{ accion }}"
+                                            {% if permisos_dict|default:"{}"|dict_get:modulo|default:"{}"|dict_get:accion %} checked {% endif %}>
+                                    </div>
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </form>
+    </div>
+</div>

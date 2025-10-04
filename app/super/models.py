@@ -27,8 +27,7 @@ class ModeloBaseCentro(models.Model):
     centro = models.ForeignKey(Centros, on_delete=models.CASCADE)
 
     class Meta:
-        abstract = True# Create your models here.
-
+        abstract = True
 
 
 class UserProfile(models.Model):
@@ -44,3 +43,25 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.nombre} {self.apellidos}"
+    
+    
+class Permiso(models.Model):
+    ACCIONES = [
+        ('create', 'Crear'),
+        ('read', 'Ver'),
+        ('update', 'Editar'),
+        ('delete', 'Eliminar'),
+    ]
+
+    usuario = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='permisos')
+    modulo = models.CharField(max_length=100)  # Ejemplo: "Proveedores", "Alérgenos"
+    accion = models.CharField(max_length=10, choices=ACCIONES)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('usuario', 'modulo', 'accion')
+        verbose_name = 'Permiso'
+        verbose_name_plural = 'Permisos'
+
+    def __str__(self):
+        return f"{self.usuario.nombre} {self.usuario.apellidos} → {self.modulo} [{self.accion}]"    

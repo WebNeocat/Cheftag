@@ -12,7 +12,9 @@ from django.contrib import messages
 from django.db.models import Q
 from django.utils.timezone import localtime
 from django.core.exceptions import ObjectDoesNotExist
-from app.core.mixins import PaginationMixin
+from app.core.mixins import PaginationMixin, PermisoMixin
+from app.super.views import MODULOS, ACCIONES
+from app.super.permissions import tiene_permiso
 from app.super.models import UserProfile
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Alergenos, TipoAlimento, Alimento, localizacion, Conservacion, InformacionNutricional, UnidadDeMedida, Trazas, EtiquetaAlimento
@@ -28,6 +30,20 @@ def home(request):
     return render(request, 'dashuser/home.html', context)
 
 def datos_centro(request):
+    """
+    Devuelve información del usuario, del centro, saludo y permisos por módulo.
+    """
+    context = {}
+
+    if not request.user.is_authenticated:
+        return context
+
+    # Datos del usuario
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+    except UserProfile.DoesNotExist:
+        return context
+
     hora_actual = localtime().hour
     if 5 <= hora_actual < 12:
         saludo = "Buenos días"
@@ -35,44 +51,38 @@ def datos_centro(request):
         saludo = "Buenas tardes"
     else:
         saludo = "Buenas noches"
-    
-    # obtenemos el perfil del usuario logueado
-    user_profile = UserProfile.objects.get(user=request.user)
-    
-    # obtenemos los datos asociados al perfil
-    imagen = user_profile.imagen
-    cargo = user_profile.cargo
-    nombre = user_profile.nombre
-    apellidos = user_profile.apellidos
-    
-    # Comprobamos si el usuario tiene una imagen
-    if imagen and user_profile.imagen:
-        imagen_user_url = user_profile.imagen.url
-    else:
-        imagen_user_url = None
-    
-    # Obtenemos la imagen del centro (si existe)
-    if user_profile.centro and user_profile.centro.imagen:
-        imagen_centro_url = user_profile.centro.imagen.url
-    else:
-        imagen_centro_url = None
-    
-    # Retornar el contexto con ambas URLs de imágenes
-    return {
+
+    # Imagenes
+    imagen_user_url = user_profile.imagen.url if user_profile.imagen else None
+    imagen_centro_url = user_profile.centro.imagen.url if user_profile.centro and user_profile.centro.imagen else None
+
+    # Construimos los permisos
+    permisos_dict = {}
+    for modulo in MODULOS:
+        permisos_dict[modulo] = {}
+        for accion in ACCIONES:
+            permisos_dict[modulo][accion] = tiene_permiso(user_profile, modulo, accion)
+
+    context.update({
+        'user_profile': user_profile,
+        'nombre': user_profile.nombre,
+        'apellidos': user_profile.apellidos,
+        'cargo': user_profile.cargo,
         'imagen_user_url': imagen_user_url,
         'imagen_centro_url': imagen_centro_url,
-        'cargo': cargo, 
-        'nombre': nombre, 
-        'apellidos': apellidos, 
-        'saludo': saludo
-    }
+        'saludo': saludo,
+        'permisos': permisos_dict,  # <-- aquí todos los permisos por módulo y acción
+    })
+
+    return context
 
 ######################################################################################
 ###############################  ALERGENOS  ########################################
 ######################################################################################
 
 
-class AlergenosList(PaginationMixin, LoginRequiredMixin, ListView):
+class AlergenosList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "Alergenos" 
     model = Alergenos
     template_name = 'dashuser/listar_alergenos.html'
     context_object_name = 'alergenos'
@@ -109,7 +119,8 @@ class AlergenosList(PaginationMixin, LoginRequiredMixin, ListView):
         return context
     
     
-class AlergenosCreate(LoginRequiredMixin, CreateView):
+class AlergenosCreate(PermisoMixin, LoginRequiredMixin, CreateView):
+    permiso_modulo = "Alergenos" 
     model = Alergenos
     form_class = AlergenosForm
     template_name = 'dashuser/crear_alergenos.html'
@@ -131,7 +142,8 @@ class AlergenosCreate(LoginRequiredMixin, CreateView):
                 messages.error(self.request, f"Error en el campo '{field}': {error}")
         return super().form_invalid(form)
     
-class AlergenosUpdate(LoginRequiredMixin, UpdateView):
+class AlergenosUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
+    permiso_modulo = "Alergenos" 
     model = Alergenos
     template_name = 'dashuser/detalle_alergenos.html'
     form_class = AlergenosForm
@@ -157,7 +169,8 @@ class AlergenosUpdate(LoginRequiredMixin, UpdateView):
         return super().form_invalid(form)   
     
 
-class AlergenosDelete(LoginRequiredMixin, DeleteView):
+class AlergenosDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
+    permiso_modulo = "Alergenos" 
     model = Alergenos
     template_name = 'dashuser/alergenos_confirm_delete.html'
     success_url = reverse_lazy('dashuser:AlergenosList')
@@ -182,7 +195,8 @@ class AlergenosDelete(LoginRequiredMixin, DeleteView):
 ######################################################################################
 
 
-class TrazasList(PaginationMixin, LoginRequiredMixin, ListView):
+class TrazasList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "Trazas" 
     model = Trazas
     template_name = 'dashuser/listar_trazas.html'
     context_object_name = 'trazas'
@@ -218,7 +232,8 @@ class TrazasList(PaginationMixin, LoginRequiredMixin, ListView):
 
         return context
     
-class TrazasCreate(LoginRequiredMixin, CreateView):
+class TrazasCreate(PermisoMixin, LoginRequiredMixin, CreateView):
+    permiso_modulo = "Trazas"
     model = Trazas
     form_class = TrazasForm
     template_name = 'dashuser/crear_trazas.html'
@@ -242,7 +257,8 @@ class TrazasCreate(LoginRequiredMixin, CreateView):
         return super().form_invalid(form)
     
     
-class TrazasUpdate(LoginRequiredMixin, UpdateView):
+class TrazasUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
+    permiso_modulo = "Trazas"
     model = Trazas
     template_name = 'dashuser/detalle_trazas.html'
     form_class = TrazasForm
@@ -268,7 +284,8 @@ class TrazasUpdate(LoginRequiredMixin, UpdateView):
         return super().form_invalid(form)   
     
 
-class TrazasDelete(LoginRequiredMixin, DeleteView):
+class TrazasDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
+    permiso_modulo = "Trazas"
     model = Trazas
     template_name = 'dashuser/trazas_confirm_delete.html'
     success_url = reverse_lazy('dashuser:TrazasList')
@@ -294,7 +311,8 @@ class TrazasDelete(LoginRequiredMixin, DeleteView):
 ######################################################################################    
 
 
-class UnidadDeMedidaList(PaginationMixin, LoginRequiredMixin, ListView):
+class UnidadDeMedidaList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "UnidadDeMedida"
     model = UnidadDeMedida
     template_name = 'dashuser/listar_unidaddemedida.html'
     context_object_name = 'unidaddemedidas'
@@ -331,7 +349,8 @@ class UnidadDeMedidaList(PaginationMixin, LoginRequiredMixin, ListView):
         return context
     
     
-class UnidadDeMedidaCreate(LoginRequiredMixin, CreateView):
+class UnidadDeMedidaCreate(PermisoMixin, LoginRequiredMixin, CreateView):
+    permiso_modulo = "UnidadDeMedida"
     model = UnidadDeMedida
     form_class = UnidadDeMedidaForm
     template_name = 'dashuser/crear_unidaddemedida.html'
@@ -354,7 +373,8 @@ class UnidadDeMedidaCreate(LoginRequiredMixin, CreateView):
         return super().form_invalid(form)   
      
     
-class UnidadDeMedidaUpdate(LoginRequiredMixin, UpdateView):
+class UnidadDeMedidaUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
+    permiso_modulo = "UnidadDeMedida"
     model = UnidadDeMedida
     template_name = 'dashuser/detalle_unidaddemedida.html'
     form_class = UnidadDeMedidaForm
@@ -380,7 +400,8 @@ class UnidadDeMedidaUpdate(LoginRequiredMixin, UpdateView):
         return super().form_invalid(form)
     
 
-class UnidadDeMedidaDelete(LoginRequiredMixin, DeleteView):
+class UnidadDeMedidaDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
+    permiso_modulo = "UnidadDeMedida"
     model = UnidadDeMedida
     template_name = 'dashuser/unidaddemedida_confirm_delete.html'
     success_url = reverse_lazy('dashuser:UnidadDeMedidaList')
@@ -406,7 +427,8 @@ class UnidadDeMedidaDelete(LoginRequiredMixin, DeleteView):
 ######################################################################################
 
 
-class TipoAlimentoList(PaginationMixin, LoginRequiredMixin, ListView):
+class TipoAlimentoList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "TipoAlimento"
     model = TipoAlimento
     template_name = 'dashuser/listar_tipoalimento.html'
     context_object_name = 'tipoalimentos'
@@ -442,7 +464,8 @@ class TipoAlimentoList(PaginationMixin, LoginRequiredMixin, ListView):
         return context
     
     
-class TipoAlimentoCreate(LoginRequiredMixin, CreateView):
+class TipoAlimentoCreate(PermisoMixin, LoginRequiredMixin, CreateView):
+    permiso_modulo = "TipoAlimento"
     model = TipoAlimento
     form_class = TipoAlimentosForm
     template_name = 'dashuser/crear_tipoalimento.html'
@@ -466,7 +489,8 @@ class TipoAlimentoCreate(LoginRequiredMixin, CreateView):
         return super().form_invalid(form)
     
     
-class TipoAlimentoUpdate(LoginRequiredMixin, UpdateView):
+class TipoAlimentoUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
+    permiso_modulo = "TipoAlimento"
     model = TipoAlimento
     template_name = 'dashuser/detalle_tipoalimento.html'
     form_class = TipoAlimentosForm
@@ -491,7 +515,8 @@ class TipoAlimentoUpdate(LoginRequiredMixin, UpdateView):
                 messages.error(self.request, f"Error en el campo '{field}': {error}")
         return super().form_invalid(form)  
     
-class TipoAlimentoDelete(LoginRequiredMixin, DeleteView):
+class TipoAlimentoDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
+    permiso_modulo = "TipoAlimento"
     model = TipoAlimento
     template_name = 'dashuser/tipoalimento_confirm_delete.html'
     success_url = reverse_lazy('dashuser:TipoAlimentoList')
@@ -516,7 +541,8 @@ class TipoAlimentoDelete(LoginRequiredMixin, DeleteView):
 ######################################################################################    
 
 
-class LocalizacionList(PaginationMixin, LoginRequiredMixin, ListView):
+class LocalizacionList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "localizacion"
     model = localizacion
     template_name = 'dashuser/listar_localizacion.html'
     context_object_name = 'localizaciones'
@@ -552,7 +578,8 @@ class LocalizacionList(PaginationMixin, LoginRequiredMixin, ListView):
         return context
     
     
-class LocalizacionCreate(LoginRequiredMixin, CreateView):
+class LocalizacionCreate(PermisoMixin, LoginRequiredMixin, CreateView):
+    permiso_modulo = "localizacion"
     model = localizacion
     form_class = LocalizacionForm
     template_name = 'dashuser/crear_localizacion.html'
@@ -576,7 +603,8 @@ class LocalizacionCreate(LoginRequiredMixin, CreateView):
         return super().form_invalid(form)   
 
 
-class LocalizacionUpdate(LoginRequiredMixin, UpdateView):
+class LocalizacionUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
+    permiso_modulo = "localizacion"
     model = localizacion
     template_name = 'dashuser/detalle_localizacion.html'
     form_class = LocalizacionForm
@@ -602,7 +630,8 @@ class LocalizacionUpdate(LoginRequiredMixin, UpdateView):
         return super().form_invalid(form)
     
  
-class LocalizacionDelete(LoginRequiredMixin, DeleteView):
+class LocalizacionDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
+    permiso_modulo = "localizacion"
     model = localizacion
     template_name = 'dashuser/localizacion_confirm_delete.html'
     success_url = reverse_lazy('dashuser:LocalizacionList')
@@ -628,7 +657,8 @@ class LocalizacionDelete(LoginRequiredMixin, DeleteView):
 ######################################################################################    
 
 
-class ConservacionList(PaginationMixin, LoginRequiredMixin, ListView):
+class ConservacionList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "Conservacion"
     model = Conservacion
     template_name = 'dashuser/listar_conservacion.html'
     context_object_name = 'conservaciones'
@@ -664,7 +694,8 @@ class ConservacionList(PaginationMixin, LoginRequiredMixin, ListView):
         return context
     
     
-class ConservacionCreate(LoginRequiredMixin, CreateView):
+class ConservacionCreate(PermisoMixin, LoginRequiredMixin, CreateView):
+    permiso_modulo = "Conservacion"
     model = Conservacion
     form_class = ConservacionForm
     template_name = 'dashuser/crear_conservacion.html'
@@ -688,7 +719,8 @@ class ConservacionCreate(LoginRequiredMixin, CreateView):
         return super().form_invalid(form)   
 
 
-class ConservacionUpdate(LoginRequiredMixin, UpdateView):
+class ConservacionUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
+    permiso_modulo = "Conservacion"
     model = Conservacion
     template_name = 'dashuser/detalle_conservacion.html'
     form_class = ConservacionForm
@@ -714,7 +746,8 @@ class ConservacionUpdate(LoginRequiredMixin, UpdateView):
         return super().form_invalid(form)
     
  
-class ConservacionDelete(LoginRequiredMixin, DeleteView):
+class ConservacionDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
+    permiso_modulo = "Conservacion"
     model = Conservacion
     template_name = 'dashuser/conservacion_confirm_delete.html'
     success_url = reverse_lazy('dashuser:ConservacionList')
@@ -738,7 +771,8 @@ class ConservacionDelete(LoginRequiredMixin, DeleteView):
 ##############################     ALIMENTO   ########################################
 ######################################################################################      
 
-class AlimentoList(PaginationMixin, LoginRequiredMixin, ListView):
+class AlimentoList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "Alimento"
     model = Alimento
     template_name = 'dashuser/listar_alimentos.html'
     context_object_name = 'alimentos'
@@ -774,7 +808,8 @@ class AlimentoList(PaginationMixin, LoginRequiredMixin, ListView):
         return context
     
     
-class AlimentoCreate(View):
+class AlimentoCreate(PermisoMixin, LoginRequiredMixin, View):
+    permiso_modulo = "Alimento"
     def get(self, request):
         alimento_form = AlimentoForm()
         nutricion_form = InformacionNutricionalForm()
@@ -812,18 +847,20 @@ class AlimentoCreate(View):
         return render(request, 'dashuser/crear_alimento.html', context)
 
 
-class AlimentoDetailView(DetailView):
+class AlimentoDetailView(PaginationMixin, LoginRequiredMixin, DetailView):
+    permiso_modulo = "Alimento"
     model = Alimento
     template_name = 'dashuser/detalle_alimento.html'
     context_object_name = 'alimento'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(datos_centro(self.request))  # Añadimos datos del centro (usuario)
+        context.update(datos_centro(self.request))  
         return context
     
     
-class AlimentoUpdate(LoginRequiredMixin, View):
+class AlimentoUpdate(PaginationMixin, LoginRequiredMixin, View):
+    permiso_modulo = "Alimento"
     def get(self, request, pk):
         alimento = get_object_or_404(
             Alimento, pk=pk, centro=request.user.userprofile.centro
@@ -880,7 +917,8 @@ class AlimentoUpdate(LoginRequiredMixin, View):
         return render(request, 'dashuser/editar_alimento.html', context)
 
 
-class AlimentoDelete(LoginRequiredMixin, DeleteView):
+class AlimentoDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
+    permiso_modulo = "Alimento"
     model = Alimento
     template_name = 'dashuser/eliminar_alimento.html'
     context_object_name = 'alimento'

@@ -4,17 +4,19 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django import forms
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.db import transaction
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import User
 from django.utils.timezone import localtime
 from django.db.models import Q
+from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Paginator
 from django.views.generic.list import ListView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.views.generic import DetailView
+from django.views.generic import DetailView, TemplateView
 from .forms import UserProfileForm, CentroForm, CentroUpdateForm
-from .models import UserProfile, Centros
+from .models import UserProfile, Centros, Permiso
 from app.core.mixins import PaginationMixin
 import logging
 
@@ -338,4 +340,71 @@ class UsuariosCentroListView(PaginationMixin,ListView):
         context = super().get_context_data(**kwargs)
         centro_id = self.kwargs.get('pk')
         context['centro'] = Centros.objects.get(pk=centro_id)
-        return context    
+
+    
+######################################################################################
+###############################     CENTROS    #######################################
+######################################################################################
+
+    
+    
+# Definimos los módulos y acciones
+MODULOS = ["Proveedor", "Alimento", "Plato",  "Alergenos", "Trazas", "UnidadDeMedida", "TipoAlimento", "localizacion",
+           "Conservacion", "TipoPlato", "TextoModo","TipoMerma", "Salsa", "Receta", "Recepcion", "Merma", "EtiquetaPlato", "RegistroAccion", "UserProfile"]
+ACCIONES = ["create", "read", "update", "delete"]
+
+
+class UserPermisosView(UserPassesTestMixin, TemplateView):
+    template_name = "super/user_permisos.html"
+
+    def test_func(self):
+        # Solo superuser puede acceder
+        return self.request.user.is_superuser
+
+    def get_userprofile(self):
+        # Obtenemos el UserProfile del usuario seleccionado
+        return get_object_or_404(UserProfile, pk=self.kwargs.get("pk"))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user_profile = self.get_userprofile()
+
+        permisos_dict = {}
+        for modulo in MODULOS:
+            permisos_dict[modulo] = {}
+            for accion in ACCIONES:
+                existe = Permiso.objects.filter(
+                    usuario=user_profile,
+                    modulo=modulo,
+                    accion=accion
+                ).exists()
+                permisos_dict[modulo][accion] = existe
+
+        context["user_profile"] = user_profile
+        context["modulos"] = MODULOS
+        context["acciones"] = ACCIONES
+        context["permisos_dict"] = permisos_dict
+        return context
+
+    def post(self, request, *args, **kwargs):
+        user_profile = self.get_userprofile()
+        for modulo in MODULOS:
+            for accion in ACCIONES:
+                campo = f"{modulo}_{accion}"
+                checked = request.POST.get(campo) == "on"
+
+                permiso, created = Permiso.objects.get_or_create(
+                    usuario=user_profile,
+                    modulo=modulo,
+                    accion=accion
+                )
+                if checked:
+                    permiso.save()
+                else:
+                    permiso.delete()
+
+        messages.success(request, f"Permisos actualizados para {user_profile}")
+        return redirect(
+            reverse_lazy("super:UsuariosList")
+        )
+   

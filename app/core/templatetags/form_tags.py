@@ -24,3 +24,11 @@ def kcal_to_kj(value):
         return int(round(kj))  # redondea al entero más cercano
     except (ValueError, TypeError):
         return ''
+
+
+@register.filter
+def dict_get(dictionary, key):
+    """Devuelve dictionary[key] o None si no existe"""
+    if dictionary is None:
+        return None
+    return dictionary.get(key)

@@ -8,9 +8,10 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.views import View
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import UpdateView, DeleteView
-from .mixins import PaginationMixin
+from .mixins import PaginationMixin, PermisoMixin
 from app.dashuser.views import datos_centro
 from app.super.models import UserProfile
 from app.super.forms import UserProfileForm
@@ -22,7 +23,8 @@ from app.super.forms import UserProfileForm
 ######################################################################################
 
 
-class RegistroAccionListView(PaginationMixin, LoginRequiredMixin, ListView):
+class RegistroAccionListView(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "RegistroAccion"
     model = RegistroAccion
     template_name = "core/registro_accion_list.html"
     context_object_name = "registros"
@@ -43,7 +45,8 @@ class RegistroAccionListView(PaginationMixin, LoginRequiredMixin, ListView):
         return context
 
 
-class RegistroAccionDetailView(LoginRequiredMixin, DetailView):
+class RegistroAccionDetailView(PermisoMixin, LoginRequiredMixin, DetailView):
+    permiso_modulo = "RegistroAccion"
     model = RegistroAccion
     template_name = "core/registro_accion_detail.html"
     context_object_name = "registro"
@@ -62,7 +65,8 @@ class RegistroAccionDetailView(LoginRequiredMixin, DetailView):
 ############################        USUARIOS     #####################################
 ######################################################################################    
     
-class UsersListView(PaginationMixin, LoginRequiredMixin, ListView):
+class UsersListView(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "UserProfile"
     model = UserProfile
     template_name = 'core/lista_usuarios.html'
     context_object_name = 'usuarios'
@@ -80,7 +84,8 @@ class UsersListView(PaginationMixin, LoginRequiredMixin, ListView):
         return context    
  
     
-class UserCreateView(LoginRequiredMixin, CreateView):
+class UserCreateView(PermisoMixin, LoginRequiredMixin, CreateView):
+    permiso_modulo = "UserProfile"
     model = UserProfile
     form_class = UserProfileForm
     template_name = 'core/crear_usuario.html'
@@ -122,7 +127,8 @@ class UserCreateView(LoginRequiredMixin, CreateView):
     
     
         
-class UsersUpdateView(LoginRequiredMixin, UpdateView):
+class UsersUpdateView(PermisoMixin, LoginRequiredMixin, UpdateView):
+    permiso_modulo = "UserProfile"
     model = UserProfile
     form_class = UserProfileForm
     template_name = 'core/editar_usuario.html'
@@ -146,7 +152,8 @@ class UsersUpdateView(LoginRequiredMixin, UpdateView):
     
 
 
-class UserDeleteView(LoginRequiredMixin, DeleteView):
+class UserDeleteView(PermisoMixin, LoginRequiredMixin, DeleteView):
+    permiso_modulo = "UserProfile"
     model = UserProfile
     template_name = 'core/confirm_delete_usuario.html'
     success_url = reverse_lazy('core:UsersListView')
@@ -174,7 +181,8 @@ class UserDeleteView(LoginRequiredMixin, DeleteView):
     
     
 
-class UserDetailView(LoginRequiredMixin, DetailView):
+class UserDetailView(PermisoMixin, LoginRequiredMixin, DetailView):
+    permiso_modulo = "UserProfile"
     model = UserProfile
     template_name = 'core/detalle_usuario.html'
     context_object_name = 'usuario'
@@ -186,3 +194,8 @@ class UserDetailView(LoginRequiredMixin, DetailView):
             return UserProfile.objects.filter(centro=user_profile.centro)
         return UserProfile.objects.none()   
     
+    
+######################################################################################
+#################################    PERMISOS    #####################################
+######################################################################################    
+  

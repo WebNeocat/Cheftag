@@ -91,124 +91,169 @@
       <!-- partial:partials/_sidebar.html -->
       <nav class="sidebar sidebar-offcanvas" id="sidebar">
         <ul class="nav">
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'dashuser:home' %}">
-              <i class="mdi mdi-monitor-dashboard  menu-icon"></i>
-              <span class="menu-title">Dashboard</span>
-            </a>
-          </li>
-          <li class="nav-item nav-category">Sistema</li>
-          <li class="nav-item">
-              <a class="nav-link" href="{% url 'recepcion:ProveedorList' %}">
-                <i class="menu-icon mdi mdi-factory"></i>
-                <span class="menu-title">Proveedores</span>
-              </a>
+          {% if permisos.Proveedor.read or permisos.Alimento.read or permisos.Plato.read or permisos.EtiquetaPlato.read %}
+            <li class="nav-item nav-category">Sistema</li>
+              {% if permisos.Proveedor.read %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'recepcion:ProveedorList' %}">
+                  <i class="menu-icon mdi mdi-factory"></i>
+                  <span class="menu-title">Proveedores</span>
+                </a>
+              </li>
+              {% endif %}
+
+              {% if permisos.Alimento.read %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'dashuser:AlimentoList' %}">
+                  <i class="menu-icon mdi mdi-food-variant"></i>
+                  <span class="menu-title">Alimentos</span>
+                </a>
+              </li>
+              {% endif %}
+
+              {% if permisos.Plato.read %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'platos:PlatoList' %}">
+                  <i class="menu-icon mdi mdi-food-takeout-box"></i>
+                  <span class="menu-title">Platos</span>
+                </a>
+              </li>
+              {% endif %}
+
+              {% if permisos.EtiquetaPlato.read %}
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="collapse" href="#etiq" aria-expanded="false" aria-controls="etiq">
+                  <i class="menu-icon mdi mdi-tag-text-outline"></i>
+                  <span class="menu-title">Etiquetado</span>
+                  <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="etiq">
+                  <ul class="nav flex-column sub-menu">
+                    <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:crear_etiqueta' %}">Alimentos</a></li>
+                  </ul>
+                  <ul class="nav flex-column sub-menu">
+                    <li class="nav-item"> <a class="nav-link" href="{% url 'platos:generar_etiqueta' %}">Platos</a></li>
+                  </ul>
+                </div>
+              </li>
+              {% endif %}
+
+              {% if permisos.EtiquetaPlato.read %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'platos:LotesResumenListView' %}">
+                  <i class="menu-icon mdi mdi-package-variant"></i>
+                  <span class="menu-title">Lotes Etiquetas</span>
+                </a>
+              </li>
+              {% endif %}
             </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'dashuser:AlimentoList' %}">
-                <i class="menu-icon mdi mdi-food-variant"></i>
-                <span class="menu-title">Alimentos</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'platos:PlatoList' %}">
-                <i class="menu-icon mdi mdi-food-takeout-box"></i>
-                <span class="menu-title">Platos</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" data-bs-toggle="collapse" href="#etiq" aria-expanded="false" aria-controls="etiq">
-                <i class="menu-icon mdi mdi-tag-text-outline"></i>
-                <span class="menu-title">Etiquetado</span>
-                <i class="menu-arrow"></i>
-              </a>
-              <div class="collapse" id="etiq">
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:crear_etiqueta' %}">Alimentos</a></li>
-                </ul>
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item"> <a class="nav-link" href="{% url 'platos:generar_etiqueta' %}">Platos</a></li>
-                </ul>
-              </div>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'platos:LotesResumenListView' %}">
-                <i class="menu-icon mdi mdi-package-variant"></i>
-                <span class="menu-title">Lotes Etiquetas</span>
-              </a>
-            </li>
+          {% endif %}
+          {% if permisos.Recepcion.read or permisos.Merma.read %}
             <li class="nav-item nav-category">STOCKS</li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'recepcion:RecepcionManualList' %}">
-                <i class="menu-icon mdi mdi-dolly"></i>
-                <span class="menu-title">Recepción</span>
-              </a>
+              {% if permisos.Recepcion.read %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'recepcion:RecepcionManualList' %}">
+                  <i class="menu-icon mdi mdi-dolly"></i>
+                  <span class="menu-title">Recepción</span>
+                </a>
+              </li>
+              {% endif %}
+              {% if permisos.Merma.read %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'recepcion:MermasList' %}">
+                  <i class="menu-icon mdi mdi-format-indent-decrease"></i>
+                  <span class="menu-title">Mermas</span>
+                </a>
+              </li>
+              {% endif %} 
+              {% if permisos.Recepcion.read %}           
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'recepcion:AuditoriaList' %}">
+                  <i class="menu-icon mdi mdi-format-list-checks"></i>
+                  <span class="menu-title">Auditoria</span>
+                </a>
+              </li>
+              {% endif %}
             </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'recepcion:MermasList' %}">
-                <i class="menu-icon mdi mdi-format-indent-decrease"></i>
-                <span class="menu-title">Mermas</span>
-              </a>
-            </li>            
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'recepcion:AuditoriaList' %}">
-                <i class="menu-icon mdi mdi-format-list-checks"></i>
-                <span class="menu-title">Auditoria</span>
-              </a>
+          {% endif %} 
+          {% if permisos.UserProfile.read or permisos.RegistroAccion.read %}
+            <li class="nav-item nav-category">CONTROL</li>
+              {% if permisos.UserProfile.read %}  
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'core:UsersListView' %}">
+                  <i class="menu-icon mdi mdi-account-multiple"></i>
+                  <span class="menu-title"> Usuarios</span>
+                </a>
+              </li>
+              {% endif %}
+              {% if permisos.RegistroAccion.read %}  
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'core:registro_accion_list' %}">
+                  <i class="menu-icon mdi mdi-math-log"></i>
+                  <span class="menu-title"> Registros</span>
+                </a>
+              </li>
+              {% endif %}
             </li>
-          </li>
-          <li class="nav-item nav-category">CONTROL</li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'core:UsersListView' %}">
-                <i class="menu-icon mdi mdi-account-multiple"></i>
-                <span class="menu-title"> Usuarios</span>
-              </a>
+          {% endif %}  
+          {% if permisos.Alergenos.read or permisos.Trazas.read or permisos.Localizacion.read or permisos.Conservacion.read or permisos.TipoAlimento.read or permisos.UnidadDeMedida.read or permisos.TipoPlato.read or permisos.TextoModo.read or permisos.TipoMerma.read %}
+            <li class="nav-item nav-category">CONFIGURACIÓN</li>
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="collapse" href="#confi" aria-expanded="false" aria-controls="confi">
+                  <i class="menu-icon mdi mdi-tools"></i>
+                  <span class="menu-title">Opciones</span>
+                  <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="confi">
+                  <ul class="nav flex-column sub-menu">
+                    {% if permisos.Alergenos.read %}
+                    <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:AlergenosList' %}">Alérgenos</a></li>
+                    {% endif %}
+                  </ul>
+                  <ul class="nav flex-column sub-menu">
+                    {% if permisos.Trazas.read %}
+                    <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:TrazasList' %}">Trazas de alérgenos</a></li>
+                    {% endif %}
+                  </ul>
+                  <ul class="nav flex-column sub-menu">
+                    {% if permisos.localizacion.read %}
+                    <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:LocalizacionList' %}">Ubicaciones</a></li>
+                    {% endif %}
+                  </ul>
+                  <ul class="nav flex-column sub-menu">
+                    {% if permisos.Conservacion.read %}
+                    <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:ConservacionList' %}">Conservación</a></li>
+                    {% endif %}
+                  </ul>
+                  <ul class="nav flex-column sub-menu">
+                    {% if permisos.TipoAlimento.read %}
+                    <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:TipoAlimentoList' %}">Tipos de Alimento</a></li>
+                    {% endif %}
+                  </ul>
+                  <ul class="nav flex-column sub-menu">
+                    {% if permisos.UnidadDeMedida.read %}
+                    <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:UnidadDeMedidaList' %}">Unidad de Medida</a></li>
+                    {% endif %}
+                  </ul>
+                  <ul class="nav flex-column sub-menu">
+                    {% if permisos.TipoPlato.read %}
+                    <li class="nav-item"> <a class="nav-link" href="{% url 'platos:TipoPlatoList' %}">Tipos de Plato</a></li>
+                    {% endif %}
+                  </ul>
+                  <ul class="nav flex-column sub-menu">
+                    {% if permisos.TextoModo.read %}
+                    <li class="nav-item"> <a class="nav-link" href="{% url 'platos:TextoModoList' %}">Modos de uso</a></li>
+                    {% endif %}
+                  </ul>
+                  <ul class="nav flex-column sub-menu">
+                    {% if permisos.TipoMerma.read %}
+                    <li class="nav-item"> <a class="nav-link" href="{% url 'recepcion:TipoDeMermaList' %}">Tipos de mermas</a></li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </li>
             </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'core:registro_accion_list' %}">
-                <i class="menu-icon mdi mdi-math-log"></i>
-                <span class="menu-title"> Registros</span>
-              </a>
-            </li>
-          </li>
-          <li class="nav-item nav-category">CONFIGURACIÓN</li>
-            <li class="nav-item">
-              <a class="nav-link" data-bs-toggle="collapse" href="#confi" aria-expanded="false" aria-controls="confi">
-                <i class="menu-icon mdi mdi-tools"></i>
-                <span class="menu-title">Opciones</span>
-                <i class="menu-arrow"></i>
-              </a>
-              <div class="collapse" id="confi">
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:AlergenosList' %}">Alérgenos</a></li>
-                </ul>
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:TrazasList' %}">Trazas de alérgenos</a></li>
-                </ul>
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:LocalizacionList' %}">Ubicaciones</a></li>
-                </ul>
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:ConservacionList' %}">Conservación</a></li>
-                </ul>
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:TipoAlimentoList' %}">Tipos de Alimento</a></li>
-                </ul>
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item"> <a class="nav-link" href="{% url 'dashuser:UnidadDeMedidaList' %}">Unidad de Medida</a></li>
-                </ul>
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item"> <a class="nav-link" href="{% url 'platos:TipoPlatoList' %}">Tipos de Plato</a></li>
-                </ul>
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item"> <a class="nav-link" href="{% url 'platos:TextoModoList' %}">Modos de uso</a></li>
-                </ul>
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item"> <a class="nav-link" href="{% url 'recepcion:TipoDeMermaList' %}">Tipos de mermas</a></li>
-                </ul>
-              </div>
-            </li>
-          </li>
+          {% endif %}
         </ul>
       </nav>
       <div class="main-panel">
