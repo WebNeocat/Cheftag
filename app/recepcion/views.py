@@ -195,18 +195,26 @@ class RecepcionManualList(PermisoMixin, PaginationMixin, LoginRequiredMixin, Lis
         return context
     
 
-class RecepcionManualCreate(PermisoMixin, LoginRequiredMixin, View):
-    permiso_modulo = "Recepcion"
+class RecepcionManualCreate(LoginRequiredMixin, View):
+    model = Recepcion
     template_name = 'recepcion/crear_recepcion_manual.html'
-    success_url = 'recepcion:RecepcionManualList' 
+    success_url = 'recepcion:RecepcionManualList'
 
     def get(self, request, *args, **kwargs):
-        formset = RecepcionFormSet(queryset=Recepcion.objects.none())
+        user_profile = get_object_or_404(UserProfile, user=request.user)
+        formset = RecepcionFormSet(
+            queryset=Recepcion.objects.none(),
+            form_kwargs={"centro": user_profile.centro}  # ✅ pasamos el centro al formset
+        )
         return render(request, self.template_name, {'formset': formset})
 
     def post(self, request, *args, **kwargs):
-        formset = RecepcionFormSet(request.POST, queryset=Recepcion.objects.none())
         user_profile = get_object_or_404(UserProfile, user=request.user)
+        formset = RecepcionFormSet(
+            request.POST,
+            queryset=Recepcion.objects.none(),
+            form_kwargs={"centro": user_profile.centro}  # ✅ también aquí
+        )
 
         if formset.is_valid() and user_profile.centro:
             for form in formset:
@@ -214,10 +222,12 @@ class RecepcionManualCreate(PermisoMixin, LoginRequiredMixin, View):
                     recepcion = form.save(commit=False)
                     recepcion.centro = user_profile.centro
                     recepcion.save()
-                    # Actualizar stock
+
+                    # ✅ Actualizar stock del alimento
                     alimento = recepcion.alimento
                     alimento.stock_actual += recepcion.cantidad
                     alimento.save()
+
             messages.success(request, 'Recepciones registradas correctamente.')
             return redirect(self.success_url)
         else:
@@ -226,7 +236,7 @@ class RecepcionManualCreate(PermisoMixin, LoginRequiredMixin, View):
 
     
     
-class RecepcionManualUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
+class RecepcionManualUpdate(LoginRequiredMixin, UpdateView):
     permiso_modulo = "Recepcion"
     model = Recepcion
     form_class = RecepcionForm
@@ -527,18 +537,24 @@ class MermasCreate(PermisoMixin, LoginRequiredMixin, CreateView):
     template_name = 'recepcion/crear_mermas.html'
     success_url = reverse_lazy('recepcion:MermasList')
 
+    def get_form_kwargs(self):
+        """Pasar user al formulario para filtrar queryset de alimentos."""
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
         user_profile = get_object_or_404(UserProfile, user=self.request.user)
-        if user_profile.centro:
-            mermas = form.save(commit=False)
-            mermas.centro = user_profile.centro
-            mermas.registrado_por = user_profile
-            mermas.save()
-            messages.success(self.request, 'Merma creada correctamente.')
-            return redirect(self.success_url)
-        else:
+        if not user_profile.centro:
             messages.error(self.request, 'No está asociado a ningún centro.')
             return self.form_invalid(form)
+        
+        merma = form.save(commit=False)
+        merma.centro = user_profile.centro
+        merma.registrado_por = user_profile
+        merma.save()
+        messages.success(self.request, 'Merma creada correctamente.')
+        return redirect(self.success_url)
 
     def form_invalid(self, form):
         for field, errors in form.errors.items():
@@ -546,7 +562,7 @@ class MermasCreate(PermisoMixin, LoginRequiredMixin, CreateView):
                 messages.error(self.request, f"Error en el campo '{field}': {error}")
         for error in form.non_field_errors():
             messages.error(self.request, error)
-        return super().form_invalid(form)   
+        return super().form_invalid(form)
     
     
     
@@ -558,6 +574,11 @@ class MermasUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('recepcion:MermasList')
     context_object_name = 'merma'
 
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user  # pasamos el usuario al formulario
+        return kwargs
     def get_queryset(self):
         user_profile = get_object_or_404(UserProfile, user=self.request.user)
         if user_profile.centro:

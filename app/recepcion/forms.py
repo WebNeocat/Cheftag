@@ -27,38 +27,39 @@ class ProveedorForm(forms.ModelForm):
   
         
 class RecepcionForm(forms.ModelForm):
-    alimento = forms.ModelChoiceField(
-        queryset=Alimento.objects.all(),
-        label="Alimento",
-        widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
-        empty_label="Selecciona un alimento"
-    )
-    proveedor = forms.ModelChoiceField(
-        queryset=Proveedor.objects.all(),
-        label="Proveedor",
-        widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
-        empty_label="Selecciona un alimento"
-    )
-    unidad_medida = forms.ModelChoiceField(
-        queryset=UnidadDeMedida.objects.all(),
-        label="Unidad de medida",
-        widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
-        empty_label="Selecciona una unidad"
-    )
     class Meta:
         model = Recepcion
         fields = ['proveedor', 'alimento', 'lote', 'unidad_medida', 'fecha_caducidad', 'cantidad', 'observaciones']
         widgets = {
             'lote': forms.TextInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'fecha_caducidad': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', "class": "form-control form-control-sm form-control-border"}),
+            'fecha_caducidad': forms.DateInput(
+                format='%Y-%m-%d',
+                attrs={'type': 'date', "class": "form-control form-control-sm form-control-border"}
+            ),
             'cantidad': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'observaciones': forms.Textarea(attrs={"class":"form-control form-control-sm form-control-border", "rows":3}),
-        }  
-        
-              
+            'observaciones': forms.Textarea(
+                attrs={"class": "form-control form-control-sm form-control-border", "rows": 3}
+            ),
+        }
+
     def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.fields['fecha_caducidad'].input_formats = ['%Y-%m-%d']
+        centro = kwargs.pop("centro", None)  # ✅ recibimos el centro desde la vista
+        super().__init__(*args, **kwargs)
+
+        # Configuración adicional
+        self.fields['fecha_caducidad'].input_formats = ['%Y-%m-%d']
+
+        # ✅ filtramos por centro si está definido
+        if centro:
+            self.fields['alimento'].queryset = Alimento.objects.filter(centro=centro)
+            self.fields['proveedor'].queryset = Proveedor.objects.filter(centro=centro)
+            self.fields['unidad_medida'].queryset = UnidadDeMedida.objects.filter(centro=centro)
+
+        # ✅ estilos comunes
+        self.fields['alimento'].widget.attrs.update({"class": "form-select form-select-sm form-control-border"})
+        self.fields['proveedor'].widget.attrs.update({"class": "form-select form-select-sm form-control-border"})
+        self.fields['unidad_medida'].widget.attrs.update({"class": "form-select form-select-sm form-control-border"})
+
   
          
 RecepcionFormSet = modelformset_factory(
@@ -98,7 +99,7 @@ class TipoDeMermaForm(forms.ModelForm):
 
 class MermaForm(forms.ModelForm):
     alimento = forms.ModelChoiceField(
-        queryset=Alimento.objects.all(),
+        queryset=Alimento.objects.none(),  # se asigna en __init__
         label="Alimento",
         widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
         empty_label="Selecciona un alimento"
@@ -122,4 +123,15 @@ class MermaForm(forms.ModelForm):
         widgets = {
             'observaciones': forms.Textarea(attrs={"class":"form-control form-control-sm form-control-border", "rows":3}),  
             'cantidad': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-        }               
+        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user and hasattr(user, 'userprofile') and user.userprofile.centro:
+            centro = user.userprofile.centro
+            self.fields['alimento'].queryset = Alimento.objects.filter(centro=centro)
+            self.fields['tipo_merma'].queryset = TipoDeMerma.objects.filter(centro=centro)
+            self.fields['unidad_medida'].queryset = UnidadDeMedida.objects.filter(centro=centro)
+
+            

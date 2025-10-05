@@ -72,20 +72,21 @@ class ConservacionForm(forms.ModelForm):
 class AlergenosModelMultipleChoiceField(forms.ModelMultipleChoiceField):
     def label_from_instance(self, obj):
         return obj  # retorna el objeto completo, no un string
+
+
     
             
 class AlimentoForm(forms.ModelForm):
-    
     conservacion = forms.ModelChoiceField(
-        queryset=Conservacion.objects.all(),
-        label="Conservacion",
+        queryset=Conservacion.objects.none(),  # ✅ se define vacío y luego se filtra en __init__
+        label="Conservación",
         widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
         empty_label="Selecciona un tipo",
         required=False
     )
     
     tipo_alimento = forms.ModelChoiceField(
-        queryset=TipoAlimento.objects.all(),
+        queryset=TipoAlimento.objects.none(),
         label="Tipo de Alimento",
         widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
         empty_label="Selecciona un tipo",
@@ -93,27 +94,32 @@ class AlimentoForm(forms.ModelForm):
     )
     
     localizacion = forms.ModelChoiceField(
-        queryset=localizacion.objects.all(),
+        queryset=localizacion.objects.none(),
         label="Localización",
         widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
-        empty_label="Selecciona una localizacion",
+        empty_label="Selecciona una localización",
         required=False
     )
 
     alergenos = AlergenosModelMultipleChoiceField(
-        queryset=Alergenos.objects.all(),
+        queryset=Alergenos.objects.none(),
         widget=forms.CheckboxSelectMultiple,
         required=False,
     )
     
     trazas = AlergenosModelMultipleChoiceField(
-        queryset=Trazas.objects.all(),
+        queryset=Trazas.objects.none(),
         widget=forms.CheckboxSelectMultiple,
         required=False,
     )
+
     class Meta:
         model = Alimento
-        fields = ['nombre', 'nombre_alternativo', 'gtin',  'alergenos', 'trazas','descripcion', 'conservacion', 'localizacion', 'tipo_alimento', 'stock_minimo', 'imagen']
+        fields = [
+            'nombre', 'nombre_alternativo', 'gtin', 'alergenos', 'trazas',
+            'descripcion', 'conservacion', 'localizacion', 'tipo_alimento',
+            'stock_minimo', 'imagen'
+        ]
         widgets = {
             'nombre': forms.TextInput(attrs={"class": "form-control form-control-sm form-control-border"}),
             'nombre_alternativo': forms.TextInput(attrs={"class": "form-control form-control-sm form-control-border"}),
@@ -124,11 +130,23 @@ class AlimentoForm(forms.ModelForm):
         } 
         
     def __init__(self, *args, **kwargs):
+        centro = kwargs.pop("centro", None)  # ✅ recibimos el centro desde la vista
         super().__init__(*args, **kwargs)
+
         # Poner todos los campos como opcionales excepto 'nombre'
         for field_name, field in self.fields.items():
             if field_name != 'nombre':
-                field.required = False    
+                field.required = False   
+
+        # ✅ Si hay centro, filtramos los queryset
+        if centro:
+            self.fields['conservacion'].queryset = Conservacion.objects.filter(centro=centro)
+            self.fields['tipo_alimento'].queryset = TipoAlimento.objects.filter(centro=centro)
+            self.fields['localizacion'].queryset = localizacion.objects.filter(centro=centro)
+            self.fields['alergenos'].queryset = Alergenos.objects.filter(centro=centro)
+            self.fields['trazas'].queryset = Trazas.objects.filter(centro=centro)
+ 
+  
         
 class InformacionNutricionalForm(forms.ModelForm):
     class Meta:
@@ -148,16 +166,29 @@ class InformacionNutricionalForm(forms.ModelForm):
 
 class EtiquetaAlimentoForm(forms.ModelForm):
     alimento = forms.ModelChoiceField(
-        queryset=Alimento.objects.all(),
+        queryset=Alimento.objects.none(),  # se rellenará en __init__
         label="Alimento",
         widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
         empty_label="Selecciona un alimento"
     )
+
     class Meta:
         model = EtiquetaAlimento
         fields = ['alimento', 'lote', 'fecha_caducidad', 'cantidad']
         widgets = {
-            'fecha_caducidad': forms.DateInput(attrs={'type': 'date', "class": "form-control form-control-sm form-control-border"}),
+            'fecha_caducidad': forms.DateInput(
+                format='%Y-%m-%d',
+                attrs={'type': 'date', "class": "form-control form-control-sm form-control-border"}
+            ),
             'lote': forms.TextInput(attrs={"class": "form-control form-control-sm form-control-border"}),
             'cantidad': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-        }             
+        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        # Filtrar alimentos por el centro del usuario
+        if user and hasattr(user, 'userprofile') and user.userprofile.centro:
+            self.fields['alimento'].queryset = Alimento.objects.filter(centro=user.userprofile.centro)
+        self.fields['fecha_caducidad'].input_formats = ['%Y-%m-%d']
+           

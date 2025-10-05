@@ -328,17 +328,27 @@ class PlatoCreate(PermisoMixin, LoginRequiredMixin, CreateView):
     template_name = 'platos/crear_plato.html'
     success_url = reverse_lazy('platos:PlatoList')
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['centro'] = self.request.user.userprofile.centro
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        centro = self.request.user.userprofile.centro
 
-        # formset de ingredientes
         if self.request.POST:
             context['ingredientes_formset'] = AlimentoPlatoFormSet(
-                self.request.POST, self.request.FILES, prefix='ingredientes'
+                self.request.POST,
+                self.request.FILES,
+                prefix='ingredientes',
+                form_kwargs={'centro': centro}
             )
         else:
-            context['ingredientes_formset'] = AlimentoPlatoFormSet(prefix='ingredientes')
-
+            context['ingredientes_formset'] = AlimentoPlatoFormSet(
+                prefix='ingredientes',
+                form_kwargs={'centro': centro}
+            )
         return context
 
     def form_valid(self, form):
@@ -440,21 +450,23 @@ class PlatoUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        centro = user_profile.centro
 
-        # Formset de ingredientes (sin form de nutrición)
         if self.request.POST:
             context['ingredientes_formset'] = AlimentoPlatoFormSet(
                 self.request.POST,
                 self.request.FILES,
                 instance=self.object,
-                prefix='ingredientes'
+                prefix='ingredientes',
+                form_kwargs={'centro': centro}  # <- filtro por centro
             )
         else:
             context['ingredientes_formset'] = AlimentoPlatoFormSet(
                 instance=self.object,
-                prefix='ingredientes'
+                prefix='ingredientes',
+                form_kwargs={'centro': centro}  # <- filtro por centro
             )
-
         return context
 
     def form_valid(self, form):
@@ -631,15 +643,19 @@ class SalsaCreate(PermisoMixin, LoginRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        centro = self.request.user.userprofile.centro
+
         if self.request.POST:
             context['ingredientes_formset'] = AlimentoSalsaFormSet(
-                self.request.POST, 
+                self.request.POST,
                 self.request.FILES,
-                prefix='ingredientes'
+                prefix='ingredientes',
+                form_kwargs={'centro': centro}
             )
         else:
             context['ingredientes_formset'] = AlimentoSalsaFormSet(
-                prefix='ingredientes'
+                prefix='ingredientes',
+                form_kwargs={'centro': centro}
             )
         return context
 
@@ -740,17 +756,22 @@ class SalsaUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        centro = user_profile.centro
+
         if self.request.POST:
             context['ingredientes_formset'] = AlimentoSalsaFormSet(
-                self.request.POST, 
-                self.request.FILES, 
+                self.request.POST,
+                self.request.FILES,
                 instance=self.object,
-                prefix='ingredientes'
+                prefix='ingredientes',
+                form_kwargs={'centro': centro}
             )
         else:
             context['ingredientes_formset'] = AlimentoSalsaFormSet(
                 instance=self.object,
-                prefix='ingredientes'
+                prefix='ingredientes',
+                form_kwargs={'centro': centro}
             )
         return context
 

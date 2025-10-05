@@ -1,5 +1,6 @@
 from django import forms
 from .models import Plato, AlimentoPlato, TipoPlato, Salsa, AlimentoSalsa, Receta, DatosNuticionales, TextoModo
+from app.dashuser.models import Alimento, UnidadDeMedida
 
 class SalsaForm(forms.ModelForm):    
     class Meta:
@@ -14,12 +15,12 @@ class SalsaForm(forms.ModelForm):
 
 class AlimentoSalsaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
+        centro = kwargs.pop('centro', None)
         super().__init__(*args, **kwargs)
-        # Ordenar el campo alimento por nombre
-        self.fields['alimento'].queryset = self.fields['alimento'].queryset.order_by('nombre')
-        # Ordenar el campo unidad_medida por nombre
-        self.fields['unidad_medida'].queryset = self.fields['unidad_medida'].queryset.order_by('nombre')
-        
+        if centro:
+            self.fields['alimento'].queryset = Alimento.objects.filter(centro=centro).order_by('nombre')
+            self.fields['unidad_medida'].queryset = UnidadDeMedida.objects.filter(centro=centro).order_by('nombre')
+
     class Meta:
         model = AlimentoSalsa
         fields = ['alimento', 'cantidad', 'unidad_medida', 'notas']
@@ -29,6 +30,7 @@ class AlimentoSalsaForm(forms.ModelForm):
             'unidad_medida': forms.Select(attrs={"class":"form-select form-select-sm form-control-border"}),
             'notas': forms.Textarea(attrs={"class":"form-control form-control-sm form-control-border", 'rows': 5}),
         }
+
 
 # Formset para los ingredientes
 AlimentoSalsaFormSet = forms.inlineformset_factory(
@@ -52,24 +54,25 @@ class TipoPlatoForm(forms.ModelForm):
 
 class PlatoForm(forms.ModelForm):
     tipoplato = forms.ModelChoiceField(
-        queryset=TipoPlato.objects.all(),
+        queryset=TipoPlato.objects.none(),
         label="Tipo de Plato",
         widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
         empty_label="Selecciona un tipo"
     )
     texto = forms.ModelChoiceField(
-        queryset=TextoModo.objects.all(),
+        queryset=TextoModo.objects.none(),
         label="Texto de modo de uso",
         widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
         empty_label="Selecciona un tipo"
     )
     salsa = forms.ModelChoiceField(
-        queryset=Salsa.objects.all(),
+        queryset=Salsa.objects.none(),
         label="Salsa",
         required=False,
         widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
         empty_label="Selecciona una salsa"
     )
+
     class Meta:
         model = Plato
         fields = ['nombre', 'imagen', 'codigo','descripcion', 'vida_util', 'salsa', 'tipoplato', 'texto']
@@ -81,14 +84,25 @@ class PlatoForm(forms.ModelForm):
             'vida_util': forms.NumberInput(attrs={'class': 'form-control form-control-sm form-control-border', 'min': 1}),
         }
 
+    def __init__(self, *args, **kwargs):
+        centro = kwargs.pop('centro', None)
+        super().__init__(*args, **kwargs)
+        if centro:
+            self.fields['tipoplato'].queryset = TipoPlato.objects.filter(centro=centro)
+            self.fields['texto'].queryset = TextoModo.objects.filter(centro=centro)
+            self.fields['salsa'].queryset = Salsa.objects.filter(centro=centro)
+
+        
+        
+
 class AlimentoPlatoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
+        centro = kwargs.pop('centro', None)
         super().__init__(*args, **kwargs)
-        # Ordenar el campo alimento por nombre
-        self.fields['alimento'].queryset = self.fields['alimento'].queryset.order_by('nombre')
-        # Ordenar el campo unidad_medida por nombre
-        self.fields['unidad_medida'].queryset = self.fields['unidad_medida'].queryset.order_by('nombre')
-        
+        if centro:
+            self.fields['alimento'].queryset = Alimento.objects.filter(centro=centro).order_by('nombre')
+            self.fields['unidad_medida'].queryset = UnidadDeMedida.objects.filter(centro=centro).order_by('nombre')
+
     class Meta:
         model = AlimentoPlato
         fields = ['alimento', 'cantidad', 'unidad_medida', 'notas']

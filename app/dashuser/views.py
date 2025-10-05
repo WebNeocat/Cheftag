@@ -861,10 +861,10 @@ class AlimentoList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
         return context
     
     
-class AlimentoCreate(PermisoMixin, LoginRequiredMixin, View):
-    permiso_modulo = "Alimento"
+class AlimentoCreate(LoginRequiredMixin, View):
     def get(self, request):
-        alimento_form = AlimentoForm()
+        user_profile = request.user.userprofile
+        alimento_form = AlimentoForm(centro=user_profile.centro)  # ✅ pasamos el centro
         nutricion_form = InformacionNutricionalForm()
         
         context = {
@@ -876,15 +876,16 @@ class AlimentoCreate(PermisoMixin, LoginRequiredMixin, View):
         return render(request, 'dashuser/crear_alimento.html', context)
     
     def post(self, request):
-        alimento_form = AlimentoForm(request.POST, request.FILES)
+        user_profile = request.user.userprofile
+        alimento_form = AlimentoForm(request.POST, request.FILES, centro=user_profile.centro)  # ✅ filtrado
         nutricion_form = InformacionNutricionalForm(request.POST)
 
         if alimento_form.is_valid() and nutricion_form.is_valid():
-            alimento = alimento_form.save(commit=False)  # No guardamos aún
-            alimento.centro = request.user.userprofile.centro  # asignamos el centro del usuario
+            alimento = alimento_form.save(commit=False)
+            alimento.centro = user_profile.centro  # ✅ asignamos el centro del usuario
             alimento.save()
 
-            alimento_form.save_m2m()  # ✅ ahora guarda alergenos y trazas
+            alimento_form.save_m2m()  # guarda alérgenos y trazas
             
             nutricion = nutricion_form.save(commit=False)
             nutricion.alimento = alimento
@@ -914,9 +915,11 @@ class AlimentoDetailView(PaginationMixin, LoginRequiredMixin, DetailView):
     
 class AlimentoUpdate(PaginationMixin, LoginRequiredMixin, View):
     permiso_modulo = "Alimento"
+
     def get(self, request, pk):
+        user_profile = request.user.userprofile
         alimento = get_object_or_404(
-            Alimento, pk=pk, centro=request.user.userprofile.centro
+            Alimento, pk=pk, centro=user_profile.centro
         )
 
         try:
@@ -924,7 +927,8 @@ class AlimentoUpdate(PaginationMixin, LoginRequiredMixin, View):
         except InformacionNutricional.DoesNotExist:
             nutricion = None
 
-        alimento_form = AlimentoForm(instance=alimento)
+        # ✅ Pasamos el centro al formulario
+        alimento_form = AlimentoForm(instance=alimento, centro=user_profile.centro)
         nutricion_form = InformacionNutricionalForm(instance=nutricion)
 
         context = {
@@ -936,8 +940,9 @@ class AlimentoUpdate(PaginationMixin, LoginRequiredMixin, View):
         return render(request, 'dashuser/editar_alimento.html', context)
 
     def post(self, request, pk):
+        user_profile = request.user.userprofile
         alimento = get_object_or_404(
-            Alimento, pk=pk, centro=request.user.userprofile.centro
+            Alimento, pk=pk, centro=user_profile.centro
         )
 
         try:
@@ -945,15 +950,16 @@ class AlimentoUpdate(PaginationMixin, LoginRequiredMixin, View):
         except InformacionNutricional.DoesNotExist:
             nutricion = None
 
-        alimento_form = AlimentoForm(request.POST, request.FILES, instance=alimento)
+        # ✅ Pasamos centro también en el POST
+        alimento_form = AlimentoForm(request.POST, request.FILES, instance=alimento, centro=user_profile.centro)
         nutricion_form = InformacionNutricionalForm(request.POST, instance=nutricion)
 
         if alimento_form.is_valid() and nutricion_form.is_valid():
             alimento = alimento_form.save(commit=False)
-            alimento.centro = request.user.userprofile.centro
+            alimento.centro = user_profile.centro  # reforzamos centro
             alimento.save()
 
-            alimento_form.save_m2m()  # ✅ guarda los alergenos
+            alimento_form.save_m2m()  # ✅ guarda alérgenos y trazas
 
             nutricion = nutricion_form.save(commit=False)
             nutricion.alimento = alimento
@@ -968,6 +974,7 @@ class AlimentoUpdate(PaginationMixin, LoginRequiredMixin, View):
         }
         context.update(datos_centro(request))
         return render(request, 'dashuser/editar_alimento.html', context)
+
 
 
 class AlimentoDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
@@ -993,17 +1000,17 @@ class AlimentoDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
     
 def crear_etiqueta(request):
     if request.method == 'POST':
-        form = EtiquetaAlimentoForm(request.POST)
+        form = EtiquetaAlimentoForm(request.POST, user=request.user)
         if form.is_valid():
-            etiqueta = form.save()  # fecha_apertura se autocompleta
+            etiqueta = form.save()
             return redirect('dashuser:etiqueta_pdf', pk=etiqueta.pk)
     else:
-        form = EtiquetaAlimentoForm()
-        
-        
+        form = EtiquetaAlimentoForm(user=request.user)
+
     contexto = {'form': form}
-    contexto.update(datos_centro(request))  # añade saludo, imagenes, etc.
-    return render(request, 'dashuser/crear_etiqueta.html', contexto) 
+    contexto.update(datos_centro(request))
+    return render(request, 'dashuser/crear_etiqueta.html', contexto)
+
 
 
 
