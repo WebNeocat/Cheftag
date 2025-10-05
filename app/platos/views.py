@@ -1148,43 +1148,42 @@ def generar_etiqueta(request):
     
     
 def generar_etiqueta(request):
+    # Recuperar lista de IDs de etiquetas pendientes en sesión
+    etiquetas_ids = request.session.get("etiquetas_ids", [])
+
+    # Instanciar formulario con platos filtrados por centro
     if request.method == "POST":
+        form = GenerarEtiquetaForm(request.POST, user=request.user)
         accion = request.POST.get("accion")
-        etiquetas_ids = request.POST.getlist("etiquetas")
+        selected_ids = request.POST.getlist("etiquetas")
+        cantidad = int(request.POST.get("cantidad", 1))
 
         # 🔹 ACCIÓN: ELIMINAR
-        if accion == "eliminar" and etiquetas_ids:
-            etiquetas = EtiquetaPlato.objects.filter(id__in=etiquetas_ids)
-            etiquetas.delete()
-
-            # Actualizar la sesión
-            session_ids = request.session.get("etiquetas_ids", [])
-            request.session["etiquetas_ids"] = [i for i in session_ids if str(i) not in etiquetas_ids]
+        if accion == "eliminar" and selected_ids:
+            EtiquetaPlato.objects.filter(id__in=selected_ids).delete()
+            # Actualizar sesión
+            request.session["etiquetas_ids"] = [i for i in etiquetas_ids if str(i) not in selected_ids]
             request.session.modified = True
-
             return redirect("platos:generar_etiqueta")
 
         # 🔹 ACCIÓN: IMPRIMIR
-        if accion == "imprimir" and etiquetas_ids:
-            etiquetas = EtiquetaPlato.objects.filter(id__in=etiquetas_ids)
+        elif accion == "imprimir" and selected_ids:
+            etiquetas = EtiquetaPlato.objects.filter(id__in=selected_ids).select_related("plato")
             merger = PdfMerger()
 
             for etiqueta in etiquetas:
                 plato = etiqueta.plato
                 ingredientes_info = plato.get_ingredientes_con_info()
 
+                # Recolectar alérgenos y trazas
                 todos_alergenos = set()
                 todas_trazas = set()
                 for ing in ingredientes_info:
-                    if ing.get("alergenos"):
-                        todos_alergenos.update(ing["alergenos"])
-                    if ing.get("trazas"):
-                        todas_trazas.update(ing["trazas"])
+                    todos_alergenos.update(ing.get("alergenos", []))
+                    todas_trazas.update(ing.get("trazas", []))
 
-                # 🔹 Usar URL como contenido del QR
-                url = request.build_absolute_uri(
-                    reverse('platos:etiqueta_qr', args=[etiqueta.pk])
-                )
+                # Generar QR
+                url = request.build_absolute_uri(reverse('platos:etiqueta_qr', args=[etiqueta.pk]))
                 qr_img = qrcode.make(url)
                 buffer = BytesIO()
                 qr_img.save(buffer, format="PNG")
@@ -1200,11 +1199,9 @@ def generar_etiqueta(request):
                 }
 
                 html = render_to_string("platos/preview_etiqueta.html", context)
-
                 pdf_buffer = BytesIO()
                 html_obj = HTML(string=html, base_url=request.build_absolute_uri())
                 css = CSS(string='@page { size: 100mm auto; margin: 5mm; }')
-
                 html_obj.write_pdf(pdf_buffer, stylesheets=[css])
                 pdf_buffer.seek(0)
                 merger.append(pdf_buffer)
@@ -1219,63 +1216,44 @@ def generar_etiqueta(request):
             merger.close()
             return response
 
-        # 🔹 ACCIÓN: GENERAR nuevas etiquetas
-        form = GenerarEtiquetaForm(request.POST)
-        cantidad = int(request.POST.get("cantidad", 1))
-
-        if form.is_valid():
+        # 🔹 ACCIÓN: GENERAR NUEVAS ETIQUETAS
+        elif form.is_valid():
             plato = form.cleaned_data["plato"]
             peso = form.cleaned_data["peso"]
 
             for _ in range(cantidad):
-                if hasattr(plato, 'nutricion') and plato.nutricion:
-                    nutricion = plato.nutricion
-                    etiqueta = EtiquetaPlato.objects.create(
-                        plato=plato,
-                        peso=peso,
-                        energia=nutricion.energia,
-                        carbohidratos=nutricion.hidratosdecarbono,
-                        proteinas=nutricion.proteinas,
-                        grasas_totales=nutricion.grasas_totales,
-                        azucares=nutricion.azucares,
-                        sal=nutricion.sal,
-                        grasas_saturadas=nutricion.grasas_saturadas,
-                        centro=plato.centro
-                    )
-                else:
-                    etiqueta = EtiquetaPlato.objects.create(
-                        plato=plato,
-                        peso=peso,
-                        energia=0,
-                        carbohidratos=0,
-                        proteinas=0,
-                        grasas_totales=0,
-                        azucares=0,
-                        sal=0,
-                        grasas_saturadas=0,
-                        centro=plato.centro
-                    )
+                nutricion = getattr(plato, "nutricion", None)
+                etiqueta = EtiquetaPlato.objects.create(
+                    plato=plato,
+                    peso=peso,
+                    energia=getattr(nutricion, "energia", 0) if nutricion else 0,
+                    carbohidratos=getattr(nutricion, "hidratosdecarbono", 0) if nutricion else 0,
+                    proteinas=getattr(nutricion, "proteinas", 0) if nutricion else 0,
+                    grasas_totales=getattr(nutricion, "grasas_totales", 0) if nutricion else 0,
+                    azucares=getattr(nutricion, "azucares", 0) if nutricion else 0,
+                    sal=getattr(nutricion, "sal", 0) if nutricion else 0,
+                    grasas_saturadas=getattr(nutricion, "grasas_saturadas", 0) if nutricion else 0,
+                    centro=plato.centro
+                )
+                # Guardar en sesión
+                etiquetas_ids.append(etiqueta.id)
 
-                # Guardar el ID en la sesión
-                if "etiquetas_ids" not in request.session:
-                    request.session["etiquetas_ids"] = []
-                request.session["etiquetas_ids"].append(etiqueta.id)
-
+            request.session["etiquetas_ids"] = etiquetas_ids
             request.session.modified = True
             return redirect("platos:generar_etiqueta")
 
     else:
-        form = GenerarEtiquetaForm()
+        form = GenerarEtiquetaForm(user=request.user)
 
-    etiquetas_ids = request.session.get("etiquetas_ids", [])
+    # Consultar etiquetas pendientes
     etiquetas = EtiquetaPlato.objects.filter(id__in=etiquetas_ids, impresa=False).select_related("plato")
-    contexto_centro = datos_centro(request)
+    contexto = datos_centro(request)
 
     return render(request, "platos/generar_etiqueta.html", {
         "form": form,
         "etiquetas": etiquetas,
-        **contexto_centro
-    })   
+        **contexto
+    })  
     
 def preview_etiqueta(request, etiqueta_id):
     etiqueta = get_object_or_404(EtiquetaPlato, id=etiqueta_id)
@@ -1439,8 +1417,15 @@ class LotesResumenListView(PermisoMixin, PaginationMixin, LoginRequiredMixin, Li
         sort_order = self.request.GET.get("order", "desc")
         buscar = self.request.GET.get("buscar", "").strip().lower()
 
-        # Recuperar etiquetas impresas
-        etiquetas = EtiquetaPlato.objects.filter(impresa=True).order_by("-fecha")
+        # Recuperar etiquetas impresas del centro del usuario
+        user_profile = UserProfile.objects.filter(user=self.request.user).first()
+        if user_profile and user_profile.centro:
+            centro = user_profile.centro
+            etiquetas = EtiquetaPlato.objects.filter(
+                impresa=True, plato__centro=centro
+            ).order_by("-fecha")
+        else:
+            etiquetas = EtiquetaPlato.objects.none()
 
         # Agrupar en lista plana
         lotes_agrupados = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {"cantidad_total": 0, "num_platos": 0})))
@@ -1510,10 +1495,20 @@ class LoteDetalleListView(PermisoMixin, LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         lote = self.kwargs.get("lote")
-        return EtiquetaPlato.objects.filter(
-            lote__startswith=lote,
-            impresa=True
-        ).order_by("plato__nombre", "fecha")
+
+        # Recuperar centro del usuario
+        user_profile = UserProfile.objects.filter(user=self.request.user).first()
+        if user_profile and user_profile.centro:
+            centro = user_profile.centro
+            queryset = EtiquetaPlato.objects.filter(
+                lote__startswith=lote,
+                impresa=True,
+                plato__centro=centro
+            ).order_by("plato__nombre", "fecha")
+        else:
+            queryset = EtiquetaPlato.objects.none()
+
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

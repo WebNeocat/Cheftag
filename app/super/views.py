@@ -112,7 +112,7 @@ class UserList(LoginRequiredMixin, PaginationMixin, ListView):
 class UserCreate(LoginRequiredMixin, CreateView):
     model = UserProfile
     fields = ['centro', 'username', 'password', 'nombre', 'apellidos', 'cargo', 'imagen', 'estado']
-    template_name = 'super/user_form_super.html'
+    template_name = 'super/user_crear_super.html'
     success_url = reverse_lazy('super:UserList')
 
     def form_valid(self, form):

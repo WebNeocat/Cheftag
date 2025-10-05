@@ -130,17 +130,30 @@ class RecetaForm(forms.ModelForm):
         
 class GenerarEtiquetaForm(forms.Form):
     plato = forms.ModelChoiceField(
-        queryset=Plato.objects.all(),
+        queryset=Plato.objects.none(),  # Se inicializa vacío
         label="Selecciona un plato",
-        widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border",
-                                   "style": "color: black !important; font-size: 16px;"}),
+        widget=forms.Select(attrs={
+            "class": "form-select form-select-sm form-control-border",
+            "style": "color: black !important; font-size: 16px;"
+        }),
     )
     peso = forms.DecimalField(
         max_digits=6,
         decimal_places=2,
         label="Peso real (g)",
-        widget=forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"})
-    )  
+        widget=forms.NumberInput(attrs={
+            "class": "form-control form-control-sm form-control-border"
+        })
+    )
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)  # Sacamos el usuario de kwargs
+        super().__init__(*args, **kwargs)
+        if user:
+            user_profile = getattr(user, "userprofile", None)
+            if user_profile and user_profile.centro:
+                self.fields['plato'].queryset = Plato.objects.filter(centro=user_profile.centro)  
+                
     
 class DatosNuticionalesForm(forms.ModelForm):
     class Meta:
