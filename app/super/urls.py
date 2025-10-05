@@ -8,13 +8,11 @@ urlpatterns = [
     path('home/', views.home, name='home'),
     path('dashboard/', dashboard, name='dashboard'),
     
-    path("crear_usuario/", CrearUsuarioView.as_view(), name="crear_usuario"),
-    path("listado_usuarios/", UsuariosList.as_view(), name="UsuariosList"),
-    path('usuarios/editar/<int:pk>/', ActualizarUsuarioView.as_view(), name='UsuarioUpdate'),
-    path('usuarios/eliminar/<int:pk>/', EliminarUsuarioView.as_view(), name='UsuarioDelete'),
-
-
-    
+    path("crear_usuario/", UserCreate.as_view(), name="UserCreate"),
+    path("listado_usuarios/", UserList.as_view(), name="UserList"),
+    path('usuarios/editar/<int:pk>/', UserUpdate.as_view(), name='UserUpdate'),
+    path('usuarios/eliminar/<int:pk>/', UserDelete.as_view(), name='UserDelete'),
+       
     path("listado_centros/", CentrosList.as_view(), name="CentrosList"),
     path("crear_centro/", CentroCreate.as_view(), name="CentroCreate"),
     path('centros/editar/<int:pk>/', CentroUpdate.as_view(), name='CentroUpdate'),
@@ -22,6 +20,6 @@ urlpatterns = [
     path('centros/eliminar/<int:pk>/', CentroDelete.as_view(), name='CentroDelete'),
     path('centros/<int:pk>/usuarios/', UsuariosCentroListView.as_view(), name='UsuariosCentro'),
     
-        path('usuarios/<int:pk>/permisos/', UserPermisosView.as_view(), name='user_permisos'),
+    path('usuarios/<int:pk>/permisos/', views.UserPermisosView.as_view(), name='user_permisos'),
 
 ]

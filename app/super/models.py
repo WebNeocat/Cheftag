@@ -44,7 +44,12 @@ class UserProfile(models.Model):
     def __str__(self):
         return f"{self.nombre} {self.apellidos}"
     
-    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if not self.estado:
+            Permiso.objects.filter(usuario=self).delete()
+            
+            
 class Permiso(models.Model):
     ACCIONES = [
         ('create', 'Crear'),

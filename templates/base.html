@@ -45,10 +45,10 @@
             </button>
           </div>
           <div>
-            <a class="navbar-brand brand-logo" href="index.html">
+            <a class="navbar-brand brand-logo" href="{% url 'dashuser:Dashboard' %}">
               <img src="{{ imagen_centro_url }}" style="width:150px !important; height:auto;" alt="{{ centro.nombre }}">
             </a>
-            <a class="navbar-brand brand-logo-mini" href="index.html">
+            <a class="navbar-brand brand-logo-mini" href="{% url 'dashuser:Dashboard' %}">
               <img src="{{ imagen_centro_url }}" style="width:120px !important; height:auto;" alt="{{ centro.nombre }}">
             </a>
           </div>

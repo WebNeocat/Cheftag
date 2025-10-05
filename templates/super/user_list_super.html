@@ -1,0 +1,97 @@
+{% extends "base_super.html" %}
+{% block content %}
+
+<div class="content-wrapper">
+    <div class="card shadow-lg">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h3 class="m-0">Listado de Usuarios</h3>
+            <a class="btn btn-light text-primary" onclick="abrir_modal_edicion('{% url 'super:UserCreate' %}')">
+                <i class="fa fa-plus-circle"></i>&nbsp; Crear Nuevo
+            </a>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-md-4">
+                    <select class="form-select" name="ordenar" id="ordenar" onchange="this.form.submit()">
+                        <option value="" disabled selected>Ordenar por...</option>
+                        <option value="nombre" {% if ordenar == 'nombre' %}selected{% endif %}>Nombre</option>
+                        <option value="centro" {% if ordenar == 'centro' %}selected{% endif %}>Centro</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <input type="text" class="form-control" placeholder="Buscar..." name="buscar">
+                </div>
+                <div class="col-md-3 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-inverse-secondary">
+                        <i class="fa fa-search"></i>&nbsp; Buscar
+                    </button>
+                </div>
+            </form>
+                {% if users %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-dark text-center">
+                            <tr>
+                                <th>Estado</th>
+                                <th>Centro</th>
+                                <th>Nombre</th>
+                                <th>Cargo</th>
+                                <th>Opciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for user in users %}
+                        <tr class="text-center" style="font-size: 14px;">
+                            <td>
+                                {% if user.estado %}
+                                    <span class="badge bg-success">Activo</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactivo</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.centro }}</td>
+                            <td>{{ user.nombre }} {{ user.apellidos }}</td>
+                            <td>{{ user.cargo }}</td>
+                            <td>
+                                <a class="btn btn-inverse-info" style="--bs-btn-padding-y: 10px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'super:UserUpdate' user.pk %}')" data-toggle="tooltip" title="Editar usuario">
+                                    <i class="fa fa-pencil"></i>
+                                </a>
+                                <a class="btn btn-inverse-primary" style="--bs-btn-padding-y: 10px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'super:user_permisos' user.pk %}')" data-toggle="tooltip" title="Permisos usuario">
+                                    <i class="fa fa-lock"></i>
+                                </a>
+                                <a class="btn btn-inverse-danger" style="--bs-btn-padding-y: 10px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'super:UserDelete' user.pk %}')" data-toggle="tooltip" title="Eliminar utensilio">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            {% include "core/pagination.html" %}
+
+            {% else %}
+            <div class="alert alert-warning text-center mt-3">
+                <i class="fa fa-exclamation-circle"></i> No se encontraron usuarios.
+            </div>
+            {% endif %}
+        </div>
+        <div class="modal fade" id="consulta" role="dialog">
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extrajs %}
+<script type="text/javascript">
+    var $ = jQuery.noConflict();
+    function abrir_modal_edicion(url){
+        $('#consulta').load(url, function(){
+            $(this).modal('show');
+        });
+    }
+</script>
+
+{% endblock extrajs %}

@@ -5,7 +5,7 @@ from .views import *
 app_name = 'dashuser'
 
 urlpatterns = [
-    path('home/', views.home, name='home'),
+    path("dashboard/", DashboardView.as_view(), name="Dashboard"),
     
     path('lista_localizaciones/', LocalizacionList.as_view(), name='LocalizacionList'),
     path('crear_localizacion/', LocalizacionCreate.as_view(), name='LocalizacionCreate'),

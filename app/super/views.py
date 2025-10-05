@@ -10,7 +10,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import User
 from django.utils.timezone import localtime
 from django.db.models import Q
-from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.views.generic.list import ListView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
@@ -73,17 +73,16 @@ def dashboard(request):
     }
     return render(request, 'super/dashboard.html', context)
 
-
 ######################################################################################
-###############################    USUARISOS   #######################################
+#############################   USUARISOS SUPER    ###################################
 ######################################################################################
 
 
-class UsuariosList (PaginationMixin, ListView):
+class UserList(LoginRequiredMixin, PaginationMixin, ListView):
     model = UserProfile
-    template_name = 'super/listar_usuarios.html'
-    context_object_name = 'usuarios'
-    paginate_by = 8  # Número de registros por página
+    template_name = 'super/user_list_super.html' 
+    context_object_name = 'users'
+    paginate_by = 8 
     
     def get_queryset(self):
         queryset = UserProfile.objects.all().order_by('id')
@@ -99,8 +98,8 @@ class UsuariosList (PaginationMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        usuarios = self.get_queryset()
-        paginator = Paginator(usuarios, self.paginate_by)
+        users = self.get_queryset()
+        paginator = Paginator(users, self.paginate_by)
 
         page_number = self.request.GET.get('page')
         page_obj = paginator.get_page(page_number)
@@ -109,54 +108,33 @@ class UsuariosList (PaginationMixin, ListView):
         return context
     
     
-class CrearUsuarioView(CreateView):
+
+class UserCreate(LoginRequiredMixin, CreateView):
     model = UserProfile
-    form_class = UserProfileForm
-    template_name = 'core/crear_usuario.html'
-    success_url = reverse_lazy('core:UsersList')
-
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        creator_profile = get_object_or_404(UserProfile, user=self.request.user)
-
-        if creator_profile.centro:
-            # Ocultar el campo centro y dejarlo solo de lectura
-            form.fields['centro'].widget = forms.HiddenInput()
-            form.initial['centro'] = creator_profile.centro
-        # Si no tiene centro → dejamos el campo visible para que lo seleccione
-        return form
+    fields = ['centro', 'username', 'password', 'nombre', 'apellidos', 'cargo', 'imagen', 'estado']
+    template_name = 'super/user_form_super.html'
+    success_url = reverse_lazy('super:UserList')
 
     def form_valid(self, form):
-        profile = form.save(commit=False)
-
-        # Asignar centro automáticamente si el creador tiene uno
-        creator_profile = get_object_or_404(UserProfile, user=self.request.user)
-        if creator_profile.centro:
-            profile.centro = creator_profile.centro
-
-        # Crear usuario Django asociado
+        # Creamos el usuario de Django
         user = User.objects.create_user(
             username=form.cleaned_data['username'],
             password=form.cleaned_data['password'],
             first_name=form.cleaned_data['nombre'],
-            last_name=form.cleaned_data['apellidos'],
-            is_active=profile.estado
+            last_name=form.cleaned_data['apellidos']
         )
-        profile.user = user
-        profile.save()
-
-        messages.success(self.request, "Usuario creado correctamente.")
+        # Asociamos el user al perfil
+        form.instance.user = user
         return super().form_valid(form)
 
 
 
-class ActualizarUsuarioView(UpdateView):
+class UserUpdate(UpdateView):
     model = UserProfile
-    form_class = UserProfileForm
-    template_name = 'super/editar_usuario.html'
-    success_url = reverse_lazy('super:UsuariosList')
-    context_object_name = 'usuario'
-    pk_url_kwarg = 'pk'
+    context_object_name = 'user' 
+    fields = ['centro', 'username', 'password', 'nombre', 'apellidos', 'cargo', 'imagen', 'estado']
+    template_name = 'super/user_form_super.html'
+    success_url = reverse_lazy('super:UserList')
 
     @transaction.atomic
     def form_valid(self, form):
@@ -184,32 +162,31 @@ class ActualizarUsuarioView(UpdateView):
     def form_invalid(self, form):
         messages.error(self.request, "Error al actualizar el usuario. Revisa los datos.")
         return super().form_invalid(form)
-    
-    
-class EliminarUsuarioView(DeleteView):
+
+
+
+class UserDelete(LoginRequiredMixin, DeleteView):
     model = UserProfile
-    template_name = 'super/confirmar_delete_usuario.html'
-    context_object_name = 'usuario'
-    pk_url_kwarg = 'pk'
-    success_url = reverse_lazy('super:UsuariosList')
+    template_name = 'super/user_confirm_delete.html'
+    success_url = reverse_lazy('super:UserList')
+    context_object_name = 'user'
 
+    @transaction.atomic
     def delete(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        # Borra también el User de Django asociado si existe
-        user = self.object.user
-        nombre = self.object.username
+        usuario = self.get_object()
+        user = usuario.user  
 
-        # Primero elimina el perfil
-        self.object.delete()
+        # Eliminamos primero el perfil
+        response = super().delete(request, *args, **kwargs)
 
-        # Elimina el User de Django
+        # Luego eliminamos el user de Django
         if user:
             user.delete()
 
-        messages.success(request, f'Usuario "{nombre}" eliminado correctamente.')
-        return super().delete(request, *args, **kwargs)
+        messages.success(request, "Usuario y perfil eliminados correctamente.")
+        return response
     
-    
+        
 ######################################################################################
 ###############################     CENTROS    #######################################
 ######################################################################################
@@ -349,12 +326,13 @@ class UsuariosCentroListView(PaginationMixin,ListView):
     
     
 # Definimos los módulos y acciones
-MODULOS = ["Proveedor", "Alimento", "Plato",  "Alergenos", "Trazas", "UnidadDeMedida", "TipoAlimento", "localizacion",
-           "Conservacion", "TipoPlato", "TextoModo","TipoMerma", "Salsa", "Receta", "Recepcion", "Merma", "EtiquetaPlato", "RegistroAccion", "UserProfile"]
+MODULOS = ["Proveedor", "Alimento", "Plato",  "Alergenos", "Trazas", "UnidadDeMedida", "TipoAlimento", "localizacion", 'UserProfile',
+           "Conservacion", "TipoPlato", "TextoModo","TipoMerma", "Salsa", "Receta", "Recepcion", "Merma", "EtiquetaPlato", "RegistroAccion", ]
 ACCIONES = ["create", "read", "update", "delete"]
 
 
 class UserPermisosView(UserPassesTestMixin, TemplateView):
+    permiso_modulo = "UserProfile"
     template_name = "super/user_permisos.html"
 
     def test_func(self):
@@ -405,6 +383,6 @@ class UserPermisosView(UserPassesTestMixin, TemplateView):
 
         messages.success(request, f"Permisos actualizados para {user_profile}")
         return redirect(
-            reverse_lazy("super:UsuariosList")
+            reverse_lazy("super:UserList")
         )
    

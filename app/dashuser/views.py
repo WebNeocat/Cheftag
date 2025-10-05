@@ -6,17 +6,20 @@ from django.views.generic.list import ListView
 from django.views import View
 from weasyprint import HTML, CSS
 from django.template.loader import render_to_string
-from django.views.generic import DetailView
+from django.views.generic import DetailView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.contrib import messages
 from django.db.models import Q
-from django.utils.timezone import localtime
+from django.utils.timezone import localtime, now, timedelta
 from django.core.exceptions import ObjectDoesNotExist
 from app.core.mixins import PaginationMixin, PermisoMixin
 from app.super.views import MODULOS, ACCIONES
 from app.super.permissions import tiene_permiso
+from django.db.models import Count
+from app.platos.models import Plato, Receta, EtiquetaPlato
 from app.super.models import UserProfile
 from django.contrib.auth.mixins import LoginRequiredMixin
+from app.recepcion.models import Recepcion
 from .models import Alergenos, TipoAlimento, Alimento, localizacion, Conservacion, InformacionNutricional, UnidadDeMedida, Trazas, EtiquetaAlimento
 from .forms import AlergenosForm, TipoAlimento, LocalizacionForm, TipoAlimentosForm, ConservacionForm, InformacionNutricionalForm, AlimentoForm, UnidadDeMedidaForm, TrazasForm, EtiquetaAlimentoForm
 import qrcode
@@ -24,10 +27,6 @@ import io
 import base64
 
 
-@login_required
-def home(request):
-    context = datos_centro(request)
-    return render(request, 'dashuser/home.html', context)
 
 def datos_centro(request):
     """
@@ -76,6 +75,60 @@ def datos_centro(request):
 
     return context
 
+
+class DashboardView(LoginRequiredMixin, TemplateView):
+    template_name = 'dashuser/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user_profile = self.request.user.userprofile
+        centro = user_profile.centro
+        context.update(datos_centro(self.request))
+
+        # 📊 Platos más creados
+        platos_mas_creados = (
+            Plato.objects.filter(centro=centro)
+            .values("nombre")
+            .annotate(total=Count("id"))
+            .order_by("-total")[:5]
+        )
+
+        # 📊 Alimentos más usados en recetas
+        alimentos_mas_usados = (
+            Alimento.objects.filter(centro=centro)
+            .annotate(num_usos=Count("alimentoplato"))
+            .order_by("-num_usos")[:5]
+        )
+
+        # 📊 Raciones últimos 7 días (por etiquetas)
+        ultimos_dias = now().date() - timedelta(days=7)
+        raciones = (
+            EtiquetaPlato.objects
+            .filter(plato__centro=centro, fecha__date__gte=ultimos_dias)
+            .values("fecha__date")
+            .annotate(total=Count("id"))
+            .order_by("fecha__date")
+        )
+
+        # 📊 Totales
+        context["stats"] = {
+            "total_platos": Plato.objects.filter(centro=centro).count(),
+            "total_recetas": Receta.objects.filter(centro=centro).count(),
+            "total_alimentos": Alimento.objects.filter(centro=centro).count(),
+        }
+
+        # Preparar datos para Chart.js
+        context["platos_labels"] = [p["nombre"] for p in platos_mas_creados]
+        context["platos_values"] = [p["total"] for p in platos_mas_creados]
+
+        context["alimentos_labels"] = [a.nombre for a in alimentos_mas_usados]
+        context["alimentos_values"] = [a.num_usos for a in alimentos_mas_usados]
+
+        context["raciones_labels"] = [r["fecha__date"].strftime("%Y-%m-%d") for r in raciones]
+        context["raciones_values"] = [r["total"] for r in raciones]
+
+        return context
+    
 ######################################################################################
 ###############################  ALERGENOS  ########################################
 ######################################################################################
