@@ -89,7 +89,7 @@ class UserCreateView(PermisoMixin, LoginRequiredMixin, CreateView):
     model = UserProfile
     form_class = UserProfileForm
     template_name = 'core/crear_usuario.html'
-    success_url = reverse_lazy('core:UsersList')
+    success_url = reverse_lazy('core:UsersListView')
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)

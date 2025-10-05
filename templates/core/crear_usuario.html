@@ -7,7 +7,7 @@
         </div>
         <div class="modal-body">
             <div class="container">
-                <form method="POST" action="{% url 'super:crear_usuario' %}" enctype="multipart/form-data">
+                <form method="POST" action="{% url 'core:UserCreateView' %}" enctype="multipart/form-data">
                     {% csrf_token %}
                     {{ form.as_p }}
                     <button type="submit" class="btn btn-primary">Crear Usuario</button>
