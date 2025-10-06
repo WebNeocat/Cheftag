@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Pedido #{{ pedido.id }}</title>
+    <style>
+        body {
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 12px;
+            margin: 40px;
+            color: #333;
+        }
+
+        header {
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header img {
+            height: 60px;
+        }
+
+        h1, h2, h3 {
+            color: #007bff;
+            margin-bottom: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table thead {
+            background-color: #f0f0f0;
+        }
+
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        .total {
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .footer {
+            margin-top: 40px;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            font-size: 10px;
+            text-align: center;
+            color: #999;
+        }
+
+        .info {
+            margin-bottom: 20px;
+        }
+
+        .info p {
+            margin: 2px 0;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h2>Pedido Nº {{ pedido.id }}</h2>
+        <p>Fecha del pedido: {{ pedido.fecha_pedido|date:"d/m/Y" }}</p>
+        {% if pedido.fecha_entrega %}
+            <p>Entrega prevista: {{ pedido.fecha_entrega|date:"d/m/Y" }}</p>
+        {% endif %}
+    </div>
+</header>
+
+<div class="info">
+    <p><strong>Proveedor:</strong> {{ pedido.proveedor }}</p>
+    <p><strong>Centro:</strong> {{ pedido.centro.nombre }}</p>
+    <p><strong>Estado:</strong> {{ pedido.get_estado_display }}</p>
+    {% if pedido.observaciones %}
+        <p><strong>Observaciones:</strong> {{ pedido.observaciones }}</p>
+    {% endif %}
+</div>
+
+<h3>Detalle del pedido</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Unidad</th>
+            <th>Precio Unitario (€)</th>
+            <th>Total Línea (€)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for d in pedido.detalles.all %}
+        <tr>
+            <td>{{ d.alimento|default:d.utensilio }}</td>
+            <td>{{ d.cantidad }}</td>
+            <td>{{ d.unidad }}</td>
+            <td>{{ d.precio_unitario|floatformat:2 }}</td>
+            <td>{{ d.total_linea|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <td colspan="4" class="total">Total Pedido</td>
+            <td><strong>{{ pedido.total_pedido|floatformat:2 }} €</strong></td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="footer">
+    Documento generado automáticamente por el sistema de gestión de pedidos.  
+</div>
+
+</body>
+</html>

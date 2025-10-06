@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="card shadow-lg w-100">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            {% if form.instance.pk %}
+                <h3>Editar Pedido</h3>
+            {% else %}
+                <h3>Nuevo Pedido</h3>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <form method="post" class="row g-2 align-items-center mb-3" id="pedidoForm">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    {{ form.as_p }}
+                </div>
+
+                <h4 class="mt-4">Detalles del Pedido</h4>
+
+                {{ formset.management_form }}
+
+                {% if formset.non_form_errors %}
+                    <div class="alert alert-danger">
+                        {{ formset.non_form_errors }}
+                    </div>
+                {% endif %}
+
+                <table class="table table-bordered" id="formset-table">
+                    <thead>
+                        <tr>
+                            <th>Alimento</th>
+                            <th>Utensilio</th>
+                            <th>Cantidad</th>
+                            <th>Unidad</th>
+                            <th>Precio Unitario</th>
+                            <th>Eliminar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for form in formset %}
+                        <tr class="formset-form">
+                            {% for hidden in form.hidden_fields %}
+                                {{ hidden }}
+                            {% endfor %}
+                            <td>{{ form.alimento }}</td>
+                            <td>{{ form.utensilio }}</td>
+                            <td>{{ form.cantidad }}</td>
+                            <td>{{ form.unidad }}</td>
+                            <td>{{ form.precio_unitario }}</td>
+                            <td>
+                                {% if form.instance.pk %}
+                                    {{ form.DELETE }} Eliminar
+                                {% else %}
+                                    <button type="button" class="btn btn-danger btn-sm remove-form">X</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="form-group d-flex gap-2">
+                    <button type="button" class="btn btn-secondary flex-fill" id="add-form">Añadir línea</button>
+                    <button type="submit" class="btn btn-primary flex-fill">Guardar Pedido</button>
+                    <a href="{% url 'pedidos:listado_pedidos' %}" type="submit" class="btn btn-danger flex-fill">Salir</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const addFormBtn = document.getElementById('add-form');
+    const formsetTableBody = document.querySelector('#formset-table tbody');
+    const totalFormsInput = document.getElementById('id_detalle-TOTAL_FORMS'); // ¡Muy importante que coincida con el prefijo!
+
+    addFormBtn.addEventListener('click', function () {
+        const currentForms = document.querySelectorAll('.formset-form');
+        const formCount = currentForms.length;
+
+        // Clona la primera fila para usar como plantilla
+        const newForm = currentForms[0].cloneNode(true);
+
+        // Regex para buscar y reemplazar el índice en el nombre/id
+        const formRegex = new RegExp(`detalle-(\\d+)-`, 'g');
+
+        // Actualiza todos los índices en el HTML al nuevo índice
+        newForm.innerHTML = newForm.innerHTML.replace(formRegex, `detalle-${formCount}-`);
+
+        // Limpia los valores de los inputs (salvo hidden)
+        Array.from(newForm.querySelectorAll('input, select')).forEach(input => {
+            if (input.type === 'checkbox' || input.type === 'radio') {
+                input.checked = false;
+            } else if (input.type !== 'hidden') {
+                input.value = '';
+            }
+        });
+
+        // Añade la nueva fila a la tabla
+        formsetTableBody.appendChild(newForm);
+
+        // Actualiza el contador de forms en el management form
+        totalFormsInput.value = formCount + 1;
+    });
+
+    // Para eliminar filas
+    formsetTableBody.addEventListener('click', function (e) {
+        if (e.target.classList.contains('remove-form')) {
+            const row = e.target.closest('tr');
+            row.remove();
+
+            // Actualiza total forms
+            const updatedForms = document.querySelectorAll('.formset-form');
+            totalFormsInput.value = updatedForms.length;
+
+            // Reindexa los formularios para que los índices sean consecutivos
+            updatedForms.forEach((formRow, index) => {
+                formRow.innerHTML = formRow.innerHTML.replace(/detalle-(\d+)-/g, `detalle-${index}-`);
+            });
+        }
+    });
+});
+
+</script>
+{% endblock content %}
+
+{% block extrajs %}
+
+{% endblock extrajs %}

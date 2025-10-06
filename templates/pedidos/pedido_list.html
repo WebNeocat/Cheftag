@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="m-0">Listado de Pedidos</h3>
+            <a class="btn btn-light text-primary btn-sm rounded" href="{% url 'pedidos:crear_pedido' %}">
+                <i class="fa fa-plus-circle"></i>&nbsp; Crear Nuevo
+            </a>
+        </div>
+        <div class="card-body">
+          <form method="get" class="row g-2 align-items-center mb-3">
+            <div class="col-md-6 d-flex">
+                <select class="form-select form-select-sm" name="ordenar" id="ordenar" onchange="this.form.submit()">
+                    <option value="" disabled selected>Ordenar por...</option>
+                    <option value="proveedor" {% if ordenar == 'proveedor' %}selected{% endif %}>Proveedor</option>
+                    <option value="fecha_pedido" {% if ordenar == 'fecha_pedido' %}selected{% endif %}>Fecha de Pedido</option>
+                    <option value="fecha_entrega" {% if ordenar == 'fecha_entrega' %}selected{% endif %}>Fecha de Entrega</option>
+                </select>
+            </div>
+            <div class="col-md-6 d-flex justify-content-end">
+              <input type="text" class="form-control form-control-sm me-2" placeholder="Buscar..." name="buscar" style="max-width: 450px;">
+              <button type="submit" class="btn btn-inverse-secondary" >
+                <i class="fa fa-search"></i>&nbsp; Buscar
+              </button>
+            </div>
+        </form>
+        {% if mensaje %}
+            <div class="alert alert-info">{{ mensaje }}</div>
+        {% endif %}
+        {% if pedidos %}
+        <div class="table-wrapper">
+            <table class="table table-hover tabla-responsive align-middle" style="table-layout: fixed;">
+                <thead class="table-dark">
+                    <tr style="padding: 10px !important;">
+                        <th>Estado</th>
+                        <th>Proveedor</th>
+                        <th>Fecha entrega</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pedido in pedidos %}
+                        <tr>
+                            <td data-label="Estado"
+                                {% if pedido.estado == 'parcial' %}
+                                    style="background-color:#A569BD;color:white;text-transform:capitalize;font-weight:bold;"
+                                {% else %}
+                                    class="{% if pedido.estado == 'pendiente' %}bg-inverse-info text-white
+                                        {% elif pedido.estado == 'encamino' %}bg-inverse-warning text-dark
+                                        {% elif pedido.estado == 'recibido' %}bg-inverse-success text-white
+                                        {% elif pedido.estado == 'cancelado' %}bg-inverse-danger text-white{% endif %}"
+                                    style="text-transform:capitalize;font-weight:bold;"
+                                {% endif %}>
+                                {{ pedido.get_estado_display }}
+                            </td>
+                            <td data-label="Proveedor">{{ pedido.proveedor.nombre }}</td>
+                            <td data-label="Fecha Entrga">{{ pedido.fecha_entrega }}</td>
+                            <td data-label="Acciones">
+                                <a class="btn btn-inverse-success" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" href="{% url 'pedidos:detalle_pedido' pedido.pk %}" data-toggle="tooltip" title="Ver Pedido">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                                {% if pedido.estado == 'encamino' or pedido.estado == 'pendiente' or pedido.estado == 'cancelado'%}
+                                <a class="btn btn-inverse-info" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" href="{% url 'pedidos:editar_pedido' pedido.pk %}" data-toggle="tooltip" title="Editar Pedido">
+                                    <i class="fa fa-pencil"></i>
+                                </a>
+                                {% endif %}
+                                <!-- Nuevo botón para recepcionar pedido -->
+                                {% if pedido.estado == 'encamino' or pedido.estado == 'parcial' %}
+                                <a class="btn btn-inverse-warning" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" href="" data-toggle="tooltip" title="Recepcionar Pedido">
+                                    <i class="fa fa-truck"></i>
+                                </a>
+                                {% endif %}
+                                <a href="" class="btn btn-inverse-primary"  style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" data-toggle="tooltip" title="Ver recepción">
+                                    <i class="fa fa-check"></i>
+                                </a>
+                                <a class="btn btn-inverse-danger" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" href="{% url 'pedidos:eliminar_pedido' pedido.pk %}" data-toggle="tooltip" title="Eliminar Pedido">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+            {% include "core/pagination.html" %}
+        {% endif %}
+    </div>
+</div>
+<style>
+    /* Colores "inverse" tipo tema */
+    .bg-inverse-info { background-color: #29B6F6 !important; color: #fff !important; }
+    .bg-inverse-success { background-color: #1ABC9C !important; color: #fff !important; }
+    .bg-inverse-warning { background-color: #F4D03F !important; color: #000 !important; }
+    .bg-inverse-primary { background-color: #0d6dfd75 !important; color: #fff !important; }
+    .bg-inverse-danger { background-color: #dc354675 !important; color: #fff !important; }
+</style>
+{% endblock content %}

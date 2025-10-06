@@ -1,24 +1,32 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-4">
-  <h1 class="mb-4 text-center">Dashboard</h1>
-
+  <div class="row">
+    <div class="col-12 mb-4">
+      <div class="card shadow-sm rounded-3 p-4 bg-inverse-info">
+        <h5 class="card-title text-center">Raciones servidas (últimos 7 días)</h5>
+        <div class="chart-container" style="height: 300px;">
+          <canvas id="racionesChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
   <!-- Estadísticas rápidas -->
   <div class="row text-center mb-4">
     <div class="col-12 col-md-4 mb-3">
-      <div class="card shadow-sm rounded-3 p-4 bg-light">
+      <div class="card shadow-sm rounded-3 p-4 bg-inverse-primary">
         <h5 class="card-title">Total Platos</h5>
         <h3>{{ stats.total_platos }}</h3>
       </div>
     </div>
     <div class="col-12 col-md-4 mb-3">
-      <div class="card shadow-sm rounded-3 p-4 bg-light">
+      <div class="card shadow-sm rounded-3 p-4 bg-inverse-primary">
         <h5 class="card-title">Total Recetas</h5>
         <h3>{{ stats.total_recetas }}</h3>
       </div>
     </div>
     <div class="col-12 col-md-4 mb-3">
-      <div class="card shadow-sm rounded-3 p-4 bg-light">
+      <div class="card shadow-sm rounded-3 p-4 bg-inverse-primary">
         <h5 class="card-title">Total Alimentos</h5>
         <h3>{{ stats.total_alimentos }}</h3>
       </div>
@@ -28,7 +36,7 @@
   <!-- Gráficos principales -->
   <div class="row">
     <div class="col-12 col-md-6 mb-4">
-      <div class="card shadow-sm rounded-3 p-4 bg-light">
+      <div class="card shadow-sm rounded-3 p-4 bg-inverse-success">
         <h5 class="card-title text-center">Platos más creados</h5>
         <div class="chart-container" style="height: 300px;">
           <canvas id="platosChart"></canvas>
@@ -37,21 +45,10 @@
     </div>
 
     <div class="col-12 col-md-6 mb-4">
-      <div class="card shadow-sm rounded-3 p-4 bg-light">
+      <div class="card shadow-sm rounded-3 p-4 bg-inverse-warning">
         <h5 class="card-title text-center">Alimentos más usados</h5>
         <div class="chart-container" style="height: 300px;">
           <canvas id="alimentosChart"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="col-12 mb-4">
-      <div class="card shadow-sm rounded-3 p-4 bg-light">
-        <h5 class="card-title text-center">Raciones servidas (últimos 7 días)</h5>
-        <div class="chart-container" style="height: 300px;">
-          <canvas id="racionesChart"></canvas>
         </div>
       </div>
     </div>

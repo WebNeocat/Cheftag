@@ -1,0 +1,139 @@
+<div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+        <!-- Encabezado del modal -->
+        <div class="modal-header bg-info text-white">
+            <h2 class="modal-title">Actualizar Utensilio: {{ utensilio.nombre }}</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <!-- Cuerpo del modal -->
+        <div class="modal-body">
+            <div class="container">
+                <form method='POST' action="{% url 'dashuser:UtensilioUpdate' utensilio.id %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <!-- Imagen del Utensilio -->
+                        <div class="col-md-4 text-center">
+                            {% if utensilio.imagen %}
+                                <img src="{{ utensilio.imagen.url }}" alt="{{ utensilio.nombre }}" class="img-fluid rounded shadow-lg mb-3" style="max-width: 100%; border-radius: 15px;">
+                            {% else %}
+                                <img src="/media/utensilio/default.jpg" alt="Imagen por defecto" class="img-fluid rounded shadow-lg mb-3" style="max-width: 100%; border-radius: 15px;">
+                            {% endif %}
+                        </div>
+
+                        <!-- Formulario de actualización -->
+                        <div class="col-md-8">
+                            <div class="card shadow-sm">
+                                <div class="card-body">                                    
+                                    <div class="row g-3">
+                                        <div class="col-6">
+                                            <label class="form-label fw-bold">Nombre</label>
+                                            {{ form.nombre }}
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label fw-bold">Descripción</label>
+                                            {{ form.descripcion }}
+                                        </div>
+                                        <div class="col-3">
+                                            <label class="form-label fw-bold">Precio</label>
+                                            {{ form.precio }}
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label fw-bold">Stock Actual</label>
+                                            {{ form.stock_actual}}
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label fw-bold">Stock Mínimo</label>
+                                            {{ form.stock_minimo }}
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label fw-bold">Imagen</label>
+                                            {{ form.imagen}}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Botones de acción -->
+                    <div class="text-end mt-4">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i>&nbsp; Actualizar</button>
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa fa-times-circle"></i>&nbsp; Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Función para añadir nuevos formularios de proveedor
+        $('#add-proveedor').click(function() {
+            const totalForms = $('#id_proveedores-TOTAL_FORMS').val();
+            const formIdx = totalForms;
+            const newForm = $('.proveedor-form').first().clone();
+            
+            // Actualizar IDs, nombres y limpiar valores
+            newForm.find(':input').each(function() {
+                const name = $(this).attr('name')?.replace(/-\d+-/, '-' + formIdx + '-');
+                const id = $(this).attr('id')?.replace(/-\d+-/, '-' + formIdx + '-');
+                
+                if (name && id) {
+                    $(this).attr({'name': name, 'id': id})
+                           .val('')
+                           .prop('checked', false)
+                           .removeAttr('selected');
+                }
+                
+                // Eliminar campos ocultos de IDs existentes
+                if ($(this).attr('name')?.includes('id') && $(this).val() === '') {
+                    $(this).remove();
+                }
+            });
+            
+            // Limpiar errores de validación
+            newForm.find('.invalid-feedback').remove();
+            newForm.find('.is-invalid').removeClass('is-invalid');
+            
+            // Añadir al contenedor
+            $('#proveedores-container').append(newForm);
+            $('#id_proveedores-TOTAL_FORMS').val(parseInt(totalForms) + 1);
+        });
+
+        // Validación antes de enviar el formulario
+        $('#utensilio-form').on('submit', function(e) {
+            let valid = true;
+            
+            // Validar que al menos un proveedor esté marcado como principal
+            const principalChecked = $('input[name$="-es_principal"]:checked').length > 0;
+            if (!principalChecked) {
+                alert('Debe seleccionar al menos un proveedor como principal');
+                valid = false;
+            }
+            
+            // Validar que no haya proveedores duplicados
+            const proveedores = [];
+            $('select[name$="-proveedor"]').each(function() {
+                const valor = $(this).val();
+                if (valor && proveedores.includes(valor)) {
+                    alert('No puede seleccionar el mismo proveedor más de una vez');
+                    valid = false;
+                    return false; // Salir del each
+                }
+                proveedores.push(valor);
+            });
+            
+            if (!valid) {
+                e.preventDefault();
+            }
+        });
+
+        // Cierra el modal y elimina el fondo oscuro al hacer clic en cancelar
+        $('.modal .close, .modal .btn-danger').click(function() {
+            $('.modal').modal('hide');
+            $('.modal-backdrop').remove();
+        });
+    });
+</script>

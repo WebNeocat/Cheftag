@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+                <i class="bi bi-exclamation-triangle-fill"></i> Confirmar eliminación
+            </h4>
+        </div>
+        <div class="card-body">
+            <p class="fs-5 text-dark">¿Estás seguro de que deseas eliminar este pedido?</p>
+
+            <ul class="list-group mb-4">
+                <li class="list-group-item"><strong>Proveedor:</strong> {{ object.proveedor }}</li>
+                <li class="list-group-item"><strong>Fecha de entrega:</strong> {{ object.fecha_entrega }}</li>
+                <li class="list-group-item"><strong>Creado por:</strong> {{ object.creado_por }}</li>
+            </ul>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} mt-2">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" class="mt-3">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label for="id_password" class="form-label">Introduce tu contraseña para confirmar:</label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <div class="text-danger small">
+                            {{ form.password.errors.as_text|slice:":200" }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'pedidos:listado_pedidos' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left-circle"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash-fill"></i> Eliminar Pedido
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

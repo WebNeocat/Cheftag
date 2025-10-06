@@ -2,7 +2,7 @@ from django.db import models
 from django.utils import timezone
 from django.core.validators import RegexValidator
 from app.super.models import ModeloBaseCentro
-from app.super.models import UserProfile
+from django.db import transaction
 
 
 
@@ -116,6 +116,73 @@ class Alimento(ModeloBaseCentro):
     def stock_actual_format(self):
         return int(self.stock_actual) if self.stock_actual % 1 == 0 else self.stock_actual
     
+    # Métodos mejorados para gestión de stock
+    def stock_reservado(self, centro=None):
+        """
+        Calcula el stock reservado en pedidos no completados
+        centro: Opcional, filtra por centro específico
+        """
+        from pedidos.models import PedidoDetalle
+        
+        filtros = {
+            'alimento': self,
+            'pedido__estado__in': ['pendiente', 'enviado', 'parcial'],
+            'cantidad__gt': models.F('cantidad_recibida')
+        }
+        
+        if centro:
+            filtros['pedido__centro'] = centro
+            
+        detalles = PedidoDetalle.objects.filter(**filtros)
+        return sum(d.cantidad - d.cantidad_recibida for d in detalles)
+    
+    def stock_disponible(self, centro=None):
+        """Stock actual menos reservado (puede filtrar por centro)"""
+        return self.stock_actual - self.stock_reservado(centro)
+    
+    def necesita_reposicion(self, centro=None):
+        """Indica si el stock disponible está por debajo del mínimo"""
+        return self.stock_disponible(centro) < self.stock_minimo
+    
+    def actualizar_stock(self, cantidad):
+        """
+        Actualiza el stock físico de forma segura
+        cantidad: puede ser positiva (entrada) o negativa (salida)
+        """
+        with transaction.atomic():
+            self.stock_actual = models.F('stock_actual') + cantidad
+            self.save(update_fields=['stock_actual'])
+            self.refresh_from_db(fields=['stock_actual'])  # importante si luego necesitas el valor actualizado
+    
+    def get_pedidos_pendientes(self, centro=None):
+        """
+        Devuelve los pedidos no completados para este alimento
+        centro: Opcional, filtra por centro específico
+        """
+        from pedidos.models import PedidoDetalle
+        
+        filtros = {
+            'alimento': self,
+            'pedido__estado__in': ['pendiente', 'enviado', 'parcial'],
+            'cantidad__gt': models.F('cantidad_recibida')
+        }
+        
+        if centro:
+            filtros['pedido__centro'] = centro
+            
+        return PedidoDetalle.objects.filter(**filtros).select_related('pedido')
+    
+    def get_ultimo_pedido_pendiente(self, centro=None):
+        """
+        Devuelve el último pedido pendiente para este alimento
+        """
+        pedidos = self.get_pedidos_pendientes(centro)
+        return pedidos.order_by('-pedido__fecha_pedido').first()
+    
+    def __str__(self):
+        return self.nombre
+    
+    
     
 class InformacionNutricional(models.Model):
     alimento = models.OneToOneField(Alimento, on_delete=models.CASCADE, related_name="nutricion")
@@ -140,4 +207,70 @@ class EtiquetaAlimento(models.Model):
 
     def __str__(self):
         return f"Etiqueta {self.alimento.nombre} - Lote {self.lote}"    
+    
+    
+class Utensilio(ModeloBaseCentro):
+    nombre = models.CharField(max_length=100, unique=True)  
+    gtin = models.CharField(max_length=14, blank=True, null=True, help_text="Código GTIN del producto")
+    imagen = models.ImageField(default='utensilios/default.jpg', upload_to='utensilios/', blank=True, null=True)
+    descripcion = models.TextField(blank=True, null=True)
+    precio = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    stock_actual = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True)  # Stock disponible
+    stock_minimo = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Stock mínimo para alerta
+    
+    class Meta:
+        ordering = ['nombre']
+        verbose_name = 'Utensilio'
+        verbose_name_plural = 'Utensilios'
+
+    def stock_minimo_format(self):
+        return int(self.stock_minimo) if self.stock_minimo % 1 == 0 else self.stock_minimo
+
+    def stock_actual_format(self):
+        return int(self.stock_actual) if self.stock_actual % 1 == 0 else self.stock_actual
+
+    
+    def stock_disponible(self, centro=None):
+        """Stock actual menos reservado (puede filtrar por centro)"""
+        return self.stock_actual - self.stock_reservado(centro)
+    
+    def necesita_reposicion(self, centro=None):
+        """Indica si el stock disponible está por debajo del mínimo"""
+        return self.stock_disponible(centro) < self.stock_minimo
+    
+    def actualizar_stock(self, cantidad):
+        """
+        Actualiza el stock físico de forma segura
+        cantidad: puede ser positiva (entrada) o negativa (salida)
+        """
+        self.stock_actual = models.F('stock_actual') + cantidad
+        self.save(update_fields=['stock_actual'])
+    
+    def get_pedidos_pendientes(self, centro=None):
+        """
+        Devuelve los pedidos no completados para este utensilio
+        centro: Opcional, filtra por centro específico
+        """
+        from pedidos.models import PedidoDetalle
+        
+        filtros = {
+            'utensilio': self,
+            'pedido__estado__in': ['pendiente', 'enviado', 'parcial'],
+            'cantidad__gt': models.F('cantidad_recibida')
+        }
+        
+        if centro:
+            filtros['pedido__centro'] = centro
+            
+        return PedidoDetalle.objects.filter(**filtros).select_related('pedido')
+    
+    def get_ultimo_pedido_pendiente(self, centro=None):
+        """
+        Devuelve el último pedido pendiente para este utensilio
+        """
+        pedidos = self.get_pedidos_pendientes(centro)
+        return pedidos.order_by('-pedido__fecha_pedido').first()
+    
+    def __str__(self):
+        return f"{self.nombre}"    
   

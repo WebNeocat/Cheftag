@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="card shadow-lg">
+    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+      <h3>Detalle de Pedido #{{ pedido.id }}</h3>
+    </div>
+    <div class="card-body">
+      <p><strong>Proveedor:</strong> {{ pedido.proveedor.nombre }}</p>
+      <p><strong>Fecha de pedido:</strong> {{ pedido.fecha_pedido }}</p>
+      <p><strong>Fecha de entrega:</strong> {{ pedido.fecha_entrega|default:"–" }}</p>
+      <p><strong>Estado:</strong> {{ pedido.estado }}</p>
+      <p><strong>Observaciones:</strong> {{ pedido.observaciones|default:"–" }}</p>
+
+      <h4 class="mt-4">Detalles</h4>
+      <table class="table table-bordered tabla-responsive">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Unidad</th>
+            <th>Precio unitario (€)</th>
+            <th>Subtotal (€)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in detalles %}
+          <tr>
+            <td data-label="Producto">
+              {% if d.alimento %}
+                🍅 {{ d.alimento.nombre }}
+              {% elif d.utensilio %}
+                🛠️ {{ d.utensilio.nombre }}
+              {% endif %}
+            </td>
+            <td data-label="Cantidad">{{ d.cantidad }}</td>
+            <td data-label="Unidad">{{ d.unidad.abreviatura }}</td>
+            <td data-label="Precio unitario">{{ d.precio_unitario|floatformat:2 }} €</td>
+            <td data-label="Subtotal">{{ d.total_linea|floatformat:2 }} €</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="4" class="text-right">Total:</th>
+            <th>{{ total|floatformat:2 }} €</th>
+          </tr>
+        </tfoot>
+      </table>
+      <div class="d-flex justify-content-between">
+        <a href="{% url 'pedidos:listado_pedidos' %}" class="btn btn-success" style="margin-top: 20px;">Volver al listado</a>
+        <div class="btn-group" role="group" aria-label="Acciones">
+          <a href="{% url 'pedidos:exportar_pedido_pdf' pedido.id %}" class="btn btn-danger" style="margin-top: 20px; margin-right: 20px;">Exportar a PDF</a>
+          <a href="{% url 'pedidos:exportar_pedido_excel' pedido.id %}" class="btn btn-success" style="margin-top: 20px;">Exportar a Excel</a>
+        </div>
+    </div>
+</div>
+{% endblock content %}

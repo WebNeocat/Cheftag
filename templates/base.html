@@ -105,8 +105,16 @@
               {% if permisos.Alimento.read %}
               <li class="nav-item">
                 <a class="nav-link" href="{% url 'dashuser:AlimentoList' %}">
-                  <i class="menu-icon mdi mdi-food-variant"></i>
+                  <i class="menu-icon mdi mdi-food-apple"></i>
                   <span class="menu-title">Alimentos</span>
+                </a>
+              </li>
+              {% endif %}
+              {% if permisos.Utensilio.read %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'dashuser:UtensilioList' %}">
+                  <i class="menu-icon mdi mdi-food-takeout-box"></i>
+                  <span class="menu-title">Utensilios</span>
                 </a>
               </li>
               {% endif %}
@@ -114,12 +122,19 @@
               {% if permisos.Plato.read %}
               <li class="nav-item">
                 <a class="nav-link" href="{% url 'platos:PlatoList' %}">
-                  <i class="menu-icon mdi mdi-food-takeout-box"></i>
+                  <i class="menu-icon mdi mdi-food-variant"></i>
                   <span class="menu-title">Platos</span>
                 </a>
               </li>
               {% endif %}
-
+              {% if permisos.Pedido.read %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'pedidos:listado_pedidos' %}">
+                  <i class="menu-icon mdi mdi-cart"></i>
+                  <span class="menu-title">Pedidos</span>
+                </a>
+              </li>
+              {% endif %}
               {% if permisos.EtiquetaPlato.read %}
               <li class="nav-item">
                 <a class="nav-link" data-bs-toggle="collapse" href="#etiq" aria-expanded="false" aria-controls="etiq">

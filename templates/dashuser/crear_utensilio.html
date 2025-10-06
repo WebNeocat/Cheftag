@@ -1,0 +1,88 @@
+<div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-primary">
+            <h2 class="modal-title text-white">Crear Utensilio</h2>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close">
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="container">
+                <form method='POST' action="{% url "dashuser:UtensilioCreate" %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="col-12 mt-4">
+                        <div class="card border-primary">
+                            <div class="card-header bg-inverse-primary text-white">
+                                <h5 class="mb-0">Datos utensilios</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold">Nombre</label>
+                                        {{ form.nombre }}
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold">Descripción</label>
+                                        {{ form.descripcion }}
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label fw-bold">Precio</label>
+                                        {{ form.precio }}
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label fw-bold">Stock Mínimo</label>
+                                        {{ form.stock_minimo }}
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label fw-bold">Stock Actual</label>
+                                        {{ form.stock_actual }}
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold">Imagen</label>
+                                        {{ form.imagen}}
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Botones de acción -->
+                            <div class="text-end mt-4">
+                                <button type="submit" class="btn btn-success"><i class="fa fa-save"></i>&nbsp; Crear</button>
+                                <button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa fa-times-circle"></i>&nbsp; Cancelar</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Función para añadir nuevos formularios de proveedor
+        $('#add-proveedor').click(function() {
+            const formCount = $('#id_proveedores-TOTAL_FORMS').val();
+            const newForm = $('.proveedor-form').first().clone();
+            
+            // Actualizar IDs y nombres
+            newForm.find(':input').each(function() {
+                const name = $(this).attr('name').replace(/-\d+-/, '-' + formCount + '-');
+                const id = $(this).attr('id').replace(/-\d+-/, '-' + formCount + '-');
+                $(this).attr({'name': name, 'id': id}).val('').removeAttr('checked');
+            });
+            
+            // Limpiar valores
+            newForm.find('input[type="text"], input[type="number"]').val('');
+            newForm.find('select').val('');
+            newForm.find('input[type="checkbox"]').prop('checked', false);
+            
+            // Añadir al contenedor
+            $('#proveedores-container').append(newForm);
+            $('#id_proveedores-TOTAL_FORMS').val(parseInt(formCount) + 1);
+        });
+    
+        // Eliminar el fondo oscuro al cerrar el modal
+        $('.modal .close, .modal .btn-danger').click(function() {
+            $('.modal').modal('hide');
+            $('.modal-backdrop').remove();
+        });
+    });
+</script>

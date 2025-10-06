@@ -1,0 +1,74 @@
+<div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+        <!-- Encabezado del modal -->
+        <div class="modal-header bg-success text-white">
+            <h2 class="modal-title">Utensilio: {{ utensilio.nombre }}</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <!-- Cuerpo del modal -->
+        <div class="modal-body">
+            <div class="container">
+                <div class="row">
+                    <!-- Imagen del utensilio -->
+                    <div class="col-md-4 text-center">
+                        {% if utensilio.imagen %}
+                            <img src="{{ utensilio.imagen.url }}" alt="{{ utensilio.nombre }}" class="img-fluid rounded shadow-lg" style="max-width: 100%; border-radius: 15px;">
+                        {% else %}
+                            <img src="/media/utensilios/default.jpg" alt="Imagen por defecto" class="img-fluid rounded shadow-lg" style="max-width: 100%; border-radius: 15px;">
+                        {% endif %}
+                    </div>
+
+                    <!-- Datos del utensilio -->
+                    <div class="col-md-8">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h4 class="text-primary">Detalles del Utensilio</h4>
+                                <hr>
+                                <p><strong>Descripción:</strong><span> {{ utensilio.descripcion|default:"No disponible" }}</span></p>
+                                <p><strong>Precio Actual:</strong> {{ utensilio.precio }} €</p>
+
+                                <!-- Stock con iconos de alerta -->
+                                <p>
+                                    <strong>Stock Mínimo:</strong> 
+                                    {{ utensilio.stock_minimo_format }} {{ utensilio.unidad_medida }} 
+                                    <i class="bi bi-exclamation-circle text-warning"></i>
+                                </p>
+                                <p>
+                                    <strong>Stock Actual:</strong> 
+                                    {{ utensilio.stock_actual_format }} {{ utensilio.unidad_medida }}
+                                    {% if utensilio.stock_actual < utensilio.stock_minimo %}
+                                        <i class="bi bi-arrow-down-circle text-danger"></i> (Stock bajo)
+                                    {% else %}
+                                        <i class="bi bi-check-circle text-success"></i>
+                                    {% endif %}
+                                </p>
+                                <p><strong>En camino:</strong><span class="text-info"> {{ stock_en_camino_debug }} {{ utensilio.unidad_medida }}</p>
+                                {% if pedidos_en_camino %}
+                                <p>
+                                    <strong>Pedidos en camino:</strong>
+                                    {% if pedidos_en_camino %}
+                                        {% for detalle in pedidos_en_camino %}
+                                            <span class="text-info">Pedido #{{ detalle.pedido.id }} – {{ detalle.cantidad }} {{ detalle.unidad }} 
+                                            ({{ detalle.pedido.fecha_pedido|date:"d/m/Y" }}){% if not forloop.last %}, {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="text-muted">No hay pedidos pendientes o enviados para este utensilio.</span>
+                                    {% endif %}
+                                </p>
+                                {% endif %}
+                                <p><strong>Precio Actual:</strong> {{ utensilio.precio_actual }} €</p>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pie de modal -->
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+    </div>
+</div>

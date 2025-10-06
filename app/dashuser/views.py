@@ -1,6 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
-from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.views.generic.list import ListView
 from django.views import View
@@ -9,7 +8,7 @@ from django.template.loader import render_to_string
 from django.views.generic import DetailView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, F
 from django.utils.timezone import localtime, now, timedelta
 from django.core.exceptions import ObjectDoesNotExist
 from app.core.mixins import PaginationMixin, PermisoMixin
@@ -19,9 +18,10 @@ from django.db.models import Count
 from app.platos.models import Plato, Receta, EtiquetaPlato
 from app.super.models import UserProfile
 from django.contrib.auth.mixins import LoginRequiredMixin
+from app.pedidos.models import PedidoDetalle
 from app.recepcion.models import Recepcion
-from .models import Alergenos, TipoAlimento, Alimento, localizacion, Conservacion, InformacionNutricional, UnidadDeMedida, Trazas, EtiquetaAlimento
-from .forms import AlergenosForm, TipoAlimento, LocalizacionForm, TipoAlimentosForm, ConservacionForm, InformacionNutricionalForm, AlimentoForm, UnidadDeMedidaForm, TrazasForm, EtiquetaAlimentoForm
+from .models import Alergenos, TipoAlimento, Alimento, localizacion, Conservacion, InformacionNutricional, UnidadDeMedida, Trazas, EtiquetaAlimento, Utensilio
+from .forms import AlergenosForm, TipoAlimento, LocalizacionForm, TipoAlimentosForm, ConservacionForm, InformacionNutricionalForm, AlimentoForm, UnidadDeMedidaForm, TrazasForm, EtiquetaAlimentoForm, UtensilioForm
 import qrcode
 import io
 import base64
@@ -1042,3 +1042,140 @@ def etiqueta_pdf(request, pk):
     response = HttpResponse(pdf, content_type='application/pdf')
     response['Content-Disposition'] = f'inline; filename=etiqueta_{etiqueta.id}.pdf'
     return response
+
+
+
+######################################################################################
+##################################  UTENSILIOS  #######################################
+######################################################################################
+
+
+class UtensilioList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "Utensilio"
+    model = Utensilio
+    template_name = 'dashuser/listar_utensilio.html'
+    context_object_name = 'utensilios'
+    paginate_by = 10 
+
+    def get_queryset(self):
+        try:
+            user_profile = UserProfile.objects.filter(user=self.request.user).first()
+            if user_profile and user_profile.centro:
+                centro = user_profile.centro
+                queryset = Utensilio.objects.filter(centro=centro).order_by('id')
+
+                search_query = self.request.GET.get('buscar')
+                ordering = self.request.GET.get('ordenar') 
+
+                if search_query:
+                    queryset = queryset.filter(Q(nombre__icontains=search_query))
+
+                # Aplicamos el ordenamiento según la selección del usuario
+                if ordering == 'nombre':
+                    queryset = queryset.order_by('nombre')
+                elif ordering == 'stock_bajo':
+                    queryset = queryset.filter(stock_actual__lt=F('stock_minimo')).order_by('stock_actual')
+
+                return queryset
+            else:
+                return Utensilio.objects.none()
+        except ObjectDoesNotExist:
+            return Utensilio.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(datos_centro(self.request))
+
+        # Añadir un mensaje si no hay alérgenos asociados
+        if not context['utensilios'].exists():
+            context['mensaje'] = "No tiene utensilios asociados."
+
+        return context
+
+
+ 
+class UtensilioDetail(PermisoMixin, LoginRequiredMixin, DetailView):
+    permiso_modulo = "Utensilio"
+    model = Utensilio
+    template_name = 'dashuser/datos_utensilio.html'
+    context_object_name = 'utensilio'
+
+    def get_object(self):
+        """Obtiene el utensilio asegurando que pertenece al centro del usuario."""
+        user_profile = self.request.user.userprofile
+        return get_object_or_404(Utensilio, id=self.kwargs['pk'], centro=user_profile.centro)
+    
+
+
+class UtensilioCreate(PermisoMixin, LoginRequiredMixin, CreateView):
+    permiso_modulo = "Utensilio"
+    model = Utensilio
+    form_class = UtensilioForm
+    template_name = 'dashuser/crear_utensilio.html'
+    success_url = reverse_lazy('dashuser:UtensilioList')
+
+    def form_valid(self, form):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            form.instance.centro = user_profile.centro
+            messages.success(self.request, 'Utensilio creado correctamente.')
+            return super().form_valid(form)
+        else:
+            messages.error(self.request, 'No está asociado a ningún centro.')
+            return self.form_invalid(form)
+
+
+    def form_invalid(self, form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f"Error en el campo '{field}': {error}")
+        return super().form_invalid(form)
+    
+    
+class UtensilioUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
+    permiso_modulo = "Utensilio"
+    model = Utensilio
+    template_name = 'dashuser/detalle_utensilio.html'
+    form_class = UtensilioForm
+    success_url = reverse_lazy('dashuser:UtensilioList')
+    context_object_name = 'utensilio'
+
+    def get_queryset(self):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            return Utensilio.objects.filter(centro_id=user_profile.centro_id)
+        else:
+            messages.error(self.request, 'No está asociado a ningún centro.')
+            return Utensilio.objects.none()
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Utensilio actualizado correctamente.')
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f"Error en el campo '{field}': {error}")
+        return super().form_invalid(form)  
+    
+    
+    
+class UtensilioDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
+    permiso_modulo = "Utensilio"
+    model = Utensilio
+    template_name = 'dashuser/utensilio_confirm_delete.html'
+    success_url = reverse_lazy('dashuser:UtensilioList')
+    context_object_name = 'utensilio'
+
+    def get_queryset(self):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            return Utensilio.objects.filter(centro=user_profile.centro)
+        else:
+            return Utensilio.objects.none()
+
+    def post(self, request, *args, **kwargs):
+        obj = self.get_object()
+        obj.save
+        messages.success(self.request, 'Tipo e Alimento eliminado correctamente.')
+        return super().delete(request, *args, **kwargs)    

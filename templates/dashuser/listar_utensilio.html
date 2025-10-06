@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% load math_tags %}
+{% load pedido_tags %}
+
+{% block title %}Listado de Utensilios{% endblock title %}
+{% block head %}
+<style>
+    .content-wrapper { padding-top: 0 !important; }
+    table.table td {
+        padding-top: 6px !important;
+        padding-bottom: 6px !important;
+        font-size: 12px;
+        line-height: 1.2;
+    }
+</style>
+{% endblock head %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="m-0">Listado de Utensilio</h3>
+            <a class="btn btn-light btn-sm rounded text-primary" onclick="abrir_modal_edicion('{% url 'dashuser:UtensilioCreate' %}')">
+                <i class="fa fa-plus-circle"></i>&nbsp; Crear Nuevo
+            </a>
+        </div>
+
+        <div class="card-body">
+            <!-- Barra de controles -->
+            <form method="get" class="row g-2 align-items-center mb-3">
+                <!-- Orden -->
+                <div class="col">
+                    <select class="form-select form-select-sm" name="ordenar" id="ordenar" onchange="this.form.submit()">
+                        <option value="" disabled selected>Ordenar por...</option>
+                        <option value="nombre" {% if ordenar == 'nombre' %}selected{% endif %}>Nombre</option>
+                        <option value="stock_bajo" {% if ordenar == 'stock_bajo' %}selected{% endif %}>Stock insuficiente</option>
+                    </select>
+                </div>
+
+                <!-- Buscar -->
+                <div class="col">
+                    <input type="text" class="form-control form-control-sm" placeholder="Buscar..." name="buscar" value="{{ request.GET.buscar }}">
+                </div>
+
+                <!-- Botón buscar -->
+                <div class="col">
+                    <button type="submit" class="btn btn-inverse-secondary">
+                        <i class="fa fa-search"></i>
+                    </button>
+                </div>
+
+                <!-- Botones vista -->
+                <div class="col-auto">
+                    <div class="btn-group btn-group" role="group">
+                        <button id="btn-lista" type="button" class="btn btn-inverse-secundary">
+                            <i class="fa fa-list"></i>
+                        </button>
+                        <button id="btn-cuadricula" type="button" class="btn btn-inverse-info">
+                            <i class="fa fa-th"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            {% if utensilios %}
+            <!-- Vista lista -->
+            <div id="vista-lista">
+                <div class="table-wrapper">
+                    <table class="table table-hover tabla-responsive">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Estado stock</th>
+                                <th>Nombre</th>
+                                <th>Stock Actual</th>
+                                <th>Stock Pendiente</th>
+                                <th>Estado Pedido</th>
+                                <th>Opciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for utensilio in utensilios %}
+                            <tr style="font-size: 14px;">
+                                <td>
+                                    {% if utensilio.stock_actual < utensilio.stock_minimo %}
+                                        <i class="fa fa-circle text-danger fs-6"></i>
+                                    {% else %}
+                                        <i class="fa fa-circle text-success fs-6"></i>
+                                    {% endif %}
+                                </td>
+                                <td class="fw-bold">{{ utensilio.nombre }}</td>
+                                <td>{{ utensilio.stock_actual }}</td>
+                                <td>{{ utensilio.stock_en_camino|default:0 }}</td>
+                                <td>
+                                    {% if utensilio.pedido_reciente_estado %}
+                                        <a href="{% url 'pedidos:detalle_pedido' utensilio.pedido_pendiente_id %}" class="badge bg-{{ utensilio.pedido_reciente_estado|get_estado_badge }}">
+                                            {{ utensilio.pedido_reciente_estado|title }}
+                                        </a>
+                                    {% else %} - {% endif %}
+                                </td>
+                                <td>
+                                    <a class="btn btn-inverse-success" onclick="abrir_modal_edicion('{% url 'dashuser:UtensilioDetail' utensilio.id %}')" title="Ver utensilio">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+                                    <a class="btn btn-inverse-info" onclick="abrir_modal_edicion('{% url 'dashuser:UtensilioUpdate' utensilio.id %}')" title="Editar utensilio">
+                                        <i class="fa fa-pencil"></i>
+                                    </a>
+                                    <a class="btn btn-inverse-danger" onclick="abrir_modal_edicion('{% url 'dashuser:UtensilioDelete' utensilio.id %}')" title="Eliminar utensilio">
+                                        <i class="fa fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Vista cuadrícula -->
+            <div id="vista-cuadricula" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4" style="display:none;">
+                {% for utensilio in utensilios %}
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        {% if utensilio.imagen %}
+                            <img src="{{ utensilio.imagen.url }}" class="card-img-top" alt="{{ utensilio.nombre }}" style="height:200px; object-fit:cover;">
+                        {% else %}
+                            <img src="https://via.placeholder.com/300x200?text=Sin+imagen" class="card-img-top" alt="Sin imagen">
+                        {% endif %}
+                        <div class="card-body text-center">
+                            <h5 class="card-title mb-2">{{ utensilio.nombre }}</h5>
+                            <p class="text-muted small mb-3">Stock: {{ utensilio.stock_actual }}</p>
+                            <div class="d-flex justify-content-center gap-2">
+                                <a class="btn btn-inverse-success" onclick="abrir_modal_edicion('{% url 'dashuser:UtensilioDetail' utensilio.id %}')" title="Ver utensilio">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                                <a class="btn btn-inverse-info" onclick="abrir_modal_edicion('{% url 'dashuser:UtensilioUpdate' utensilio.id %}')" title="Editar utensilio">
+                                    <i class="fa fa-pencil"></i>
+                                </a>
+                                <a class="btn btn-inverse-danger" onclick="abrir_modal_edicion('{% url 'dashuser:UtensilioDelete' utensilio.id %}')" title="Eliminar utensilio">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% include "core/pagination.html" %}
+            {% else %}
+            <div class="alert alert-warning text-center mt-3">
+                <i class="fa fa-exclamation-circle"></i> No se encontraron utensilios.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="modal fade" id="consulta" role="dialog"></div>
+</div>
+{% endblock content %}
+
+{% block extrajs %}
+<script type="text/javascript">
+    var $ = jQuery.noConflict();
+    function abrir_modal_edicion(url){
+        $('#consulta').load(url, function(){
+            $(this).modal('show');
+        });
+    }
+
+    // Funciones cambio vista
+    function activarLista(){
+        document.getElementById('vista-lista').style.display = 'block';
+        document.getElementById('vista-cuadricula').style.display = 'none';
+        document.getElementById('btn-lista').classList.add('btn-primary');
+        document.getElementById('btn-lista').classList.remove('btn-outline-primary');
+        document.getElementById('btn-cuadricula').classList.add('btn-outline-primary');
+        document.getElementById('btn-cuadricula').classList.remove('btn-primary');
+        localStorage.setItem('vistaAlimentos', 'lista');
+    }
+
+    function activarCuadricula(){
+        document.getElementById('vista-lista').style.display = 'none';
+        document.getElementById('vista-cuadricula').style.display = 'flex';
+        document.getElementById('btn-cuadricula').classList.add('btn-primary');
+        document.getElementById('btn-cuadricula').classList.remove('btn-outline-primary');
+        document.getElementById('btn-lista').classList.add('btn-outline-primary');
+        document.getElementById('btn-lista').classList.remove('btn-primary');
+        localStorage.setItem('vistaAlimentos', 'cuadricula');
+    }
+
+    // Eventos botones
+    document.getElementById('btn-lista').addEventListener('click', activarLista);
+    document.getElementById('btn-cuadricula').addEventListener('click', activarCuadricula);
+
+    // Cargar vista guardada
+    document.addEventListener('DOMContentLoaded', function(){
+        const vistaGuardada = localStorage.getItem('vistaAlimentos');
+        if (vistaGuardada === 'cuadricula') {
+            activarCuadricula();
+        } else {
+            activarLista();
+        }
+    });
+</script>
+{% endblock extrajs %}

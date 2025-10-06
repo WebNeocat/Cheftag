@@ -1,5 +1,5 @@
 from django import forms
-from .models import Alergenos, Trazas, UnidadDeMedida, TipoAlimento, localizacion, Conservacion, Alimento, InformacionNutricional, EtiquetaAlimento
+from .models import Alergenos, Trazas, UnidadDeMedida, TipoAlimento, localizacion, Conservacion, Alimento, InformacionNutricional, EtiquetaAlimento, Utensilio
 
 class AlergenosForm(forms.ModelForm):
     
@@ -164,6 +164,22 @@ class InformacionNutricionalForm(forms.ModelForm):
         exclude = ['alimento']   
         
 
+class UtensilioForm(forms.ModelForm):
+    
+    class Meta:
+        model = Utensilio
+        fields = ['nombre','precio', 'gtin', 'descripcion', 'stock_actual', 'stock_minimo', 'imagen']
+        widgets = {
+            'nombre': forms.TextInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'gtin': forms.TextInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'descripcion': forms.Textarea(attrs={"class": "form-control form-control-sm form-control-border", "style": "height: auto; font-size:16px", "rows": 4}),
+            'precio': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'stock_actual': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'stock_minimo': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'imagen': forms.FileInput(attrs={"class":"form-control form-control-sm form-control-border"}),
+        }
+        
+        
 class EtiquetaAlimentoForm(forms.ModelForm):
     alimento = forms.ModelChoiceField(
         queryset=Alimento.objects.none(),  # se rellenará en __init__

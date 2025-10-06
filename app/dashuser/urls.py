@@ -46,4 +46,10 @@ urlpatterns = [
     path('crear_etiqueta/', views.crear_etiqueta, name='crear_etiqueta'),
     path('etiqueta/<int:pk>/pdf/', views.etiqueta_pdf, name='etiqueta_pdf'),
     
+    path('lista_utensilios/', UtensilioList.as_view(), name='UtensilioList'), 
+    path('crear_utensilio/', UtensilioCreate.as_view(), name='UtensilioCreate'),
+    path('actualizar_utensilio/<int:pk>/', UtensilioUpdate.as_view(), name="UtensilioUpdate"),
+    path('utensilio/<int:pk>/', UtensilioDetail.as_view(), name='UtensilioDetail'),
+    path('eliminar_utensilio/<int:pk>/', UtensilioDelete.as_view(), name="UtensilioDelete"),
+    
 ]
