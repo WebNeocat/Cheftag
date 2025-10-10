@@ -58,11 +58,16 @@
                                 <a class="btn btn-inverse-success" onclick="abrir_modal_edicion('{% url 'recepcion:RecepcionManualDetail' pk=mov.id %}')"><i class="fa fa-eye"></i></a>
                                 <a class="btn btn-inverse-info" onclick="abrir_modal_edicion('{% url 'recepcion:RecepcionManualDetail' pk=mov.id %}')"><i class="fa fa-pencil"></i></a>
                                 <a class="btn btn-inverse-danger" onclick="abrir_modal_edicion('{% url 'recepcion:RecepcionManualDeleteFormView' pk=mov.id %}')"><i class="fa fa-trash"></i></a>
-                                {% else %}
+                                {% elif mov.tipo_movimiento == "Merma" %}
                                 <!-- Opciones Merma -->
                                 <a class="btn btn-inverse-success" onclick="abrir_modal_edicion('{% url 'recepcion:MermasDetailView' pk=mov.id %}')"><i class="fa fa-eye"></i></a>
                                 <a class="btn btn-inverse-info" onclick="abrir_modal_edicion('{% url 'recepcion:MermasUpdate' pk=mov.id %}')"><i class="fa fa-pencil"></i></a>
                                 <a class="btn btn-inverse-danger" onclick="abrir_modal_edicion('{% url 'recepcion:MermasDelete' pk=mov.id %}')"><i class="fa fa-trash"></i></a>
+                                {% else %}
+                                <!-- Opciones Ajuste de Inventario -->
+                                <a class="btn btn-inverse-success" onclick=""><i class="fa fa-eye"></i></a>
+                                <a class="btn btn-inverse-info" onclick="abrir_modal_edicion('{% url 'recepcion:AjusteInventarioUpdate' pk=mov.id %}')"><i class="fa fa-pencil"></i></a>
+                                <a class="btn btn-inverse-danger" onclick="abrir_modal_edicion('{% url 'recepcion:AjusteInventarioDelete' pk=mov.id %}')"><i class="fa fa-trash"></i></a>
                                 {% endif %}
                             </td>
                         </tr>

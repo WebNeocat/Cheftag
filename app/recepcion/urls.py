@@ -31,7 +31,13 @@ urlpatterns = [
     path('eliminar_mermas/<int:pk>/', MermasDelete.as_view(), name="MermasDelete"),
     path('datos/mermas/<int:pk>/', MermasDetailView.as_view(), name="MermasDetailView"),
     
+    path('lista_ajustes/', AjusteInventarioList.as_view(), name='AjusteInventarioList'),
+    path('crear_juste/', AjusteInventarioCreate.as_view(), name='AjusteInventarioCreate'),
+    path('actualizar_ajuste/<int:pk>/', AjusteInventarioUpdate.as_view(), name='AjusteInventarioUpdate'),
+    path('eliminar_ajuste/<int:pk>/', AjusteInventarioDelete.as_view(), name='AjusteInventarioDelete'),
+    
     path('auditoria/listado/', AuditoriaList.as_view(), name='AuditoriaList'),
+
     
     
 ]

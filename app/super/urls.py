@@ -21,5 +21,10 @@ urlpatterns = [
     path('centros/<int:pk>/usuarios/', UsuariosCentroListView.as_view(), name='UsuariosCentro'),
     
     path('usuarios/<int:pk>/permisos/', views.UserPermisosView.as_view(), name='user_permisos'),
+    
+    path('importar/', ImportadorBaseCentro, name='ImportadorBaseCentro'),
+    path('importar/alimentos/', ImportadorAlimentos, name='ImportadorAlimentos'),
+    path('importar_datos/', views.importar_datos, name='importar_datos'),
+    path('importar_datos_alimentos/', views.importar_datos_alimentos, name='importar_datos_alimentos'),
 
 ]

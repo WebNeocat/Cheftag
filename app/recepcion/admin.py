@@ -1,3 +1,7 @@
 from django.contrib import admin
+from .models import TipoDeMerma, Merma
 
-# Register your models here.
+
+
+admin.site.register(TipoDeMerma),
+admin.site.register(Merma)

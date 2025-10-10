@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import modelformset_factory
-from .models import Proveedor, Recepcion, TipoDeMerma, Merma
+from .models import Proveedor, Recepcion, TipoDeMerma, Merma, AjusteInventario
 from app.dashuser.models import Alimento, UnidadDeMedida
 
 class ProveedorForm(forms.ModelForm):    
@@ -133,5 +133,25 @@ class MermaForm(forms.ModelForm):
             self.fields['alimento'].queryset = Alimento.objects.filter(centro=centro)
             self.fields['tipo_merma'].queryset = TipoDeMerma.objects.filter(centro=centro)
             self.fields['unidad_medida'].queryset = UnidadDeMedida.objects.filter(centro=centro)
+            
+            
+            
+class AjusteStockForm(forms.ModelForm):
+    alimento = forms.ModelChoiceField(
+        queryset=Alimento.objects.all(),
+        label="Alimento",
+        widget=forms.Select(attrs={"class": "form-select form-control-border"}),
+        empty_label="Selecciona un alimento"
+    )
+
+    class Meta:
+        model = AjusteInventario
+        fields = ['alimento', 'stock_real', 'comentario']
+        widgets = {
+            'stock_real': forms.NumberInput(attrs={"class": "form-control form-control-border"}),
+            'comentario': forms.Textarea(attrs={"class": "form-control form-control-border", "rows": 2}),
+        }
+
+    
 
             

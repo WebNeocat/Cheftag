@@ -11,8 +11,8 @@ from django.views.generic.list import ListView
 from django.views import View
 from app.super.models import UserProfile
 from app.core.mixins import PaginationMixin, PermisoMixin
-from .models import Proveedor, Recepcion, TipoDeMerma, Merma
-from .forms import ProveedorForm, RecepcionForm, TipoDeMermaForm, MermaForm, RecepcionFormSet, RecepcionEliminarForm
+from .models import Proveedor, Recepcion, TipoDeMerma, Merma, AjusteInventario
+from .forms import ProveedorForm, RecepcionForm, TipoDeMermaForm, MermaForm, RecepcionFormSet, RecepcionEliminarForm, AjusteStockForm
 from app.dashuser.views import datos_centro
 from app.dashuser.models import Alimento
 import re
@@ -651,6 +651,7 @@ class AuditoriaList(PermisoMixin, PaginationMixin, LoginRequiredMixin, TemplateV
             centro = user_profile.centro
             recepciones = Recepcion.objects.filter(centro=centro)
             mermas = Merma.objects.filter(centro=centro)
+            ajustes = AjusteInventario.objects.filter(centro=centro)
 
             movimientos = []
 
@@ -666,6 +667,15 @@ class AuditoriaList(PermisoMixin, PaginationMixin, LoginRequiredMixin, TemplateV
                 m.tipo_movimiento = "Merma"
                 movimientos.append(m)
 
+            # Normalizar Ajustes
+            for a in ajustes:
+                a.fecha_movimiento = a.fecha
+                a.tipo_movimiento = "Ajuste de Inventario"
+                # Para que el template funcione
+                a.cantidad = a.diferencia  # o a.stock_real si prefieres
+                a.proveedor = None  # así entra en el bloque de ajustes, no en Recepción
+                movimientos.append(a)
+
             # Ordenar por fecha descendente
             movimientos.sort(key=lambda x: x.fecha_movimiento, reverse=True)
 
@@ -674,3 +684,149 @@ class AuditoriaList(PermisoMixin, PaginationMixin, LoginRequiredMixin, TemplateV
             context['movimientos'] = []
 
         return context
+
+    
+    
+######################################################################################
+#############################  AJUSTE INVENTARIO  ####################################
+######################################################################################
+
+ 
+class AjusteInventarioList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
+    permiso_modulo = "AjusteInventario"
+    model = AjusteInventario
+    template_name = 'recepcion/listar_ajuste.html'
+    context_object_name = 'ajustes'
+    paginate_by = 10  # Número de registros por página
+
+    def get_queryset(self):
+        try:
+            user_profile = UserProfile.objects.filter(user=self.request.user).first()
+            if user_profile and user_profile.centro:
+                centro = user_profile.centro
+                queryset = AjusteInventario.objects.filter(centro=centro).order_by('id')
+
+
+                search_query = self.request.GET.get('buscar')
+                if search_query:
+                    queryset = queryset.filter(
+                        Q(alimento__icontains=search_query) 
+                    )
+                return queryset
+            else:
+                return AjusteInventario.objects.none()
+        except ObjectDoesNotExist:
+            return AjusteInventario.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(datos_centro(self.request))
+
+        # Añadir un mensaje si no hay ajustes en inventario asociados
+        if not context['ajustes'].exists():
+            context['mensaje'] = "No tiene ajustes en el inventario asociados."
+
+        return context
+    
+    
+ 
+class AjusteInventarioCreate(PermisoMixin, LoginRequiredMixin, CreateView):
+    permiso_modulo = "AjusteInventario"
+    model = AjusteInventario
+    form_class = AjusteStockForm
+    template_name = 'recepcion/crear_ajuste.html'
+    success_url = reverse_lazy('recepcion:AjusteInventarioList')
+
+    def form_valid(self, form):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if not user_profile.centro:
+            messages.error(self.request, "No estás asociado a ningún centro.")
+            return self.form_invalid(form)
+
+        # Guardamos el ajuste normalmente
+        ajuste = form.save(commit=False)
+        ajuste.centro = user_profile.centro
+        ajuste.stock_sistema = ajuste.alimento.stock_actual
+        ajuste.diferencia = ajuste.stock_real - ajuste.stock_sistema
+        ajuste.save()  # Se dispara el signal aquí una sola vez
+
+        # 🔹 Actualizamos el stock del alimento sin tocar AjusteInventario
+        Alimento.objects.filter(pk=ajuste.alimento.pk).update(stock_actual=ajuste.stock_real)
+
+        messages.success(self.request, "Ajuste de inventario creado correctamente.")
+        return redirect(self.success_url)
+
+
+
+
+     
+class AjusteInventarioUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
+    permiso_modulo = "AjusteInventario"
+    model = AjusteInventario
+    template_name = 'recepcion/detalle_ajuste.html'
+    form_class = AjusteStockForm
+    success_url = reverse_lazy('recepcion:AjusteInventarioList')
+    context_object_name = 'ajuste'
+
+    def get_queryset(self):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            return AjusteInventario.objects.filter(centro_id=user_profile.centro_id)
+        else:
+            messages.error(self.request, 'No estás asociado a ningún centro.')
+            return AjusteInventario.objects.none()
+
+    def get_form(self, *args, **kwargs):
+        form = super().get_form(*args, **kwargs)
+        # No permitir cambiar el alimento en un ajuste existente
+        form.fields['alimento'].disabled = True
+        return form
+
+    def form_valid(self, form):
+        ajuste = form.save(commit=False)
+
+        # Calculamos la diferencia actualizada
+        ajuste.diferencia = ajuste.stock_real - ajuste.stock_sistema
+
+        # 🔹 Actualizamos solo el stock del alimento sin volver a tocar AjusteInventario
+        Alimento.objects.filter(pk=ajuste.alimento.pk).update(stock_actual=ajuste.stock_real)
+
+        # Guardamos el ajuste actualizado
+        ajuste.save()
+
+        messages.success(self.request, 'Ajuste de inventario actualizado correctamente.')
+        return redirect(self.success_url)
+
+    def form_invalid(self, form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f"Error en el campo '{field}': {error}")
+        return super().form_invalid(form)
+
+
+
+    
+    
+class AjusteInventarioDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
+    permiso_modulo = "AjusteInventario"
+    model = AjusteInventario
+    template_name = 'recepcion/ajuste_confirm_delete.html'
+    success_url = reverse_lazy('recepcion:AjusteInventarioList')
+    context_object_name = 'ajuste'
+
+    def get_queryset(self):
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.centro:
+            return AjusteInventario.objects.filter(centro=user_profile.centro)
+        else:
+            return AjusteInventario.objects.none()
+
+    def post(self, request, *args, **kwargs):
+        ajuste = self.get_object()
+        alimento = ajuste.alimento
+
+        # 🔹 Revertir el efecto del ajuste antes de eliminarlo
+        alimento.actualizar_stock(-ajuste.diferencia)
+
+        messages.success(self.request, 'Ajuste de inventario eliminado y stock revertido correctamente.')
+        return super().post(request, *args, **kwargs)    

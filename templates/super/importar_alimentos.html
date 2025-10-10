@@ -1,0 +1,126 @@
+{% extends 'base_super.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0">Importar Alimentos al Centro</h3>
+                </div>
+                <div class="card-body">
+                    <form id="importForm" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="centro" class="form-label fw-semibold">Selecciona el centro</label>
+                            <select name="centro" id="centro" class="form-select" required>
+                                <option value="">-- Selecciona un centro --</option>
+                                {% for c in centros %}
+                                    <option value="{{ c.id }}">{{ c.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="archivo" class="form-label fw-semibold">Archivo CSV o Excel</label>
+                            <input type="file" class="form-control" id="archivo" name="archivo" accept=".csv,.xls,.xlsx" required>
+                            <div class="form-text">
+                                Encabezados requeridos: <strong>Nombre, Tipo, Energía (kcal), Hidratos (g), Azúcares (g), Proteínas (g), Grasas (g), Grasas Saturadas (g), Sal (g), Alergenos y Trazas</strong>
+                            </div>
+                        </div>
+
+                        <div id="previewContainer" class="mb-3 d-none">
+                            <h6>Previsualización del archivo:</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered" id="previewTable">
+                                    <thead class="table-light"></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="progress mb-3 d-none" id="progressContainer">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 0%"></div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary">Importar Alimentos</button>
+                        </div>
+                    </form>
+
+                    {% if resumen %}
+                    <div class="mt-4 alert alert-info">
+                        <h5>Resumen de importación:</h5>
+                        <ul>
+                            <li>Registros creados: {{ resumen.creados }}</li>
+                            <li>Registros actualizados: {{ resumen.actualizados }}</li>
+                            <li>Errores: {{ resumen.errores }}</li>
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                </div>
+                <div class="card-footer text-center text-muted">
+                    <small>Usa archivos CSV o Excel con los encabezados correctos. Para alérgenos usar "Sí"/"No", para trazas usar "Posible"/"No".</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mostrar previsualización del archivo CSV
+document.getElementById('archivo').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const previewContainer = document.getElementById('previewContainer');
+    const previewTable = document.getElementById('previewTable');
+    previewTable.querySelector('thead').innerHTML = '';
+    previewTable.querySelector('tbody').innerHTML = '';
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const text = e.target.result;
+        const rows = text.split('\n').filter(r => r.trim() !== '');
+        if (rows.length === 0) return;
+
+        // Encabezados
+        const headers = rows[0].split(',');
+        let headerHTML = '<tr>';
+        headers.forEach(h => { headerHTML += `<th>${h.trim()}</th>`; });
+        headerHTML += '</tr>';
+        previewTable.querySelector('thead').innerHTML = headerHTML;
+
+        // Primeras 5 filas
+        for (let i = 1; i <= Math.min(5, rows.length - 1); i++) {
+            const cells = rows[i].split(',');
+            let rowHTML = '<tr>';
+            cells.forEach(c => { rowHTML += `<td>${c.trim()}</td>`; });
+            rowHTML += '</tr>';
+            previewTable.querySelector('tbody').innerHTML += rowHTML;
+        }
+
+        previewContainer.classList.remove('d-none');
+    };
+    reader.readAsText(file);
+});
+
+// Simular barra de progreso
+document.getElementById('importForm').addEventListener('submit', function() {
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = progressContainer.querySelector('.progress-bar');
+    progressContainer.classList.remove('d-none');
+    progressBar.style.width = '0%';
+
+    let width = 0;
+    const interval = setInterval(() => {
+        width += 10;
+        progressBar.style.width = width + '%';
+        if (width >= 100) clearInterval(interval);
+    }, 100);
+});
+</script>
+{% endblock %}

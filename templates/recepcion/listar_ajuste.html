@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="content-wrapper">
+    <div class="card shadow-lg">
+        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+            <h3 class="m-0">Listado de Ajustes del stock</h3>
+            <a class="btn btn-light btn-sm rounded text-primary" onclick="abrir_modal_edicion('{% url 'recepcion:AjusteInventarioCreate' %}')">
+                <i class="fa fa-plus-circle"></i>&nbsp; Crear Nuevo
+            </a>
+        </div>
+
+        <div class="card-body mt-3">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-md-11">
+                    <input type="text" class="form-control form-control-sm" placeholder="Buscar..." name="buscar">
+                </div>
+                <div class="col-md-1 d-flex justify-content">
+                    <button type="submit" class="btn btn-inverse-secondary btn-md" >
+                        <i class="fa fa-search"></i>
+                    </button>
+                </div>
+            </form>
+
+            {% if ajustes %}
+            <div class="table-wrapper">
+                <table class="table table-hover tabla-responsive align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Alimento</th>
+                            <th>Stock Inicial</th>
+                            <th>Stock Real</th>
+                            <th>Diferencia</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ajuste in ajustes %}
+                        <tr>
+                            <td data-label="Alimento" class="fw-bold">{{ ajuste.alimento }}</td>
+                            <td data-label="Stock Inicial">{{ ajuste.stock_sistema}}</td>
+                            <td data-label="Stock Real">{{ ajuste.stock_real}}</td>
+                            <td data-label="Diferencia">{{ ajuste.diferencia}}</td>
+                            <td data-label="Fecha">{{ ajuste.fecha}}</td>
+                            <td data-label="Acciones">
+                                <a class="btn btn-inverse-info" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'recepcion:AjusteInventarioUpdate' ajuste.id %}')" data-toggle="tooltip" title="Editar Merma">
+                                    <i class="fa fa-pencil"></i>
+                                </a>
+                                <a class="btn btn-inverse-danger" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'recepcion:AjusteInventarioDelete' ajuste.id %}')" data-toggle="tooltip" title="Eliminar Merma">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            {% include "core/pagination.html" %}
+            
+            {% else %}
+            <div class="alert alert-warning text-center mt-3">
+                <i class="fa fa-exclamation-circle"></i> No se encontraron ajustes en el inventario.
+            </div>
+            {% endif %}
+        </div>
+        <div class="modal fade" id="consulta" role="dialog">
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extrajs %}
+<script type="text/javascript">
+    var $ = jQuery.noConflict();
+    function abrir_modal_edicion(url){
+        $('#consulta').load(url, function(){
+            $(this).modal('show');
+        });
+    }
+</script>
+{% endblock extrajs %}

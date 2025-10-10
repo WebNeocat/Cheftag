@@ -150,9 +150,10 @@ class Alimento(ModeloBaseCentro):
         cantidad: puede ser positiva (entrada) o negativa (salida)
         """
         with transaction.atomic():
-            self.stock_actual = models.F('stock_actual') + cantidad
-            self.save(update_fields=['stock_actual'])
-            self.refresh_from_db(fields=['stock_actual'])  # importante si luego necesitas el valor actualizado
+            Alimento.objects.filter(pk=self.pk).update(
+                stock_actual=models.F('stock_actual') + cantidad
+            )
+            self.refresh_from_db(fields=['stock_actual'])
     
     def get_pedidos_pendientes(self, centro=None):
         """

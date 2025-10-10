@@ -92,16 +92,7 @@
       <nav class="sidebar sidebar-offcanvas" id="sidebar">
         <ul class="nav">
           {% if permisos.Proveedor.read or permisos.Alimento.read or permisos.Plato.read or permisos.EtiquetaPlato.read %}
-            <li class="nav-item nav-category">Sistema</li>
-              {% if permisos.Proveedor.read %}
-              <li class="nav-item">
-                <a class="nav-link" href="{% url 'recepcion:ProveedorList' %}">
-                  <i class="menu-icon mdi mdi-factory"></i>
-                  <span class="menu-title">Proveedores</span>
-                </a>
-              </li>
-              {% endif %}
-
+            <li class="nav-item nav-category">PRODUCCIÓN</li>
               {% if permisos.Alimento.read %}
               <li class="nav-item">
                 <a class="nav-link" href="{% url 'dashuser:AlimentoList' %}">
@@ -126,16 +117,45 @@
                   <span class="menu-title">Platos</span>
                 </a>
               </li>
-              {% endif %}
-              {% if permisos.Pedido.read %}
+              {% endif %}  
+              {% if permisos.Pedido.read or permisos.Proveedor.read %}
               <li class="nav-item">
-                <a class="nav-link" href="{% url 'pedidos:listado_pedidos' %}">
+                <a class="nav-link" data-bs-toggle="collapse" href="#comp" aria-expanded="false" aria-controls="comp">
                   <i class="menu-icon mdi mdi-cart"></i>
-                  <span class="menu-title">Pedidos</span>
+                  <span class="menu-title">Compras</span>
+                 <i class="menu-arrow"></i>
                 </a>
+                <div class="collapse" id="comp">
+                  <ul class="nav flex-column sub-menu">
+                    <li class="nav-item"> <a class="nav-link" href="{% url 'recepcion:ProveedorList' %}">Proveedores</a></li>
+                  </ul>
+                  <ul class="nav flex-column sub-menu">
+                    <li class="nav-item"> <a class="nav-link" href="{% url 'pedidos:listado_pedidos' %}">Pedidos</a></li>
+                  </ul>
+                </div>
               </li>
               {% endif %}
-              {% if permisos.EtiquetaPlato.read %}
+              {% if permisos.EtiquetaPlato.read or permisos.EtiquetaPlato.read %}
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="collapse" href="#rec" aria-expanded="false" aria-controls="rec">
+                  <i class="menu-icon mdi mdi-dolly"></i>
+                  <span class="menu-title">Recepción</span>
+                  <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="rec">
+                  <ul class="nav flex-column sub-menu">
+                    <li class="nav-item"> <a class="nav-link" href="{% url 'recepcion:RecepcionManualList' %}">Manual</a></li>
+                  </ul>
+                  <ul class="nav flex-column sub-menu">
+                    <li class="nav-item"> <a class="nav-link" href="#">Scaner</a></li>
+                  </ul>
+                  <ul class="nav flex-column sub-menu">
+                    <li class="nav-item"> <a class="nav-link" href="#">Pedidos</a></li>
+                  </ul>
+                </div>
+              </li>
+              {% endif %}
+              {% if permisos.EtiquetaPlato.read or permisos.EtiquetaPlato.read %}
               <li class="nav-item">
                 <a class="nav-link" data-bs-toggle="collapse" href="#etiq" aria-expanded="false" aria-controls="etiq">
                   <i class="menu-icon mdi mdi-tag-text-outline"></i>
@@ -149,44 +169,30 @@
                   <ul class="nav flex-column sub-menu">
                     <li class="nav-item"> <a class="nav-link" href="{% url 'platos:generar_etiqueta' %}">Platos</a></li>
                   </ul>
+                  <ul class="nav flex-column sub-menu">
+                    <li class="nav-item"> <a class="nav-link" href="{% url 'platos:LotesResumenListView' %}">Lotes Etiquetas </a></li>
+                  </ul>
                 </div>
               </li>
               {% endif %}
-
-              {% if permisos.EtiquetaPlato.read %}
+              {% if permisos.Recepcion.read or permisos.Merma.read %}
               <li class="nav-item">
-                <a class="nav-link" href="{% url 'platos:LotesResumenListView' %}">
-                  <i class="menu-icon mdi mdi-package-variant"></i>
-                  <span class="menu-title">Lotes Etiquetas</span>
+                <a class="nav-link" data-bs-toggle="collapse" href="#sto" aria-expanded="false" aria-controls="sto">
+                  <i class="menu-icon mdi mdi-elevation-rise"></i>
+                  <span class="menu-title">Stocks</span>
+                  <i class="menu-arrow"></i>
                 </a>
-              </li>
-              {% endif %}
-            </li>
-          {% endif %}
-          {% if permisos.Recepcion.read or permisos.Merma.read %}
-            <li class="nav-item nav-category">STOCKS</li>
-              {% if permisos.Recepcion.read %}
-              <li class="nav-item">
-                <a class="nav-link" href="{% url 'recepcion:RecepcionManualList' %}">
-                  <i class="menu-icon mdi mdi-dolly"></i>
-                  <span class="menu-title">Recepción</span>
-                </a>
-              </li>
-              {% endif %}
-              {% if permisos.Merma.read %}
-              <li class="nav-item">
-                <a class="nav-link" href="{% url 'recepcion:MermasList' %}">
-                  <i class="menu-icon mdi mdi-format-indent-decrease"></i>
-                  <span class="menu-title">Mermas</span>
-                </a>
-              </li>
-              {% endif %} 
-              {% if permisos.Recepcion.read %}           
-              <li class="nav-item">
-                <a class="nav-link" href="{% url 'recepcion:AuditoriaList' %}">
-                  <i class="menu-icon mdi mdi-format-list-checks"></i>
-                  <span class="menu-title">Auditoria</span>
-                </a>
+                <div class="collapse" id="sto">
+                  <ul class="nav flex-column sub-menu">
+                    <li class="nav-item"> <a class="nav-link" href="{% url 'recepcion:AuditoriaList' %}">Movimientos</a></li>
+                  </ul>
+                  <ul class="nav flex-column sub-menu">
+                    <li class="nav-item"> <a class="nav-link" href="{% url 'recepcion:MermasList' %}">Mermas</a></li>
+                  </ul>
+                  <ul class="nav flex-column sub-menu">
+                    <li class="nav-item"> <a class="nav-link" href="{% url 'recepcion:AjusteInventarioList' %}">Ajustes</a></li>
+                  </ul>
+                </div>
               </li>
               {% endif %}
             </li>

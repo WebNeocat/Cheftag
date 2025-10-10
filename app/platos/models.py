@@ -8,7 +8,7 @@ from app.dashuser.models import Alimento, UnidadDeMedida, Alergenos
 
 
 class TextoModo(ModeloBaseCentro):
-    nombre = models.CharField(max_length=100, unique=True)
+    nombre = models.CharField(max_length=100)
     texto = models.TextField(blank=True, null=True)
     estado = models.BooleanField(default=True)  # Activo o inactivo
 

@@ -448,6 +448,12 @@ class PlatoUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
             return Plato.objects.filter(centro=user_profile.centro)
         return Plato.objects.none()
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        kwargs['centro'] = user_profile.centro
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user_profile = get_object_or_404(UserProfile, user=self.request.user)
@@ -459,14 +465,21 @@ class PlatoUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
                 self.request.FILES,
                 instance=self.object,
                 prefix='ingredientes',
-                form_kwargs={'centro': centro}  # <- filtro por centro
+                form_kwargs={'centro': centro}
             )
         else:
             context['ingredientes_formset'] = AlimentoPlatoFormSet(
                 instance=self.object,
                 prefix='ingredientes',
-                form_kwargs={'centro': centro}  # <- filtro por centro
+                form_kwargs={'centro': centro}
             )
+
+        # Añadir los datos nutricionales al contexto (solo lectura)
+        try:
+            context['datos_nutricionales'] = DatosNuticionales.objects.get(plato=self.object)
+        except DatosNuticionales.DoesNotExist:
+            context['datos_nutricionales'] = None
+
         return context
 
     def form_valid(self, form):
@@ -476,23 +489,25 @@ class PlatoUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
         if ingredientes_formset.is_valid():
             user_profile = get_object_or_404(UserProfile, user=self.request.user)
 
-            # Guardar plato
+            # Guardar el plato
             self.object = form.save(commit=False)
             self.object.centro = user_profile.centro
             self.object.save()
 
             # Guardar ingredientes
             ingredientes = ingredientes_formset.save(commit=False)
-            total_cantidad = 0
             for ingrediente in ingredientes:
                 ingrediente.plato = self.object
                 ingrediente.centro = user_profile.centro
                 ingrediente.save()
-                total_cantidad += float(ingrediente.cantidad)
             for obj in ingredientes_formset.deleted_objects:
                 obj.delete()
 
-            # Recalcular datos nutricionales
+            # 🔄 Recargar ingredientes actualizados
+            self.object.refresh_from_db()
+            ingredientes_actuales = self.object.ingredientes.all()
+
+            # Recalcular los datos nutricionales
             nutricion_data = {
                 'energia': 0,
                 'grasas_totales': 0,
@@ -503,27 +518,30 @@ class PlatoUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
                 'sal': 0
             }
 
-            # Ingredientes del plato
-            if total_cantidad > 0:
-                for ingrediente in self.object.ingredientes.all():
-                    if hasattr(ingrediente.alimento, 'nutricion'):
-                        factor = float(ingrediente.cantidad) / total_cantidad
-                        n = ingrediente.alimento.nutricion
-                        nutricion_data['energia'] += float(n.energia) * factor
-                        nutricion_data['grasas_totales'] += float(n.grasas_totales) * factor
-                        nutricion_data['grasas_saturadas'] += float(n.grasas_saturadas) * factor
-                        nutricion_data['hidratosdecarbono'] += float(n.hidratosdecarbono) * factor
-                        nutricion_data['azucares'] += float(n.azucares) * factor
-                        nutricion_data['proteinas'] += float(n.proteinas) * factor
-                        nutricion_data['sal'] += float(n.sal) * factor
+            total_cantidad = sum(float(ing.cantidad or 0) for ing in ingredientes_actuales)
 
-            # Ingredientes de la salsa si existe
+            if total_cantidad > 0:
+                for ingrediente in ingredientes_actuales:
+                    n = getattr(ingrediente.alimento, 'nutricion', None)
+                    if n:
+                        cantidad = float(ingrediente.cantidad or 0)
+                        # Aporte por ingrediente (valores por 100 g)
+                        for key in nutricion_data.keys():
+                            valor = float(getattr(n, key, 0) or 0)
+                            nutricion_data[key] += valor * (cantidad / 100.0)
+
+                # Normalizar por 100 g de plato
+                for key in nutricion_data.keys():
+                    nutricion_data[key] = nutricion_data[key] * 100.0 / total_cantidad
+
+            # Si hay salsa asociada, agregar su aporte total (sin normalizar)
             if self.object.salsa and hasattr(self.object.salsa, 'nutricion'):
                 s = self.object.salsa.nutricion
                 for key in nutricion_data.keys():
-                    nutricion_data[key] += float(getattr(s, key))
+                    valor_salsa = float(getattr(s, key, 0) or 0)
+                    nutricion_data[key] += valor_salsa
 
-            # Guardar o actualizar datos nutricionales del plato
+            # Guardar o actualizar los datos nutricionales
             datos_nutricionales, created = DatosNuticionales.objects.get_or_create(
                 plato=self.object,
                 defaults={'centro': user_profile.centro, **nutricion_data}
@@ -533,17 +551,18 @@ class PlatoUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
                     setattr(datos_nutricionales, key, value)
                 datos_nutricionales.save()
 
-            messages.success(self.request, 'Plato actualizado correctamente.')
+            messages.success(self.request, 'Plato actualizado correctamente y datos nutricionales recalculados.')
             return redirect(self.get_success_url())
+
         else:
-            # Mostrar errores si los hay
+            # Mostrar errores de los ingredientes
             for form_ing in ingredientes_formset:
                 if form_ing.errors:
                     for field, errors in form_ing.errors.items():
                         for error in errors:
                             messages.error(self.request, f"Ingrediente: {field} - {error}")
-            return self.form_invalid(form)
 
+            return self.form_invalid(form)
 
         
 
@@ -1399,7 +1418,7 @@ def imprimir_etiquetas(request):
 
             pdf_buffer = BytesIO()
             html_obj = HTML(string=html, base_url=request.build_absolute_uri())
-            css = CSS(string='@page { size: 100mm auto; margin: 5mm; }')
+            css = CSS(string='@page { size: 64mm 220mm; margin: 5mm; }')
 
             html_obj.write_pdf(
                 pdf_buffer,

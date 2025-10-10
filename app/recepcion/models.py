@@ -53,7 +53,7 @@ class Recepcion(ModeloBaseCentro):
     
     
 class TipoDeMerma(ModeloBaseCentro):
-    nombre = models.CharField(max_length=100, unique=True, verbose_name="Tipo de merma")
+    nombre = models.CharField(max_length=100, verbose_name="Tipo de merma")
     descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción")
     activo = models.BooleanField(default=True, verbose_name="Activo")  # Para activar/desactivar tipos de merma
 
@@ -115,3 +115,23 @@ class Merma(ModeloBaseCentro):
             )
             # borrar la merma
             self.delete()    
+            
+            
+            
+            
+class AjusteInventario(ModeloBaseCentro):
+    alimento = models.ForeignKey(Alimento, on_delete=models.CASCADE)
+    stock_sistema = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+    stock_real = models.DecimalField(max_digits=10, decimal_places=2)
+    diferencia = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+    comentario = models.TextField(blank=True, null=True)
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha']
+        verbose_name = 'Ajuste de Inventario'
+        verbose_name_plural = 'Ajustes de Inventario'
+
+    def __str__(self):
+        return f"{self.alimento.nombre} ({self.fecha.date()} - {self.centro})"
+        

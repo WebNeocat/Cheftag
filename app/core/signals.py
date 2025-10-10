@@ -1,5 +1,3 @@
-# app/core/signals.py
-
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from decimal import Decimal
@@ -12,6 +10,7 @@ from app.core.models import RegistroAccion
 from app.super.models import UserProfile
 from app.dashuser.models import *
 from app.platos.models import *
+from app.recepcion.models import *
 
 def convertir_valor(valor):
     """Convierte valores no serializables en tipos manejables para JSON."""
@@ -610,5 +609,36 @@ def merma_post_save(sender, instance, created, **kwargs):
 
 @receiver(post_delete, sender=UserProfile)
 def merma_post_delete(sender, instance, **kwargs):
-    registrar_accion(instance, 'eliminar')                         
+    registrar_accion(instance, 'eliminar')    
+    
+
+# ---AJUSTES ---
+
+@receiver(pre_save, sender=AjusteInventario)
+def merma_pre_save(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            instance._old_instance = sender.objects.get(pk=instance.pk)
+        except sender.DoesNotExist:
+            instance._old_instance = None
+    else:
+        instance._old_instance = None
+
+
+@receiver(post_save, sender=AjusteInventario)
+def merma_post_save(sender, instance, created, **kwargs):
+    if getattr(instance, "_skip_signal", False):
+        return  # Evita crear duplicado
+    old_instance = getattr(instance, '_old_instance', None)
+    if created:
+        registrar_accion(instance, 'crear')
+    else:
+        registrar_accion(instance, 'modificar', old_instance=old_instance)
+
+
+@receiver(post_delete, sender=AjusteInventario)
+def merma_post_delete(sender, instance, **kwargs):
+    registrar_accion(instance, 'eliminar')                             
+    
+    
     
