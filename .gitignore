@@ -2,7 +2,6 @@
 venv/
 env/
 
-media/alimentos/
 # Archivos de Python
 *.pyc
 __pycache__/
