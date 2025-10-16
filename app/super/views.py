@@ -331,7 +331,7 @@ class UsuariosCentroListView(PaginationMixin,ListView):
 
     
 ######################################################################################
-###############################     CENTROS    #######################################
+###############################     PERMISOS    ######################################
 ######################################################################################
 
     
@@ -505,12 +505,12 @@ def importar_datos(request):
     }
 
     mapas_campos = {
-        'Alergenos': {'Código': 'codigo'},
-        'Trazas': {'Código': 'codigo'},
+        'Alergenos': {'Código': 'codigo', 'Imagen': 'imagen'},
+        'Trazas': {'Código': 'codigo', 'Imagen': 'imagen'},
         'UnidadDeMedida': {'Abreviatura': 'abreviatura'},
         'TipoAlimento': {},
         'TipoPlato': {},
-        'TipoDeMerma': {'Descripción': 'descripcion', 'Estado': 'activo'},
+        'TipoDeMerma': {'Descripción': 'descripcion'},
         'TextoModo': {'Texto': 'texto'},
     }
 

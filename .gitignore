@@ -22,3 +22,6 @@ comandos.txt
 
 # Base de datos SQLite
 db.sqlite3
+
+# media
+media/
