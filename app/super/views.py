@@ -337,7 +337,7 @@ class UsuariosCentroListView(PaginationMixin,ListView):
     
     
 # Definimos los módulos y acciones
-MODULOS = ["Proveedor", "Alimento", "Plato",  "Alergenos", "Trazas", "UnidadDeMedida", "TipoAlimento", "localizacion", 'UserProfile', 'Utensilio', 'AjusteInventario',
+MODULOS = ["Proveedor", "Alimento", "Plato",  "Alergenos", "Trazas", "UnidadDeMedida", "TipoAlimento", "Localizacion", 'UserProfile', 'Utensilio', 'AjusteInventario',
            "Conservacion", "TipoPlato", "TextoModo","TipoMerma", "Salsa", "Receta", "Recepcion", "Merma", "EtiquetaPlato", "RegistroAccion", 'Pedido']
 ACCIONES = ["create", "read", "update", "delete"]
 

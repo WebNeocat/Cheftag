@@ -20,7 +20,7 @@ from app.super.models import UserProfile
 from django.contrib.auth.mixins import LoginRequiredMixin
 from app.pedidos.models import PedidoDetalle
 from app.recepcion.models import Recepcion
-from .models import Alergenos, TipoAlimento, Alimento, localizacion, Conservacion, InformacionNutricional, UnidadDeMedida, Trazas, EtiquetaAlimento, Utensilio
+from .models import Alergenos, TipoAlimento, Alimento, Localizacion, Conservacion, InformacionNutricional, UnidadDeMedida, Trazas, EtiquetaAlimento, Utensilio
 from .forms import AlergenosForm, TipoAlimento, LocalizacionForm, TipoAlimentosForm, ConservacionForm, InformacionNutricionalForm, AlimentoForm, UnidadDeMedidaForm, TrazasForm, EtiquetaAlimentoForm, UtensilioForm
 import qrcode
 import io
@@ -595,8 +595,8 @@ class TipoAlimentoDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
 
 
 class LocalizacionList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListView):
-    permiso_modulo = "localizacion"
-    model = localizacion
+    permiso_modulo = "Localizacion"
+    model = Localizacion
     template_name = 'dashuser/listar_localizacion.html'
     context_object_name = 'localizaciones'
     paginate_by = 10  # Número de registros por página
@@ -606,7 +606,7 @@ class LocalizacionList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListVi
             user_profile = UserProfile.objects.filter(user=self.request.user).first()
             if user_profile and user_profile.centro:
                 centro = user_profile.centro
-                queryset = localizacion.objects.filter(centro=centro).order_by('id')
+                queryset = Localizacion.objects.filter(centro=centro).order_by('id')
 
 
                 search_query = self.request.GET.get('buscar')
@@ -616,9 +616,9 @@ class LocalizacionList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListVi
                     )
                 return queryset
             else:
-                return localizacion.objects.none()
+                return Localizacion.objects.none()
         except ObjectDoesNotExist:
-            return localizacion.objects.none()
+            return Localizacion.objects.none()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -632,8 +632,8 @@ class LocalizacionList(PermisoMixin, PaginationMixin, LoginRequiredMixin, ListVi
     
     
 class LocalizacionCreate(PermisoMixin, LoginRequiredMixin, CreateView):
-    permiso_modulo = "localizacion"
-    model = localizacion
+    permiso_modulo = "Localizacion"
+    model = Localizacion
     form_class = LocalizacionForm
     template_name = 'dashuser/crear_localizacion.html'
     success_url = reverse_lazy('dashuser:LocalizacionList')
@@ -657,8 +657,8 @@ class LocalizacionCreate(PermisoMixin, LoginRequiredMixin, CreateView):
 
 
 class LocalizacionUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
-    permiso_modulo = "localizacion"
-    model = localizacion
+    permiso_modulo = "Localizacion"
+    model = Localizacion
     template_name = 'dashuser/detalle_localizacion.html'
     form_class = LocalizacionForm
     success_url = reverse_lazy('dashuser:LocalizacionList')
@@ -667,10 +667,10 @@ class LocalizacionUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
     def get_queryset(self):
         user_profile = get_object_or_404(UserProfile, user=self.request.user)
         if user_profile.centro:
-            return localizacion.objects.filter(centro_id=user_profile.centro_id)
+            return Localizacion.objects.filter(centro_id=user_profile.centro_id)
         else:
             messages.error(self.request, 'No está asociado a ningún centro.')
-            return localizacion.objects.none()
+            return Localizacion.objects.none()
 
     def form_valid(self, form):
         messages.success(self.request, 'Localización actualizada correctamente.')
@@ -684,8 +684,8 @@ class LocalizacionUpdate(PermisoMixin, LoginRequiredMixin, UpdateView):
     
  
 class LocalizacionDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
-    permiso_modulo = "localizacion"
-    model = localizacion
+    permiso_modulo = "Localizacion"
+    model = Localizacion
     template_name = 'dashuser/localizacion_confirm_delete.html'
     success_url = reverse_lazy('dashuser:LocalizacionList')
     context_object_name = 'localizacion'
@@ -693,9 +693,9 @@ class LocalizacionDelete(PermisoMixin, LoginRequiredMixin, DeleteView):
     def get_queryset(self):
         user_profile = get_object_or_404(UserProfile, user=self.request.user)
         if user_profile.centro:
-            return localizacion.objects.filter(centro=user_profile.centro)
+            return Localizacion.objects.filter(centro=user_profile.centro)
         else:
-            return localizacion.objects.none()
+            return Localizacion.objects.none()
 
     def post(self, request, *args, **kwargs):
         obj = self.get_object()

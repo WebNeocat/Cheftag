@@ -42,7 +42,7 @@
                                     <i class="fa fa-circle text-danger fs-6"></i>
                                 {% endif %}
                             </td>
-                            <td data-label="Ubicación" class="fw-bold">{{ localizacion.localizacion }}</td>
+                            <td data-label="Ubicación" class="fw-bold">{{ localizacion.nombre }}</td>
                             <td data-label="Opciones">
                                 <a class="btn btn-info" style="--bs-btn-padding-y: 14px; --bs-btn-padding-x: 14px;" onclick="abrir_modal_edicion('{% url 'dashuser:LocalizacionUpdate' localizacion.id %}')" data-toggle="tooltip" title="Editar Ubicación">
                                     <i class="fa fa-pencil"></i>

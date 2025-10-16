@@ -289,7 +289,7 @@ def merma_post_delete(sender, instance, **kwargs):
     
 # --- LOCALIZACIÓN ---
 
-@receiver(pre_save, sender=localizacion)
+@receiver(pre_save, sender=Localizacion)
 def merma_pre_save(sender, instance, **kwargs):
     if instance.pk:
         try:
@@ -300,7 +300,7 @@ def merma_pre_save(sender, instance, **kwargs):
         instance._old_instance = None
 
 
-@receiver(post_save, sender=localizacion)
+@receiver(post_save, sender=Localizacion)
 def merma_post_save(sender, instance, created, **kwargs):
     old_instance = getattr(instance, '_old_instance', None)
     if created:
@@ -309,7 +309,7 @@ def merma_post_save(sender, instance, created, **kwargs):
         registrar_accion(instance, 'modificar', old_instance=old_instance)
 
 
-@receiver(post_delete, sender=localizacion)
+@receiver(post_delete, sender=Localizacion)
 def merma_post_delete(sender, instance, **kwargs):
     registrar_accion(instance, 'eliminar')  
     

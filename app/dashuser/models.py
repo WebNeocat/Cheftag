@@ -74,8 +74,8 @@ class Conservacion(ModeloBaseCentro):
         return f"{self.nombre}"      
     
     
-class localizacion  (ModeloBaseCentro):
-    localizacion = models.CharField('Localización', max_length=100)
+class Localizacion  (ModeloBaseCentro):
+    nombre = models.CharField('Ubicación', max_length=100)
     estado = models. BooleanField(default=True)
      
     class Meta:
@@ -83,7 +83,7 @@ class localizacion  (ModeloBaseCentro):
         verbose_name_plural = 'Localizaciones'
         
     def __str__(self):
-        return f"{self.localizacion}"    
+        return f"{self.nombre}"    
     
 
 gtin_validator = RegexValidator(r'^\d{8,14}$', 'El GTIN debe tener entre 8 y 14 dígitos.')
@@ -96,7 +96,7 @@ class Alimento(ModeloBaseCentro):
     descripcion = models.TextField(blank=True, null=True)
     tipo_alimento = models.ForeignKey(TipoAlimento, on_delete=models.CASCADE, blank=True, null=True)
     conservacion = models.ForeignKey(Conservacion, on_delete=models.CASCADE, blank=True, null=True)
-    localizacion = models.ForeignKey(localizacion, on_delete=models.CASCADE, blank=True, null=True)
+    localizacion = models.ForeignKey(Localizacion, on_delete=models.CASCADE, blank=True, null=True)
     alergenos = models.ManyToManyField(Alergenos, blank=True)
     trazas = models.ManyToManyField(Trazas, blank=True)
     stock_actual = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True, null=True)

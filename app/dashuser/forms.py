@@ -1,5 +1,5 @@
 from django import forms
-from .models import Alergenos, Trazas, UnidadDeMedida, TipoAlimento, localizacion, Conservacion, Alimento, InformacionNutricional, EtiquetaAlimento, Utensilio
+from .models import Alergenos, Trazas, UnidadDeMedida, TipoAlimento, Localizacion, Conservacion, Alimento, InformacionNutricional, EtiquetaAlimento, Utensilio
 
 class AlergenosForm(forms.ModelForm):
     
@@ -51,10 +51,10 @@ class TipoAlimentosForm(forms.ModelForm):
 class LocalizacionForm(forms.ModelForm):
     
     class Meta:
-        model = localizacion
-        fields=['localizacion','estado']
+        model = Localizacion
+        fields=['nombre','estado']
         widgets = {
-            'localizacion': forms.TextInput(attrs={"class":"form-control form-control-border"}),
+            'nombre': forms.TextInput(attrs={"class":"form-control form-control-border"}),
             'estado': forms.CheckboxInput(attrs={"class":"form-check-input"}),
         }        
 
@@ -94,7 +94,7 @@ class AlimentoForm(forms.ModelForm):
     )
     
     localizacion = forms.ModelChoiceField(
-        queryset=localizacion.objects.none(),
+        queryset=Localizacion.objects.none(),
         label="Localización",
         widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
         empty_label="Selecciona una localización",
@@ -142,7 +142,7 @@ class AlimentoForm(forms.ModelForm):
         if centro:
             self.fields['conservacion'].queryset = Conservacion.objects.filter(centro=centro)
             self.fields['tipo_alimento'].queryset = TipoAlimento.objects.filter(centro=centro)
-            self.fields['localizacion'].queryset = localizacion.objects.filter(centro=centro)
+            self.fields['localizacion'].queryset = Localizacion.objects.filter(centro=centro)
             self.fields['alergenos'].queryset = Alergenos.objects.filter(centro=centro)
             self.fields['trazas'].queryset = Trazas.objects.filter(centro=centro)
  

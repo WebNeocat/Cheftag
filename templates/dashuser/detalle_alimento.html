@@ -1,121 +1,239 @@
-
-<div class="modal-dialog modal-lg" role="document">
+<style>
+    .modal-tabs .nav-tabs .nav-link {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+    }
+    .modal-tabs .tab-pane {
+        padding: 1rem 0;
+    }
+    .modal-tabs .img-container {
+        max-width: 140px;
+    }
+    .modal-tabs .table-sm td, 
+    .modal-tabs .table-sm th {
+        padding: 0.4rem;
+        font-size: 0.9rem;
+    }
+    .modal-tabs .allergen-img {
+        width: 36px;
+        height: 36px;
+    }
+    .modal-tabs .section-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #198754;
+        margin-bottom: 0.75rem;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 0.25rem;
+    }
+    .modal-tabs .info-card {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .modal-tabs .nutrition-table th {
+        width: 40%;
+    }
+</style>
+<div class="modal-dialog modal-dialog-centered modal-tabs" role="document">
     <div class="modal-content border-0 shadow-sm">
         <!-- Encabezado -->
-        <div class="modal-header bg-success text-white">
-            <h5 class="modal-title fw-bold">
+        <div class="modal-header bg-success text-white py-2">
+            <h5 class="modal-title fw-bold mb-0">
                 <i class="bi bi-info-circle me-2"></i> {{ alimento.nombre }}
             </h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
-        <div class="modal-body">
-            <div class="container-fluid">
-                <div class="row mb-4">
-                    <!-- Imagen -->
-                    <div class="col-md-4 text-center">
-                        {% if alimento.imagen %}
-                            <img src="{{ alimento.imagen.url }}" class="img-fluid rounded shadow-sm border" alt="{{ alimento.nombre }}">
-                        {% else %}
-                            <img src="https://via.placeholder.com/200x200?text=Sin+imagen" class="img-fluid rounded shadow-sm border">
-                        {% endif %}
-                    </div>
+        <div class="modal-body p-0">
+            <!-- Navegación por tabs -->
+            <ul class="nav nav-tabs nav-justified" id="alimentoTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab" aria-controls="info" aria-selected="true">
+                        <i class="bi bi-card-text me-1"></i> Información
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="alergenos-tab" data-bs-toggle="tab" data-bs-target="#alergenos" type="button" role="tab" aria-controls="alergenos" aria-selected="false">
+                        <i class="bi bi-exclamation-triangle me-1"></i> Alérgenos
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="nutricion-tab" data-bs-toggle="tab" data-bs-target="#nutricion" type="button" role="tab" aria-controls="nutricion" aria-selected="false">
+                        <i class="bi bi-graph-up me-1"></i> Nutrición
+                    </button>
+                </li>
+            </ul>
 
-                    <!-- Descripción y detalles -->
-                    <div class="col-md-8">
-                        {% if alimento.descripcion %}
-                            <p class="text-muted small mb-3">{{ alimento.descripcion }}</p>
-                        {% endif %}
+            <!-- Contenido de los tabs -->
+            <div class="tab-content p-3" id="alimentoTabsContent">
+                <!-- Tab de Información General -->
+                <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="info-tab">
+                    <div class="row">
+                        <!-- Imagen -->
+                        <div class="col-md-4 text-center mb-3">
+                            {% if alimento.imagen %}
+                                <img src="{{ alimento.imagen.url }}" class="img-fluid rounded shadow-sm border img-container" alt="{{ alimento.nombre }}">
+                            {% else %}
+                                <img src="https://via.placeholder.com/140x140?text=Sin+imagen" class="img-fluid rounded shadow-sm border img-container">
+                            {% endif %}
+                        </div>
 
-                        <div class="table-responsive">
-                            <table class="table table-sm table-borderless align-middle mb-0">
-                                <tbody>
-                                    <tr><th class="text-nowrap">GTIN:</th><td>{{ alimento.gtin|default:"—" }}</td></tr>
-                                    <tr><th>Tipo de alimento:</th><td>{{ alimento.tipo_alimento|default:"—" }}</td></tr>
-                                    <tr><th>Conservación:</th><td>{{ alimento.conservacion|default:"—" }}</td></tr>
-                                    <tr><th>Localización:</th><td>{{ alimento.localizacion|default:"—" }}</td></tr>
-                                    <tr><th>Stock actual:</th><td>{{ alimento.stock_actual_format }}</td></tr>
-                                    <tr><th>Stock mínimo:</th><td>{{ alimento.stock_minimo_format }}</td></tr>
-                                </tbody>
-                            </table>
+                        <!-- Información básica -->
+                        <div class="col-md-8">
+                            {% if alimento.descripcion %}
+                                <div class="info-card">
+                                    <h6 class="section-title">Descripción</h6>
+                                    <p class="mb-0 small">{{ alimento.descripcion }}</p>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <h6 class="section-title">Detalles del Producto</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-borderless">
+                                            <tbody>
+                                                <tr>
+                                                    <th class="text-nowrap text-muted">GTIN:</th>
+                                                    <td>{{ alimento.gtin|default:"—" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th class="text-nowrap text-muted">Tipo de alimento:</th>
+                                                    <td>{{ alimento.tipo_alimento|default:"—" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th class="text-nowrap text-muted">Conservación:</th>
+                                                    <td>{{ alimento.conservacion|default:"—" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th class="text-nowrap text-muted">Localización:</th>
+                                                    <td>{{ alimento.localizacion|default:"—" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th class="text-nowrap text-muted">Stock actual:</th>
+                                                    <td>{{ alimento.stock_actual_format }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th class="text-nowrap text-muted">Stock mínimo:</th>
+                                                    <td>{{ alimento.stock_minimo_format }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Alérgenos y Trazas -->
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <h6 class="fw-bold text-success border-bottom pb-1 mb-3 text-center">Alérgenos</h6>
-                        {% if alimento.alergenos.all %}
-                            <div class="table-responsive">
-                                <table class="table table-sm table-hover align-middle text-center">
-                                    <tbody>
-                                        {% for alergeno in alimento.alergenos.all %}
-                                        <tr>
-                                            <td style="width:60px;">
-                                                {% if alergeno.imagen %}
-                                                    <img src="{{ alergeno.imagen.url }}" class="rounded-circle border" width="40" height="40" alt="{{ alergeno.nombre }}">
-                                                {% else %}
-                                                    <img src="https://via.placeholder.com/40?text=?" class="rounded-circle border">
-                                                {% endif %}
-                                            </td>
-                                            <td class="text-start">{{ alergeno.nombre }}</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        {% else %}
-                            <p class="text-muted fst-italic text-center">Sin alérgenos asociados</p>
-                        {% endif %}
-                    </div>
+                <!-- Tab de Alérgenos -->
+                <div class="tab-pane fade" id="alergenos" role="tabpanel" aria-labelledby="alergenos-tab">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="section-title">Alérgenos</h6>
+                            {% if alimento.alergenos.all %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover align-middle">
+                                        <tbody>
+                                            {% for alergeno in alimento.alergenos.all %}
+                                            <tr>
+                                                <td style="width:50px;">
+                                                    {% if alergeno.imagen %}
+                                                        <img src="{{ alergeno.imagen.url }}" class="rounded-circle border allergen-img" alt="{{ alergeno.nombre }}">
+                                                    {% else %}
+                                                        <img src="https://via.placeholder.com/36?text=?" class="rounded-circle border allergen-img">
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-start">{{ alergeno.nombre }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-light text-center py-3">
+                                    <i class="bi bi-check-circle text-success fs-4 d-block mb-2"></i>
+                                    <p class="mb-0 text-muted">Sin alérgenos asociados</p>
+                                </div>
+                            {% endif %}
+                        </div>
 
-                    <div class="col-md-6">
-                        <h6 class="fw-bold text-success border-bottom pb-1 mb-3 text-center">Trazas de alérgenos</h6>
-                        {% if alimento.trazas.all %}
-                            <div class="table-responsive">
-                                <table class="table table-sm table-hover align-middle text-center">
-                                    <tbody>
-                                        {% for traza in alimento.trazas.all %}
-                                        <tr>
-                                            <td style="width:60px;">
-                                                {% if traza.imagen %}
-                                                    <img src="{{ traza.imagen.url }}" class="rounded-circle border" width="40" height="40" alt="{{ traza.nombre }}">
-                                                {% else %}
-                                                    <img src="https://via.placeholder.com/40?text=?" class="rounded-circle border">
-                                                {% endif %}
-                                            </td>
-                                            <td class="text-start">{{ traza.nombre }}</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        {% else %}
-                            <p class="text-muted fst-italic text-center">Sin trazas de alérgenos</p>
-                        {% endif %}
+                        <div class="col-md-6">
+                            <h6 class="section-title">Trazas de alérgenos</h6>
+                            {% if alimento.trazas.all %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover align-middle">
+                                        <tbody>
+                                            {% for traza in alimento.trazas.all %}
+                                            <tr>
+                                                <td style="width:50px;">
+                                                    {% if traza.imagen %}
+                                                        <img src="{{ traza.imagen.url }}" class="rounded-circle border allergen-img" alt="{{ traza.nombre }}">
+                                                    {% else %}
+                                                        <img src="https://via.placeholder.com/36?text=?" class="rounded-circle border allergen-img">
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-start">{{ traza.nombre }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-light text-center py-3">
+                                    <i class="bi bi-check-circle text-success fs-4 d-block mb-2"></i>
+                                    <p class="mb-0 text-muted">Sin trazas de alérgenos</p>
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
 
-                <!-- Información Nutricional -->
-                <div>
-                    <h6 class="fw-bold text-success border-bottom pb-1 mb-3">Información Nutricional (por 100g)</h6>
+                <!-- Tab de Información Nutricional -->
+                <div class="tab-pane fade" id="nutricion" role="tabpanel" aria-labelledby="nutricion-tab">
+                    <h6 class="section-title">Información Nutricional (por 100g)</h6>
                     {% if alimento.nutricion %}
                         <div class="table-responsive">
-                            <table class="table table-sm table-striped align-middle">
+                            <table class="table table-sm table-striped nutrition-table">
                                 <tbody>
-                                    <tr><th>Energía</th><td>{{ alimento.nutricion.energia }} kcal</td></tr>
-                                    <tr><th>Grasas</th><td>{{ alimento.nutricion.grasas_totales }} g</td></tr>
-                                    <tr><th>Grasas saturadas</th><td>{{ alimento.nutricion.grasas_saturadas }} g</td></tr>
-                                    <tr><th>Carbohidratos</th><td>{{ alimento.nutricion.hidratosdecarbono }} g</td></tr>
-                                    <tr><th>Azúcares</th><td>{{ alimento.nutricion.azucares }} g</td></tr>
-                                    <tr><th>Proteínas</th><td>{{ alimento.nutricion.proteinas }} g</td></tr>
-                                    <tr><th>Sal</th><td>{{ alimento.nutricion.sal }} g</td></tr>
+                                    <tr>
+                                        <th>Energía</th>
+                                        <td>{{ alimento.nutricion.energia }} kcal</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Grasas</th>
+                                        <td>{{ alimento.nutricion.grasas_totales }} g</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Grasas saturadas</th>
+                                        <td>{{ alimento.nutricion.grasas_saturadas }} g</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Carbohidratos</th>
+                                        <td>{{ alimento.nutricion.hidratosdecarbono }} g</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Azúcares</th>
+                                        <td>{{ alimento.nutricion.azucares }} g</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Proteínas</th>
+                                        <td>{{ alimento.nutricion.proteinas }} g</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Sal</th>
+                                        <td>{{ alimento.nutricion.sal }} g</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
                     {% else %}
-                        <p class="text-muted fst-italic">No hay información nutricional disponible.</p>
+                        <div class="alert alert-light text-center py-4">
+                            <i class="bi bi-info-circle text-muted fs-4 d-block mb-2"></i>
+                            <p class="mb-0 text-muted">No hay información nutricional disponible.</p>
+                        </div>
                     {% endif %}
                 </div>
             </div>
