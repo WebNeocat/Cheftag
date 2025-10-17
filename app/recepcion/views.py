@@ -204,7 +204,7 @@ class RecepcionManualCreate(LoginRequiredMixin, View):
         user_profile = get_object_or_404(UserProfile, user=request.user)
         formset = RecepcionFormSet(
             queryset=Recepcion.objects.none(),
-            form_kwargs={"centro": user_profile.centro}  # ✅ pasamos el centro al formset
+            form_kwargs={"centro": user_profile.centro}
         )
         return render(request, self.template_name, {'formset': formset})
 
@@ -213,26 +213,36 @@ class RecepcionManualCreate(LoginRequiredMixin, View):
         formset = RecepcionFormSet(
             request.POST,
             queryset=Recepcion.objects.none(),
-            form_kwargs={"centro": user_profile.centro}  # ✅ también aquí
+            form_kwargs={"centro": user_profile.centro}
         )
 
-        if formset.is_valid() and user_profile.centro:
+        if not user_profile.centro:
+            messages.error(request, 'No estás asociado a ningún centro.')
+            return redirect('dashboard')  # o alguna URL de tu elección
+
+        if formset.is_valid():
             for form in formset:
                 if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
                     recepcion = form.save(commit=False)
                     recepcion.centro = user_profile.centro
                     recepcion.save()
 
-                    # ✅ Actualizar stock del alimento
-                    alimento = recepcion.alimento
-                    alimento.stock_actual += recepcion.cantidad
-                    alimento.save()
+                    try:
+                        # Actualiza stock, stock_util y precio_medio
+                        recepcion.actualizar_stock_alimento()
+                    except ValueError as e:
+                        form.add_error(None, str(e))
+                        return render(request, self.template_name, {'formset': formset})
 
             messages.success(request, 'Recepciones registradas correctamente.')
             return redirect(self.success_url)
         else:
-            messages.error(request, 'Error al guardar las recepciones o no estás asociado a un centro.')
+            # Mostrar errores del formset
+            print("Formset errors:", formset.errors)
+            print("Non form errors:", formset.non_form_errors())
+            messages.error(request, 'Error al guardar las recepciones.')
             return render(request, self.template_name, {'formset': formset})
+
 
     
     

@@ -29,17 +29,13 @@ class ProveedorForm(forms.ModelForm):
 class RecepcionForm(forms.ModelForm):
     class Meta:
         model = Recepcion
-        fields = ['proveedor', 'alimento', 'lote', 'unidad_medida', 'fecha_caducidad', 'cantidad', 'observaciones']
+        fields = ['proveedor', 'alimento', 'lote', 'unidad_compra', 'precio_compra','fecha_caducidad', 'cantidad', 'observaciones']
         widgets = {
             'lote': forms.TextInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'fecha_caducidad': forms.DateInput(
-                format='%Y-%m-%d',
-                attrs={'type': 'date', "class": "form-control form-control-sm form-control-border"}
-            ),
+            'fecha_caducidad': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', "class": "form-control form-control-sm form-control-border"}),
             'cantidad': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
-            'observaciones': forms.Textarea(
-                attrs={"class": "form-control form-control-sm form-control-border", "rows": 3}
-            ),
+            'precio_compra': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'observaciones': forms.Textarea(attrs={"class": "form-control form-control-sm form-control-border", "rows": 3}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -53,12 +49,12 @@ class RecepcionForm(forms.ModelForm):
         if centro:
             self.fields['alimento'].queryset = Alimento.objects.filter(centro=centro)
             self.fields['proveedor'].queryset = Proveedor.objects.filter(centro=centro)
-            self.fields['unidad_medida'].queryset = UnidadDeMedida.objects.filter(centro=centro)
+            self.fields['unidad_compra'].queryset = UnidadDeMedida.objects.filter(centro=centro)
 
         # ✅ estilos comunes
         self.fields['alimento'].widget.attrs.update({"class": "form-select form-select-sm form-control-border"})
         self.fields['proveedor'].widget.attrs.update({"class": "form-select form-select-sm form-control-border"})
-        self.fields['unidad_medida'].widget.attrs.update({"class": "form-select form-select-sm form-control-border"})
+        self.fields['unidad_compra'].widget.attrs.update({"class": "form-select form-select-sm form-control-border"})
 
   
          

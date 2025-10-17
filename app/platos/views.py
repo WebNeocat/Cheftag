@@ -1191,7 +1191,6 @@ def generar_etiqueta(request):
     # Recuperar lista de IDs de etiquetas pendientes en sesión
     etiquetas_ids = request.session.get("etiquetas_ids", [])
 
-    # Instanciar formulario con platos filtrados por centro
     if request.method == "POST":
         form = GenerarEtiquetaForm(request.POST, user=request.user)
         accion = request.POST.get("accion")
@@ -1201,21 +1200,28 @@ def generar_etiqueta(request):
         # 🔹 ACCIÓN: ELIMINAR
         if accion == "eliminar" and selected_ids:
             EtiquetaPlato.objects.filter(id__in=selected_ids).delete()
-            # Actualizar sesión
             request.session["etiquetas_ids"] = [i for i in etiquetas_ids if str(i) not in selected_ids]
             request.session.modified = True
             return redirect("platos:generar_etiqueta")
 
-        # 🔹 ACCIÓN: IMPRIMIR
+        # 🔹 ACCIÓN: IMPRIMIR / CONFIRMAR PRODUCCIÓN
         elif accion == "imprimir" and selected_ids:
             etiquetas = EtiquetaPlato.objects.filter(id__in=selected_ids).select_related("plato")
             merger = PdfMerger()
 
             for etiqueta in etiquetas:
                 plato = etiqueta.plato
+
+                # 🔹 Descontar stock de los ingredientes y de la salsa
+                try:
+                    plato.descontar_stock_por_produccion(cantidad_platos=1)
+                except ValueError as e:
+                    messages.error(request, f"Error al descontar stock para {plato.nombre}: {e}")
+                    continue  # Saltar a la siguiente etiqueta
+
                 ingredientes_info = plato.get_ingredientes_con_info()
 
-                # Recolectar alérgenos y trazas
+                # Recopilar alérgenos y trazas
                 todos_alergenos = set()
                 todas_trazas = set()
                 for ing in ingredientes_info:
@@ -1238,6 +1244,7 @@ def generar_etiqueta(request):
                     "qr_base64": qr_base64,
                 }
 
+                # Generar PDF
                 html = render_to_string("platos/preview_etiqueta.html", context)
                 pdf_buffer = BytesIO()
                 html_obj = HTML(string=html, base_url=request.build_absolute_uri())
@@ -1246,10 +1253,11 @@ def generar_etiqueta(request):
                 pdf_buffer.seek(0)
                 merger.append(pdf_buffer)
 
-                # Marcar como impresa
+                # Marcar etiqueta como impresa
                 etiqueta.impresa = True
                 etiqueta.save()
 
+            # Devolver PDF combinado
             response = HttpResponse(content_type="application/pdf")
             response["Content-Disposition"] = 'inline; filename="etiquetas.pdf"'
             merger.write(response)
@@ -1275,7 +1283,6 @@ def generar_etiqueta(request):
                     grasas_saturadas=getattr(nutricion, "grasas_saturadas", 0) if nutricion else 0,
                     centro=plato.centro
                 )
-                # Guardar en sesión
                 etiquetas_ids.append(etiqueta.id)
 
             request.session["etiquetas_ids"] = etiquetas_ids
@@ -1293,7 +1300,8 @@ def generar_etiqueta(request):
         "form": form,
         "etiquetas": etiquetas,
         **contexto
-    })  
+    })
+ 
     
 def preview_etiqueta(request, etiqueta_id):
     etiqueta = get_object_or_404(EtiquetaPlato, id=etiqueta_id)

@@ -1,7 +1,9 @@
 from django.db import models
 from app.super.models import ModeloBaseCentro  
 import random
+from decimal import Decimal
 import string
+from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
 from app.dashuser.models import Alimento, UnidadDeMedida, Alergenos
@@ -153,7 +155,50 @@ class Plato(ModeloBaseCentro):
 
         return ingredientes
     
-    
+    def descontar_stock_por_produccion(self, cantidad_platos=1):
+        """
+        Resta del stock todos los ingredientes del plato y de la salsa (si existe)
+        cuando se produce, normalizando gramos a kg y ml a litros.
+        """
+        with transaction.atomic():
+            # Ingredientes del plato
+            for ingrediente in self.ingredientes.all():
+                self._descontar_ingrediente_stock(ingrediente.alimento,
+                                                  ingrediente.cantidad * cantidad_platos,
+                                                  ingrediente.unidad_medida)
+
+            # Ingredientes de la salsa (si existe)
+            if self.salsa:
+                for ingrediente in self.salsa.ingredientes.all():
+                    self._descontar_ingrediente_stock(ingrediente.alimento,
+                                                      ingrediente.cantidad * cantidad_platos,
+                                                      ingrediente.unidad_medida)
+
+    def _descontar_ingrediente_stock(self, alimento, cantidad, unidad_medida):
+        """
+        Descarta stock de un alimento según la unidad de medida y cantidad.
+        Normaliza g → kg y ml → L, y aplica el porcentaje_uso (merma).
+        """
+        abreviatura = unidad_medida.abreviatura.lower()
+        cantidad = Decimal(cantidad)
+
+        # Normalizar unidades
+        if abreviatura in ["g", "gramo", "gramos"]:
+            cantidad /= Decimal(1000)  # g → kg
+        elif abreviatura in ["ml", "mililitro", "mililitros"]:
+            cantidad /= Decimal(1000)  # ml → L
+
+        # Aplicar porcentaje de uso (merma)
+        porcentaje_uso = Decimal(alimento.porcentaje_uso or 100)
+        if porcentaje_uso <= 0:
+            raise ValueError(f"El alimento '{alimento.nombre}' tiene porcentaje_uso inválido.")
+        
+        # Cantidad real a descontar del stock
+        cantidad_a_descontar = cantidad / (porcentaje_uso / Decimal(100))
+
+        # Restar del stock_actual y recalcular stock_util
+        alimento.actualizar_stock(-cantidad_a_descontar)
+
 class AlimentoPlato(ModeloBaseCentro):
     plato = models.ForeignKey(Plato, on_delete=models.CASCADE, related_name='ingredientes')
     alimento = models.ForeignKey(Alimento, on_delete=models.CASCADE)

@@ -101,6 +101,22 @@ class AlimentoForm(forms.ModelForm):
         required=False
     )
 
+    unidad_compra = forms.ModelChoiceField(
+        queryset=UnidadDeMedida.objects.none(),
+        label="Unidad de compra",
+        widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
+        empty_label="Selecciona una unidad",
+        required=False
+    )
+
+    unidad_uso = forms.ModelChoiceField(
+        queryset=UnidadDeMedida.objects.none(),
+        label="Unidad de uso",
+        widget=forms.Select(attrs={"class": "form-select form-select-sm form-control-border"}),
+        empty_label="Selecciona una unidad",
+        required=False
+    )
+
     alergenos = AlergenosModelMultipleChoiceField(
         queryset=Alergenos.objects.none(),
         widget=forms.CheckboxSelectMultiple,
@@ -118,7 +134,7 @@ class AlimentoForm(forms.ModelForm):
         fields = [
             'nombre', 'nombre_alternativo', 'gtin', 'alergenos', 'trazas',
             'descripcion', 'conservacion', 'localizacion', 'tipo_alimento',
-            'stock_minimo', 'imagen'
+            'stock_minimo', 'imagen', 'unidad_compra', 'unidad_uso', 'precio_medio', 'peso_unitario', 'porcentaje_uso'
         ]
         widgets = {
             'nombre': forms.TextInput(attrs={"class": "form-control form-control-sm form-control-border"}),
@@ -126,6 +142,9 @@ class AlimentoForm(forms.ModelForm):
             'gtin': forms.TextInput(attrs={"class": "form-control form-control-sm form-control-border", "placeholder":"Ej: 01234567890123"}),
             'descripcion': forms.Textarea(attrs={"class": "form-control form-control-sm form-control-border", "style": "height: auto; font-size:16px", "rows": 4}),
             'stock_minimo': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'peso_unitario': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'precio_medio': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
+            'porcentaje_uso': forms.NumberInput(attrs={"class": "form-control form-control-sm form-control-border"}),
             'imagen': forms.FileInput(attrs={"class":"form-control form-control-sm form-control-border"}),
         } 
         
@@ -145,6 +164,9 @@ class AlimentoForm(forms.ModelForm):
             self.fields['localizacion'].queryset = Localizacion.objects.filter(centro=centro)
             self.fields['alergenos'].queryset = Alergenos.objects.filter(centro=centro)
             self.fields['trazas'].queryset = Trazas.objects.filter(centro=centro)
+            self.fields['unidad_uso'].queryset = UnidadDeMedida.objects.filter(centro=centro)
+            self.fields['unidad_compra'].queryset = UnidadDeMedida.objects.filter(centro=centro)
+            
  
   
         

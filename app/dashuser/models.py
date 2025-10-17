@@ -97,9 +97,15 @@ class Alimento(ModeloBaseCentro):
     tipo_alimento = models.ForeignKey(TipoAlimento, on_delete=models.CASCADE, blank=True, null=True)
     conservacion = models.ForeignKey(Conservacion, on_delete=models.CASCADE, blank=True, null=True)
     localizacion = models.ForeignKey(Localizacion, on_delete=models.CASCADE, blank=True, null=True)
+    unidad_compra = models.ForeignKey(UnidadDeMedida, on_delete=models.CASCADE, blank=True, related_name='unidad_compra')
+    unidad_uso = models.ForeignKey(UnidadDeMedida, on_delete=models.CASCADE, blank=True, related_name='unidad_uso')
+    peso_unitario = models.DecimalField('Medida por unidad', max_digits=10, decimal_places=2, default=0, blank=True, null=True)
+    porcentaje_uso = models.DecimalField('Porcentaje de uso', max_digits=4, decimal_places=2, default=0, blank=True, null=True)
+    precio_medio = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True, null=True)
     alergenos = models.ManyToManyField(Alergenos, blank=True)
     trazas = models.ManyToManyField(Trazas, blank=True)
     stock_actual = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True, null=True)
+    stock_util = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True, null=True)
     stock_minimo = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True, null=True)
 
     class Meta:
@@ -146,15 +152,24 @@ class Alimento(ModeloBaseCentro):
     
     def actualizar_stock(self, cantidad):
         """
-        Actualiza el stock físico de forma segura
-        cantidad: puede ser positiva (entrada) o negativa (salida)
+        Actualiza el stock físico y recalcula el stock útil.
+        cantidad: positiva (entrada) o negativa (salida)
         """
         with transaction.atomic():
             Alimento.objects.filter(pk=self.pk).update(
                 stock_actual=models.F('stock_actual') + cantidad
             )
+            # Refresca para tener el valor actualizado
             self.refresh_from_db(fields=['stock_actual'])
-    
+            # Recalcula stock_util según porcentaje_uso
+            self.stock_util = self.stock_actual * (self.porcentaje_uso / 100)
+            self.save(update_fields=['stock_util'])
+
+    def actualizar_porcentaje_uso(self, nuevo_porcentaje):
+        self.porcentaje_uso = nuevo_porcentaje
+        self.stock_util = self.stock_actual * (nuevo_porcentaje / 100)
+        self.save(update_fields=['porcentaje_uso', 'stock_util'])
+
     def get_pedidos_pendientes(self, centro=None):
         """
         Devuelve los pedidos no completados para este alimento

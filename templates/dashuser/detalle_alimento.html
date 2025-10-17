@@ -112,8 +112,32 @@
                                                     <td>{{ alimento.localizacion|default:"—" }}</td>
                                                 </tr>
                                                 <tr>
+                                                    <th class="text-nowrap text-muted">Unidad de compra:</th>
+                                                    <td>{{ alimento.unidad_compra }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th class="text-nowrap text-muted">Unidad de uso:</th>
+                                                    <td>{{ alimento.unidad_uso }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th class="text-nowrap text-muted">Precio actual:</th>
+                                                    <td>{{ alimento.precio_medio }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th class="text-nowrap text-muted">Porcentaje de uso:</th>
+                                                    <td>{{ alimento.porcentaje_uso }} %</td>
+                                                </tr>
+                                                <tr>
                                                     <th class="text-nowrap text-muted">Stock actual:</th>
                                                     <td>{{ alimento.stock_actual_format }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th class="text-nowrap text-muted">Peso unitario:</th>
+                                                    <td>{{ alimento.peso_unitario }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th class="text-nowrap text-muted">Stock útil:</th>
+                                                    <td>{{ alimento.stock_util }}</td>
                                                 </tr>
                                                 <tr>
                                                     <th class="text-nowrap text-muted">Stock mínimo:</th>

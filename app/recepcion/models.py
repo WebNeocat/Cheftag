@@ -34,12 +34,13 @@ class Proveedor(ModeloBaseCentro):
 
 
 class Recepcion(ModeloBaseCentro):
-    proveedor = models.ForeignKey(Proveedor, on_delete=models.PROTECT, related_name='recepciones')
+    proveedor = models.ForeignKey(Proveedor, on_delete=models.PROTECT, related_name='recepciones', blank=True)
     alimento = models.ForeignKey(Alimento, on_delete=models.PROTECT, related_name='recepciones')
     lote = models.CharField(max_length=50, help_text="Número de lote del proveedor")
     fecha_caducidad = models.DateField()
     cantidad = models.DecimalField(max_digits=10, decimal_places=2, help_text="Cantidad recibida (kg, L, etc.)")
-    unidad_medida = models.ForeignKey(UnidadDeMedida, on_delete=models.PROTECT, help_text="Unidad de medida (kg, L, etc.)")
+    unidad_compra = models.ForeignKey(UnidadDeMedida, on_delete=models.PROTECT, help_text="Unidad de medida (kg, L, etc.)")
+    precio_compra = models.DecimalField(default=0, max_digits=10, decimal_places=2, verbose_name="Precio compra" )
     observaciones = models.TextField(blank=True, null=True)
     fecha_recepcion = models.DateTimeField(default=timezone.now, editable=False)
 
@@ -50,6 +51,44 @@ class Recepcion(ModeloBaseCentro):
 
     def __str__(self):
         return f"{self.alimento.nombre} - {self.lote} ({self.proveedor.nombre})"
+
+    def actualizar_stock_alimento(self):
+        alimento = self.alimento
+        cantidad_entrada = self.cantidad
+
+        # 1️⃣ Conversión si unidad_compra != unidad_uso
+        if alimento.unidad_compra_id != alimento.unidad_uso_id:
+            if alimento.peso_unitario and alimento.peso_unitario > 0:
+                cantidad_entrada *= alimento.peso_unitario
+            else:
+                raise ValueError(
+                    f"El alimento '{alimento.nombre}' necesita peso_unitario para convertir entre unidades."
+                )
+
+        # 2️⃣ Actualizar stock
+        with transaction.atomic():
+            # Guardamos stock_actual
+            Alimento.objects.filter(pk=alimento.pk).update(
+                stock_actual=models.F('stock_actual') + cantidad_entrada
+            )
+            alimento.refresh_from_db(fields=['stock_actual'])
+
+            # Recalculamos stock_util
+            alimento.stock_util = alimento.stock_actual * (alimento.porcentaje_uso / 100)
+
+            # 3️⃣ Actualizar precio_medio
+            if not alimento.precio_medio or alimento.precio_medio == 0:
+                alimento.precio_medio = self.precio_compra
+            else:
+                # Media ponderada: (stock_antiguo * precio_medio + cantidad_nueva * precio_compra) / stock_total
+                stock_antiguo = alimento.stock_actual - cantidad_entrada
+                alimento.precio_medio = (
+                    (stock_antiguo * alimento.precio_medio) + (cantidad_entrada * self.precio_compra)
+                ) / alimento.stock_actual
+
+            # Guardamos cambios finales
+            alimento.save(update_fields=['stock_util', 'precio_medio'])
+
     
     
 class TipoDeMerma(ModeloBaseCentro):
